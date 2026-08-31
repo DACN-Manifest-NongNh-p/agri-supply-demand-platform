@@ -1,5 +1,25 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
+}
+
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100svh;
+}
 :root {
-  --text: #6b6375;
+  --text: #000000;
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
@@ -7,16 +27,35 @@
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
+  --intelligence-bg: 80 15% 90%;
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
+  --heading: var(--sans);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  /* ---- Landing page design tokens (light) ---- */
+  --background: 40 33% 98%;
+  --foreground: 150 15% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 150 15% 12%;
+  --secondary: 90 20% 94%;
+  --secondary-foreground: 150 15% 20%;
+  --muted: 90 15% 92%;
+  --muted-foreground: 150 8% 45%;
+  --primary: 150 45% 15%;
+  --primary-foreground: 60 20% 96%;
+  --lime: 84 75% 55%;
+  --lime-foreground: 150 45% 12%;
+  --forest: 150 45% 12%;
+  --sage: 110 20% 55%;
+  --risk-high: 0 72% 51%;
+  --risk-medium: 32 85% 55%;
+  --risk-low: 142 60% 40%;
+  --shadow-soft: 0 4px 14px -2px rgba(20, 30, 20, 0.08), 0 2px 4px -2px rgba(20, 30, 20, 0.04);
+  --shadow-lift: 0 20px 40px -12px rgba(20, 30, 20, 0.18), 0 8px 16px -8px rgba(20, 30, 20, 0.1);
+
+  font: 16px/1.5 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -24,13 +63,9 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
@@ -40,22 +75,36 @@
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    /* ---- Landing page design tokens (dark) ---- */
+    --background: 150 20% 7%;
+    --foreground: 60 15% 94%;
+    --card: 150 18% 10%;
+    --card-foreground: 60 15% 94%;
+    --secondary: 150 15% 14%;
+    --secondary-foreground: 60 10% 88%;
+    --muted: 150 12% 16%;
+    --muted-foreground: 90 8% 60%;
+    --primary: 84 60% 60%;
+    --primary-foreground: 150 30% 10%;
+    --lime: 84 70% 58%;
+    --lime-foreground: 150 45% 10%;
+    --forest: 150 30% 8%;
+    --sage: 110 18% 45%;
+    --risk-high: 0 70% 60%;
+    --risk-medium: 32 80% 60%;
+    --risk-low: 142 55% 48%;
+    --shadow-soft: 0 4px 14px -2px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    --shadow-lift: 0 20px 40px -12px rgba(0, 0, 0, 0.55), 0 8px 16px -8px rgba(0, 0, 0, 0.35);
   }
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -77,17 +126,24 @@ h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
-  @media (max-width: 1024px) {
+}
+
+@media (max-width: 1024px) {
+  h1 {
     font-size: 36px;
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
+}
+
+@media (max-width: 1024px) {
+  h2 {
     font-size: 20px;
   }
 }
@@ -108,4 +164,32 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* ---- Landing page shared utility classes ---- */
+.editorial {
+  font-family: var(--heading);
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.label-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0);
 }

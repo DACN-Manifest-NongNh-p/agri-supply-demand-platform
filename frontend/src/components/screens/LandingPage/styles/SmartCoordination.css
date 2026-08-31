@@ -1,0 +1,366 @@
+/* ===== SmartCoordination ===== */
+.smart-section {
+  background-color: hsl(var(--secondary));
+  padding: 6rem 0;
+}
+
+@media (min-width: 768px) {
+  .smart-section {
+    padding: 8rem 0;
+  }
+}
+
+.smart-container {
+  margin: 0 auto;
+  max-width: 1400px;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .smart-container {
+    padding: 0 2.5rem;
+  }
+}
+
+.smart-grid {
+  display: grid;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .smart-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 5rem;
+  }
+}
+
+.smart-title {
+  margin-top: 1.5rem;
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+}
+
+.smart-intro {
+  margin-top: 1.5rem;
+  max-width: 28rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.smart-card {
+  border-radius: 28px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  box-shadow: var(--shadow-lift);
+  padding: 1.75rem;
+}
+
+@media (min-width: 768px) {
+  .smart-card {
+    padding: 2.25rem;
+  }
+}
+
+.smart-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.smart-card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.smart-card-value {
+  margin-top: 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.smart-card-arrow {
+  display: none;
+  height: 1.25rem;
+  width: 1.25rem;
+  color: hsl(var(--muted-foreground));
+}
+
+@media (min-width: 640px) {
+  .smart-card-arrow {
+    display: block;
+  }
+}
+
+.smart-footnote {
+  margin-top: 1.5rem;
+  font-size: 14px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.smart-footnote-strong {
+  font-weight: 500;
+  color: hsl(var(--foreground));
+}
+
+/* Batch boxes */
+.batch-box {
+  margin-top: 1.75rem;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+}
+
+.batch-box--recommended {
+  border: 1px solid hsl(var(--lime) / 0.6);
+  background-color: hsl(var(--lime) / 0.1);
+}
+
+.batch-box--alternative {
+  margin-top: 0.75rem;
+  border: 1px solid hsl(var(--border));
+}
+
+.batch-box-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.batch-box-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.batch-box-name--muted {
+  color: hsl(var(--muted-foreground));
+}
+
+.batch-badge {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.batch-badge--recommended {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background-color: hsl(var(--lime));
+  color: hsl(var(--lime-foreground));
+}
+
+.batch-badge-icon {
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.batch-badge--alternative {
+  background-color: hsl(var(--secondary));
+  color: hsl(var(--muted-foreground));
+}
+
+.batch-stats {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.batch-stats--muted {
+  color: hsl(var(--muted-foreground));
+}
+
+.batch-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.batch-stat-label--plain {
+  color: inherit;
+}
+
+.batch-stat-value {
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.batch-stat-value--muted {
+  color: hsl(var(--foreground) / 0.7);
+}
+
+/* ===== Reservation ===== */
+.reservation-section {
+  background-color: hsl(var(--background));
+  padding: 6rem 0;
+}
+
+@media (min-width: 768px) {
+  .reservation-section {
+    padding: 8rem 0;
+  }
+}
+
+.reservation-container {
+  margin: 0 auto;
+  max-width: 1400px;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .reservation-container {
+    padding: 0 2.5rem;
+  }
+}
+
+.reservation-grid {
+  display: grid;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .reservation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5rem;
+  }
+}
+
+.reservation-title {
+  margin-top: 1.5rem;
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+}
+
+.reservation-intro {
+  margin-top: 1.5rem;
+  max-width: 28rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.reservation-card {
+  border-radius: 28px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  box-shadow: var(--shadow-soft);
+  padding: 2rem;
+}
+
+.reservation-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.reservation-card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.reservation-card-value {
+  font-size: 1.875rem;
+}
+
+.reservation-bar {
+  margin-top: 1.5rem;
+  display: flex;
+  height: 1rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: hsl(var(--muted));
+}
+
+.reservation-bar-segment {
+  height: 100%;
+}
+
+.reservation-bar-segment--primary {
+  background-color: hsl(var(--primary));
+}
+
+.reservation-bar-segment--sage {
+  background-color: hsl(var(--sage));
+}
+
+.reservation-bar-segment--lime {
+  background-color: hsl(var(--lime));
+}
+
+.reservation-list {
+  margin-top: 1.75rem;
+}
+
+.reservation-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-top: 1px solid hsl(var(--border));
+}
+
+.reservation-row:first-child {
+  border-top: none;
+}
+
+.reservation-row-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.reservation-dot {
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: 9999px;
+}
+
+.dot--primary {
+  background-color: hsl(var(--primary));
+}
+
+.dot--sage {
+  background-color: hsl(var(--sage));
+}
+
+.dot--lime {
+  background-color: hsl(var(--lime));
+}
+
+.reservation-row-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.reservation-qty {
+  font-size: 0.875rem;
+}
+
+.reservation-state {
+  border-radius: 9999px;
+  background-color: hsl(var(--secondary));
+  padding: 0.25rem 0.75rem;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}

@@ -1,0 +1,303 @@
+.time-aware-section {
+  background: #f5f5e9;
+  padding: 7rem 0;
+}
+
+.time-aware-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.time-aware-grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 7rem;
+  align-items: center;
+}
+
+/* ---------- LEFT ---------- */
+
+.time-aware-copy {
+  max-width: 480px;
+}
+
+.time-aware-title {
+  margin-top: 1.25rem;
+  max-width: 500px;
+
+  font-family: var(--sans);
+  font-size: clamp(2.8rem, 5vw, 4.8rem);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+
+  color: #17251e;
+}
+
+.time-aware-intro {
+  max-width: 440px;
+  margin-top: 1.75rem;
+
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+
+  color: #65756d;
+}
+
+.time-aware-note {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  margin-top: 2rem;
+
+  font-size: 12px;
+  color: #51645a;
+}
+
+.note-marker {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9be52c;
+}
+
+/* ---------- BOARD ---------- */
+
+.priority-board {
+  overflow: hidden;
+
+  border: 1px solid #d9ddd0;
+  border-radius: 20px;
+
+  background: #fbfbf4;
+}
+
+/* top */
+
+.priority-board-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 1.35rem 1.5rem;
+
+  border-bottom: 1px solid #dfe2d8;
+
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+
+  color: #728078;
+}
+
+.priority-board-top span:last-child {
+  color: #9aa39d;
+  font-weight: 500;
+}
+
+/* header */
+
+.priority-header {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1.35fr 0.65fr;
+  gap: 1.5rem;
+
+  padding: 0.9rem 1.5rem;
+
+  background: #f1f2e9;
+
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+
+  color: #89938c;
+}
+
+/* rows */
+
+.priority-row {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr 1.35fr 0.65fr;
+  gap: 1.5rem;
+  align-items: center;
+
+  min-height: 118px;
+  padding: 1.5rem;
+
+  border-bottom: 1px solid #e3e5dd;
+
+  transition: background 200ms ease;
+}
+
+.priority-row:last-child {
+  border-bottom: none;
+}
+
+.priority-row:hover {
+  background: #f5f6ee;
+}
+
+.priority-row-high {
+  background: rgba(242, 77, 57, 0.025);
+}
+
+/* batch */
+
+.batch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.batch-info strong {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1c2c24;
+}
+
+.batch-info span,
+.batch-harvested {
+  font-size: 13px;
+  color: #7d8982;
+}
+
+/* shelf */
+
+.shelf-life-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #26372e;
+}
+
+.shelf-track {
+  width: 100%;
+  height: 5px;
+
+  margin-top: 0.65rem;
+
+  overflow: hidden;
+  border-radius: 999px;
+
+  background: #e4e7de;
+}
+
+.shelf-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.shelf-fill-normal {
+  background: #7fa57a;
+}
+
+.shelf-fill-high {
+  background: #e35d4c;
+}
+
+/* priority */
+
+.priority-badge {
+  justify-self: start;
+
+  padding: 0.4rem 0.75rem;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.priority-low {
+  background: #e9f3df;
+  color: #5d8a36;
+}
+
+.priority-medium {
+  background: #fff0d9;
+  color: #bd7a25;
+}
+
+.priority-high {
+  background: #fde5e2;
+  color: #d84d3d;
+}
+
+/* footer */
+
+.priority-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  padding: 1.1rem 1.5rem;
+
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: #718078;
+}
+
+.footer-line {
+  width: 22px;
+  height: 1px;
+  background: #9be52c;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 1023px) {
+  .time-aware-grid {
+    grid-template-columns: 1fr;
+    gap: 4rem;
+  }
+
+  .time-aware-copy {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 767px) {
+  .time-aware-section {
+    padding: 5rem 0;
+  }
+
+  .time-aware-container {
+    padding: 0 1.25rem;
+  }
+
+  .time-aware-title {
+    font-size: 3rem;
+  }
+
+  .priority-header {
+    display: none;
+  }
+
+  .priority-row {
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+
+    padding: 1.25rem;
+  }
+
+  .batch-harvested {
+    display: none;
+  }
+
+  .shelf-life {
+    grid-column: 1 / -1;
+  }
+
+  .priority-badge {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}

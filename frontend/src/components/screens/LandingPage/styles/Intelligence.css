@@ -1,0 +1,208 @@
+.intelligence-section {
+  background-color: hsl(var(--intelligence-bg));
+  padding: 6rem 0;
+}
+
+@media (min-width: 768px) {
+  .intelligence-section {
+    padding: 8rem 0;
+  }
+}
+
+.intelligence-container {
+  margin: 0 auto;
+  max-width: 1400px;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .intelligence-container {
+    padding: 0 2.5rem;
+  }
+}
+
+.intelligence-header {
+  max-width: 48rem;
+}
+
+.intelligence-title {
+  margin-top: 1.5rem;
+  font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+}
+
+.intelligence-intro {
+  margin-top: 1.5rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.intelligence-disclaimer {
+  margin-top: 1.5rem;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Grid */
+.intelligence-grid {
+  margin-top: 4rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .intelligence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Card base */
+.card {
+  border-radius: 1.5rem;
+  padding: 2rem;
+}
+
+.card--bordered {
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  box-shadow: var(--shadow-soft);
+}
+
+.card--dark {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.card-eyebrow {
+  color: hsl(var(--muted-foreground));
+}
+
+.card-eyebrow--dark {
+  color: hsl(var(--primary-foreground) / 0.6);
+}
+
+.card-text {
+  margin-top: 1.25rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+.card-footnote {
+  margin-top: 1.25rem;
+  font-size: 13px;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Stat box (forecasting cards) */
+.stat-box {
+  margin-top: 1.75rem;
+  border-radius: 1rem;
+  background-color: hsl(var(--secondary));
+  padding: 1.25rem;
+}
+
+.stat-box-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.stat-box-value {
+  margin-top: 0.5rem;
+  font-size: 1.875rem;
+}
+
+.stat-box-caption {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Risk rows (surplus risk card) */
+.risk-rows {
+  margin-top: 1.5rem;
+}
+
+.risk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 0;
+  border-top: 1px solid hsl(var(--primary-foreground) / 0.12);
+}
+
+.risk-row:first-child {
+  border-top: none;
+}
+
+.risk-row-label {
+  font-size: 0.875rem;
+  color: hsl(var(--primary-foreground) / 0.7);
+}
+
+.risk-row-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.risk-row-value--lime {
+  color: hsl(var(--lime));
+}
+
+.risk-pill {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.risk-pill--high-dark {
+  background-color: hsl(var(--risk-high) / 0.25);
+}
+
+.risk-pill--high {
+  background-color: hsl(var(--risk-high) / 0.12);
+  color: hsl(var(--risk-high));
+}
+
+/* Spoilage grid */
+.spoilage-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .spoilage-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.spoilage-item {
+  border-radius: 1rem;
+  background-color: hsl(var(--secondary));
+  padding: 1rem;
+}
+
+.spoilage-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.spoilage-value {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
