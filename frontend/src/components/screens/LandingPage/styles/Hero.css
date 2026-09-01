@@ -25,11 +25,11 @@
   inset: 0;
   z-index: 1;
 
-  background: linear-gradient(
+   background: linear-gradient(
     to top,
-    rgba(26, 58, 26, 0.9),
-    rgba(26, 58, 26, 0.45),
-    rgba(26, 58, 26, 0.6)
+    rgba(5, 15, 10, 0.82) 0%,
+    rgba(5, 15, 10, 0.48) 45%,
+    rgba(5, 15, 10, 0.22) 100%
   );
 }
 
@@ -38,11 +38,11 @@
   inset: 0;
   z-index: 1;
 
-  background: linear-gradient(
+ background: linear-gradient(
     to right,
-    rgba(26, 58, 26, 0.7),
-    transparent,
-    transparent
+    rgba(5, 15, 10, 0.62) 0%,
+    rgba(5, 15, 10, 0.28) 45%,
+    transparent 75%
   );
 }
 
