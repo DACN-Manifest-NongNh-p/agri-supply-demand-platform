@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import "../styles/Nav.css";
@@ -55,12 +56,12 @@ export function Nav() {
         </div>
 
         <div className="nav-actions">
-          <a href="#cta" className="nav-login">
+          <Link to="/login" className="nav-login">
             Log in
-          </a>
-          <a href="#cta" className="nav-signup">
+          </Link>
+          <Link to="/signup" className="nav-signup">
             Sign Up
-          </a>
+          </Link>
         </div>
 
         <button
@@ -85,12 +86,12 @@ export function Nav() {
             ))}
           </ul>
           <div className="nav-mobile-actions">
-            <a href="#cta" onClick={() => setOpen(false)} className="nav-mobile-login">
+            <Link to="/login" onClick={() => setOpen(false)} className="nav-mobile-login">
               Log in
-            </a>
-            <a href="#cta" onClick={() => setOpen(false)} className="nav-mobile-signup">
+            </Link>
+            <Link to="/signup" onClick={() => setOpen(false)} className="nav-mobile-signup">
               Sign Up
-            </a>
+            </Link>
           </div>
         </div>
       )}
