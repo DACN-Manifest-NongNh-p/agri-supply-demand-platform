@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: agri-supply-demand-api
+
+server:
+  port: 8080
