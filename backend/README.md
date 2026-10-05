@@ -15,7 +15,8 @@ From this directory:
 mvn spring-boot:run
 ```
 
-The API starts at `http://localhost:8080`. Check it with `GET /api/health`.
+The API starts at `http://localhost:8082`. Check it with `GET /api/health`.
+Protected `/api/**` endpoints require a Keycloak access token. The local issuer defaults to `http://localhost:8081/realms/agri-platform`; override it with `KEYCLOAK_ISSUER_URI` when needed.
 
 ## Package layout
 

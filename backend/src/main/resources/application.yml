@@ -1,6 +1,15 @@
 spring:
   application:
     name: agri-supply-demand-api
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/agri-platform}
 
 server:
-  port: 8080
+  port: 8082
+
+app:
+  cors:
+    allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}

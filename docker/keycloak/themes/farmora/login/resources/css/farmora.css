@@ -1,0 +1,517 @@
+:root {
+  --farmora-ink: #26382b;
+  --farmora-muted: #69766d;
+  --farmora-green: #477653;
+  --farmora-green-dark: #386445;
+  --farmora-line: #dfe7dd;
+  --farmora-paper: #f5f6ef;
+}
+
+html.login-pf {
+  min-height: 100%;
+  background: var(--farmora-paper);
+}
+
+body {
+  display: flex;
+  min-height: 100svh;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0;
+  padding: 24px;
+  color: var(--farmora-ink);
+  background: var(--farmora-paper);
+  font-family: "Aptos", "Segoe UI", sans-serif;
+}
+
+.pf-v5-c-login {
+  min-height: 100vh;
+  padding: 24px;
+  background: var(--farmora-paper);
+}
+
+.pf-v5-c-login__container {
+  position: relative;
+  display: grid;
+  width: min(100%, 1160px);
+  min-height: max(680px, calc(100svh - 48px));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(49, 75, 53, 0.12);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(41, 57, 42, 0.13), 0 3px 10px rgba(41, 57, 42, 0.04);
+  isolation: isolate;
+}
+
+.pf-v5-c-login__container::before {
+  position: absolute;
+  z-index: 1;
+  inset: 0 auto 0 0;
+  width: 50%;
+  background:
+    linear-gradient(155deg, rgba(23, 43, 28, 0.42), rgba(23, 43, 28, 0.78)),
+    url("../img/auth-pic.jpg") center / cover;
+  content: "";
+  transition: transform 620ms cubic-bezier(0.22, 0.8, 0.24, 1);
+  will-change: transform;
+}
+
+#kc-header {
+  display: none;
+}
+
+#kc-header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--farmora-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+#kc-header-wrapper::before {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: #fff url("../img/logo.png") center / contain no-repeat;
+  content: "";
+}
+
+.pf-v5-c-login__main {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 500px);
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  justify-self: center;
+  margin: 36px 0 24px;
+  padding: 36px clamp(28px, 4vw, 52px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pf-v5-c-login__container.auth-mode-signup .pf-v5-c-login__main {
+  grid-column: 2;
+}
+
+.pf-v5-c-login__main-body,
+#kc-form-wrapper,
+#kc-form-login,
+#kc-register-form {
+  width: 100%;
+  max-width: 100%;
+}
+
+.pf-v5-c-login__main-body {
+  padding: 0;
+}
+
+#kc-form-login,
+#kc-register-form {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 12px;
+}
+
+.pf-v5-c-login__main-header {
+  margin-bottom: 18px;
+  border: 0;
+}
+
+#kc-page-title {
+  color: var(--farmora-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.pf-v5-c-form__group {
+  margin-bottom: 0;
+}
+
+.pf-v5-c-form__label,
+.pf-v5-c-form__label-text {
+  color: #35453a;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.pf-v5-c-form-control {
+  min-height: 44px;
+  border: 1px solid var(--farmora-line);
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.pf-v5-c-form-control input {
+  min-height: 42px;
+  padding-inline: 12px;
+  color: var(--farmora-ink);
+  font: inherit;
+  font-size: 13px;
+}
+
+.pf-v5-c-form-control:focus-within {
+  border-color: #6a9672;
+  box-shadow: 0 0 0 3px rgba(91, 137, 100, 0.14);
+}
+
+.pf-v5-c-button.pf-m-primary {
+  min-height: 46px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--farmora-green);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.pf-v5-c-button.pf-m-primary:hover {
+  background: var(--farmora-green-dark);
+  transform: translateY(-1px);
+}
+
+.pf-v5-c-check__input {
+  accent-color: var(--farmora-green);
+}
+
+.pf-v5-c-login a {
+  color: var(--farmora-green);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pf-v5-c-login a:hover {
+  color: var(--farmora-green-dark);
+  text-decoration: underline;
+}
+
+#kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div > div {
+  display: inline-flex;
+  width: calc(33.333% - 8px);
+  min-height: 82px;
+  margin: 0 8px 8px 0;
+  vertical-align: top;
+}
+
+#kc-register-form input[name="account_type"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+#kc-register-form label[for^="account_type-"] {
+  display: flex;
+  width: 100%;
+  min-height: 82px;
+  align-items: center;
+  padding: 13px;
+  border: 1px solid var(--farmora-line);
+  border-radius: 9px;
+  color: var(--farmora-ink);
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+#kc-register-form input[name="account_type"]:checked + label {
+  border-color: var(--farmora-green);
+  background: #e7efdf;
+  box-shadow: inset 0 0 0 1px var(--farmora-green);
+}
+
+#kc-register-form input[name="account_type"]:focus-visible + label {
+  outline: 3px solid rgba(91, 137, 100, 0.35);
+  outline-offset: 2px;
+}
+
+#kc-register-form label[for^="account_type-"]:hover {
+  border-color: #a8c2a8;
+  background: #fbfcf9;
+}
+
+.pf-v5-c-login__main-footer {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: center;
+  padding: 0 24px 26px;
+  color: var(--farmora-muted);
+  font-size: 12px;
+}
+
+.pf-v5-c-login__main-footer-band {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.farmora-switch-panel {
+  position: absolute;
+  z-index: 3;
+  inset: 0 auto 0 0;
+  display: flex;
+  width: 50%;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 64px clamp(34px, 5vw, 72px);
+  color: #fff;
+  transition: transform 620ms cubic-bezier(0.22, 0.8, 0.24, 1);
+  will-change: transform;
+}
+
+.farmora-switch-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: auto;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.farmora-switch-brand img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: contain;
+}
+
+.farmora-switch-eyebrow {
+  margin: 0 0 14px;
+  color: #d5e5bb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.farmora-switch-panel h2 {
+  max-width: 390px;
+  margin: 0 0 14px;
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.08;
+}
+
+.farmora-switch-description {
+  max-width: 360px;
+  margin: 0 0 28px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.farmora-switch-action {
+  display: inline-flex;
+  min-width: 148px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 22px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 7px;
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.farmora-switch-action:hover {
+  color: var(--farmora-green-dark) !important;
+  background: #fff;
+}
+
+.pf-v5-c-login__container.auth-mode-signin::before,
+.pf-v5-c-login__container.auth-mode-signin .farmora-switch-panel {
+  transform: translateX(100%);
+}
+
+.pf-v5-c-login__container.auth-mode-signin .pf-v5-c-login__main {
+  grid-column: 1;
+}
+
+.pf-v5-c-login__container.auth-enter-from-right::before,
+.pf-v5-c-login__container.auth-enter-from-right .farmora-switch-panel {
+  transform: translateX(100%);
+}
+
+.pf-v5-c-login__container.auth-enter-from-left::before,
+.pf-v5-c-login__container.auth-enter-from-left .farmora-switch-panel {
+  transform: translateX(0);
+}
+
+.pf-v5-c-login__container.auth-mode-signin.auth-leaving-to-signup::before,
+.pf-v5-c-login__container.auth-mode-signin.auth-leaving-to-signup .farmora-switch-panel {
+  transform: translateX(0);
+}
+
+.pf-v5-c-login__container.auth-mode-signup.auth-leaving-to-signin::before,
+.pf-v5-c-login__container.auth-mode-signup.auth-leaving-to-signin .farmora-switch-panel {
+  transform: translateX(100%);
+}
+
+.pf-v5-c-login__container.auth-enter-from-right .farmora-switch-panel,
+.pf-v5-c-login__container.auth-enter-from-left .farmora-switch-panel {
+  transition: none;
+}
+
+@media (max-width: 760px) {
+  body {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .pf-v5-c-login__container {
+    width: min(100%, 520px);
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 220px auto;
+    margin: 0 auto;
+    border-radius: 15px;
+  }
+
+  .pf-v5-c-login__container::before {
+    inset: 0 0 auto;
+    width: 100%;
+    height: 220px;
+    background-position: center 42%;
+    transform: none !important;
+  }
+
+  .farmora-switch-panel {
+    inset: 0 0 auto;
+    display: grid;
+    width: 100%;
+    height: 220px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto;
+    align-content: center;
+    gap: 4px 12px;
+    padding: 18px 22px;
+    transform: none !important;
+  }
+
+  .farmora-switch-brand {
+    grid-column: 1 / -1;
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+
+  .farmora-switch-brand img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .farmora-switch-eyebrow {
+    grid-column: 1 / -1;
+    margin: 0 0 2px;
+    font-size: 9px;
+  }
+
+  .farmora-switch-panel h2 {
+    grid-column: 1;
+    grid-row: 3;
+    margin: 0 0 4px;
+    font-size: 24px;
+  }
+
+  .farmora-switch-description {
+    grid-column: 1;
+    grid-row: 4;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .farmora-switch-action {
+    min-width: 112px;
+    min-height: 40px;
+    grid-column: 2;
+    grid-row: 3 / 5;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
+  .pf-v5-c-login__container.auth-enter-from-right::before,
+  .pf-v5-c-login__container.auth-enter-from-right .farmora-switch-panel {
+    transform: translateX(100%) !important;
+  }
+
+  .pf-v5-c-login__container.auth-enter-from-left::before,
+  .pf-v5-c-login__container.auth-enter-from-left .farmora-switch-panel {
+    transform: translateX(-100%) !important;
+  }
+
+  .pf-v5-c-login__container.auth-mode-signin.auth-leaving-to-signup::before,
+  .pf-v5-c-login__container.auth-mode-signin.auth-leaving-to-signup .farmora-switch-panel {
+    transform: translateX(-100%) !important;
+  }
+
+  .pf-v5-c-login__container.auth-mode-signup.auth-leaving-to-signin::before,
+  .pf-v5-c-login__container.auth-mode-signup.auth-leaving-to-signin .farmora-switch-panel {
+    transform: translateX(100%) !important;
+  }
+
+  .pf-v5-c-login__main {
+    width: min(100%, 520px);
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0 auto;
+    padding: 28px 22px;
+    box-shadow: none;
+  }
+
+  .pf-v5-c-login__container.auth-mode-signup .pf-v5-c-login__main {
+    grid-column: 1;
+  }
+
+  #kc-page-title {
+    font-size: 30px;
+  }
+
+  #kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div > div {
+    width: 100%;
+    min-height: 54px;
+    margin-right: 0;
+  }
+
+  #kc-register-form label[for^="account_type-"] {
+    min-height: 54px;
+    padding: 10px 12px;
+  }
+
+  .pf-v5-c-login__main-footer {
+    padding-bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-v5-c-login__container::before,
+  .farmora-switch-panel {
+    transition-duration: 1ms;
+  }
+}
