@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
+import {
+  getKeycloakUsername,
+  isKeycloakAuthenticated,
+  loginWithKeycloak,
+  logoutFromKeycloak,
+  registerWithKeycloak,
+} from "@/lib/keycloak";
 import "../styles/Nav.css";
 
 const links = [
@@ -28,6 +34,11 @@ export function Logo({ className }: { className?: string }) {
 export function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const authenticated = isKeycloakAuthenticated();
+  const username = getKeycloakUsername();
+  const logIn = () => void loginWithKeycloak().catch(console.error);
+  const signUp = () => void registerWithKeycloak().catch(console.error);
+  const logOut = () => void logoutFromKeycloak().catch(console.error);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -56,12 +67,17 @@ export function Nav() {
         </div>
 
         <div className="nav-actions">
-          <Link to="/login" className="nav-login">
-            Log in
-          </Link>
-          <Link to="/signup" className="nav-signup">
-            Sign Up
-          </Link>
+          {authenticated ? (
+            <>
+              <span className="nav-user">{username}</span>
+              <button type="button" onClick={logOut} className="nav-login">Log out</button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={logIn} className="nav-login">Log in</button>
+              <button type="button" onClick={signUp} className="nav-signup">Sign Up</button>
+            </>
+          )}
         </div>
 
         <button
@@ -85,13 +101,24 @@ export function Nav() {
               </li>
             ))}
           </ul>
-          <div className="nav-mobile-actions">
-            <Link to="/login" onClick={() => setOpen(false)} className="nav-mobile-login">
-              Log in
-            </Link>
-            <Link to="/signup" onClick={() => setOpen(false)} className="nav-mobile-signup">
-              Sign Up
-            </Link>
+          <div className={`nav-mobile-actions${authenticated ? " nav-mobile-actions--authenticated" : ""}`}>
+            {authenticated ? (
+              <>
+                <span className="nav-mobile-user">{username}</span>
+                <button type="button" onClick={() => { setOpen(false); logOut(); }} className="nav-mobile-login">
+                  Log out
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => { setOpen(false); logIn(); }} className="nav-mobile-login">
+                  Log in
+                </button>
+                <button type="button" onClick={() => { setOpen(false); signUp(); }} className="nav-mobile-signup">
+                  Sign Up
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

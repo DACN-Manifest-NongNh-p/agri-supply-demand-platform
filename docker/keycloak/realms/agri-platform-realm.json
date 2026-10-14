@@ -1,0 +1,59 @@
+{
+  "realm": "agri-platform",
+  "enabled": true,
+  "displayName": "Farmora",
+  "registrationAllowed": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginTheme": "farmora",
+  "eventsListeners": ["jboss-logging", "farmora-role-assigner"],
+  "roles": {
+    "realm": [
+      { "name": "BUYER", "description": "Buys agricultural products" },
+      { "name": "PRODUCER", "description": "Producer or cooperative supplying products" },
+      { "name": "LOGISTICS", "description": "Logistics provider delivering orders" },
+      { "name": "COORDINATOR", "description": "Coordinates supply, demand, and delivery" },
+      { "name": "ADMIN", "description": "Platform administrator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "farmora-web",
+      "name": "Farmora Web",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "account-type-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "account_type",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "account_type",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

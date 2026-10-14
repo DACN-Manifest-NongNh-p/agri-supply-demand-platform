@@ -162,12 +162,16 @@
 .nav-login {
   border-radius: 9999px;
   padding: 0.5rem 1rem;
+  border: 0;
 
   font-size: 13px;
   font-weight: 500;
+  font-family: inherit;
 
   color: rgba(245, 245, 235, 0.85);
+  background: transparent;
   text-decoration: none;
+  cursor: pointer;
 
   transition: color 150ms ease;
 }
@@ -176,17 +180,29 @@
   color: #f5f5eb;
 }
 
+.nav-user {
+  max-width: 180px;
+  overflow: hidden;
+  color: rgba(245, 245, 235, 0.75);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .nav-signup {
   border-radius: 9999px;
+  border: 0;
   background-color: #c7f36b;
 
   padding: 0.625rem 1.25rem;
 
   font-size: 13px;
   font-weight: 600;
+  font-family: inherit;
 
   color: #30452f;
   text-decoration: none;
+  cursor: pointer;
 
   transition: transform 300ms ease;
 }
@@ -280,9 +296,23 @@
   gap: 0.5rem;
 }
 
+.nav-mobile-actions--authenticated {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.nav-mobile-user {
+  overflow: hidden;
+  color: rgba(245, 245, 235, 0.75);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .nav-mobile-login {
   border-radius: 9999px;
   border: 1px solid rgba(245, 245, 235, 0.25);
+  font-family: inherit;
 
   padding: 0.625rem 0;
 
@@ -292,12 +322,16 @@
   font-weight: 500;
 
   color: #f5f5eb;
+  background: transparent;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .nav-mobile-signup {
   border-radius: 9999px;
+  border: 0;
   background-color: #c7f36b;
+  font-family: inherit;
 
   padding: 0.625rem 0;
 
@@ -308,4 +342,5 @@
 
   color: #30452f;
   text-decoration: none;
+  cursor: pointer;
 }

@@ -1,6 +1,7 @@
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { Reveal, Eyebrow } from "./Reveal";
 import { Logo } from "./Nav";
+import { registerWithKeycloak } from "@/lib/keycloak";
 import rescueImage from "@/assets/rescue-produce.jpg";
 import "../styles/Rescue.css";
 
@@ -70,10 +71,10 @@ export function FinalCTA() {
             Connect supply, demand, time, and transportation in one coordination platform.
           </p>
           <div className="cta-actions">
-            <a href="#top" className="cta-primary">
+            <button type="button" onClick={() => void registerWithKeycloak().catch(console.error)} className="cta-primary">
               Get Started
               <ArrowRight className="cta-primary-icon" />
-            </a>
+            </button>
             <a href="#coordination" className="cta-secondary">
               Explore the Platform
             </a>

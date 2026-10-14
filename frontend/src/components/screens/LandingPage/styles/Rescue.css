@@ -192,12 +192,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  border: 0;
   border-radius: 9999px;
   background-color: hsl(var(--lime));
   padding: 1rem 1.75rem;
   font-size: 0.875rem;
   font-weight: 600;
+  font-family: inherit;
   color: hsl(var(--lime-foreground));
+  cursor: pointer;
   transition: transform 300ms ease;
   text-decoration: none;
 }
