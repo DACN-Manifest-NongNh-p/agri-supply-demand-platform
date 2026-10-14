@@ -79,6 +79,8 @@ npm run dev
 
 Vite uses strict port `5173`; open `http://localhost:5173`. Keycloak's client only allows this redirect origin. If the port is occupied, stop the other Vite process rather than changing the port without also updating the client redirect URIs, web origins, and CORS origin.
 
+A Farmora admin account is pre-provisioned for local development: username `farmora.admin`, temporary password `Admin@123` (you must change it on first login). See [Pre-provisioned admin account](../auth/README.md#pre-provisioned-admin-account), including the commands to create it on an existing database.
+
 From the landing page, **Log in** and **Sign Up** go directly to Keycloak. Registration includes the required Buyer / Producer / Logistics choice. Forgot Password uses Keycloak's reset flow; actual email delivery needs SMTP configuration.
 
 ## Ports

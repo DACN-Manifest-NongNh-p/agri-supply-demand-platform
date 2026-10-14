@@ -7,37 +7,40 @@
   --farmora-paper: #f5f6ef;
 }
 
-html.login-pf {
+html.login-pf,
+body#keycloak-bg {
   min-height: 100%;
   background: var(--farmora-paper);
 }
 
-body {
-  display: flex;
-  min-height: 100svh;
-  align-items: flex-start;
-  justify-content: center;
+body#keycloak-bg {
   margin: 0;
-  padding: 24px;
+  padding: 0;
   color: var(--farmora-ink);
-  background: var(--farmora-paper);
   font-family: "Aptos", "Segoe UI", sans-serif;
 }
 
 .pf-v5-c-login {
-  min-height: 100vh;
+  display: flex;
+  width: 100%;
+  min-height: 100svh;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
   background: var(--farmora-paper);
 }
 
+/* The card is locked to the viewport; the form column scrolls on long pages (registration). */
 .pf-v5-c-login__container {
   position: relative;
   display: grid;
   width: min(100%, 1160px);
-  min-height: max(680px, calc(100svh - 48px));
+  height: calc(100svh - 48px);
+  min-height: 560px;
+  max-height: 880px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: minmax(0, 1fr);
-  margin: auto;
+  margin: 0;
   padding: 0;
   overflow: hidden;
   border: 1px solid rgba(49, 75, 53, 0.12);
@@ -84,17 +87,36 @@ body {
 .pf-v5-c-login__main {
   position: relative;
   z-index: 2;
-  width: min(100%, 500px);
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex-direction: column;
+  height: 100%;
   grid-column: 2;
   grid-row: 1;
-  align-self: center;
-  justify-self: center;
-  margin: 36px 0 24px;
-  padding: 36px clamp(28px, 4vw, 52px);
+  align-self: stretch;
+  margin: 0;
+  padding: 48px clamp(28px, 5vw, 64px);
+  overflow-y: auto;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.pf-v5-c-login__main > * {
+  width: 100%;
+  max-width: 420px;
+  margin-inline: auto;
+}
+
+/* Vertically centre short forms (login), let long ones (register) start at the top and scroll. */
+.pf-v5-c-login__main > :first-child {
+  margin-top: auto;
+}
+
+.pf-v5-c-login__main > :last-child {
+  margin-bottom: auto;
 }
 
 .pf-v5-c-login__main-body,
@@ -115,17 +137,36 @@ body {
   row-gap: 12px;
 }
 
+/* Registration: first and last name share a row so the form fits without scrolling. */
+#kc-register-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+}
+
+#kc-register-form > * {
+  grid-column: 1 / -1;
+}
+
+#kc-register-form > .pf-v5-c-form__group:has(#firstName),
+#kc-register-form > .pf-v5-c-form__group:has(#lastName) {
+  grid-column: auto;
+}
+
 .pf-v5-c-login__main-header {
-  margin-bottom: 18px;
+  display: block;
+  margin-bottom: 24px;
+  padding: 0;
   border: 0;
 }
 
 #kc-page-title {
+  margin: 0;
   color: var(--farmora-ink);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 34px;
   font-weight: 400;
   line-height: 1.15;
+  text-align: left;
 }
 
 .pf-v5-c-form__group {
@@ -135,7 +176,7 @@ body {
 .pf-v5-c-form__label,
 .pf-v5-c-form__label-text {
   color: #35453a;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
 }
 
@@ -147,12 +188,18 @@ body {
   box-shadow: none;
 }
 
+/* PatternFly draws the bottom border with ::after; the Farmora border is the box border above. */
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after {
+  display: none;
+}
+
 .pf-v5-c-form-control input {
   min-height: 42px;
   padding-inline: 12px;
   color: var(--farmora-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .pf-v5-c-form-control:focus-within {
@@ -160,14 +207,41 @@ body {
   box-shadow: 0 0 0 3px rgba(91, 137, 100, 0.14);
 }
 
+/* Password field + show/hide button read as one control. */
+.pf-v5-c-input-group .pf-v5-c-form-control {
+  border-right: 0;
+  border-radius: 7px 0 0 7px;
+}
+
+.pf-v5-c-button.pf-m-control {
+  min-width: 46px;
+  height: 100%;
+  min-height: 44px;
+  border: 1px solid var(--farmora-line);
+  border-radius: 0 7px 7px 0;
+  color: var(--farmora-muted);
+  background: #fff;
+}
+
+.pf-v5-c-button.pf-m-control::after {
+  display: none;
+}
+
+.pf-v5-c-button.pf-m-control:hover,
+.pf-v5-c-button.pf-m-control:focus-visible {
+  color: var(--farmora-green-dark);
+  background: #f3f7f0;
+}
+
 .pf-v5-c-button.pf-m-primary {
   min-height: 46px;
+  margin-top: 8px;
   border: 0;
   border-radius: 7px;
   background: var(--farmora-green);
   color: #fff;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   transition: background-color 150ms ease, transform 150ms ease;
 }
@@ -177,8 +251,26 @@ body {
   transform: translateY(-1px);
 }
 
+.pf-v5-c-check {
+  align-items: center;
+  gap: 8px;
+}
+
 .pf-v5-c-check__input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
   accent-color: var(--farmora-green);
+}
+
+.pf-v5-c-check__label {
+  color: #35453a;
+  font-size: 13px;
+}
+
+.pf-v5-c-form__helper-text {
+  margin-top: 10px;
+  font-size: 13px;
 }
 
 .pf-v5-c-login a {
@@ -192,12 +284,15 @@ body {
   text-decoration: underline;
 }
 
-#kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div > div {
-  display: inline-flex;
-  width: calc(33.333% - 8px);
-  min-height: 82px;
-  margin: 0 8px 8px 0;
-  vertical-align: top;
+/* account_type options: the unlabelled wrapper between the label and the error container. */
+#kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div:not([class*="group-label"]):not([id]) {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+#kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div:not([class*="group-label"]):not([id]) > div {
+  display: flex;
 }
 
 #kc-register-form input[name="account_type"] {
@@ -213,9 +308,11 @@ body {
 #kc-register-form label[for^="account_type-"] {
   display: flex;
   width: 100%;
-  min-height: 82px;
+  min-height: 64px;
   align-items: center;
-  padding: 13px;
+  justify-content: center;
+  padding: 10px 12px;
+  text-align: center;
   border: 1px solid var(--farmora-line);
   border-radius: 9px;
   color: var(--farmora-ink);
@@ -243,15 +340,18 @@ body {
 }
 
 .pf-v5-c-login__main-footer {
-  grid-column: 2;
-  grid-row: 3;
-  justify-self: center;
-  padding: 0 24px 26px;
+  padding: 16px 0 0;
   color: var(--farmora-muted);
-  font-size: 12px;
+  font-size: 13px;
+}
+
+.pf-v5-c-login__main-footer:empty {
+  display: none;
 }
 
 .pf-v5-c-login__main-footer-band {
+  margin: 0;
+  padding: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -309,43 +409,47 @@ body {
 
 .farmora-switch-description {
   max-width: 360px;
-  margin: 0 0 28px;
+  margin: 0;
   color: rgba(255, 255, 255, 0.86);
   font-size: 14px;
   line-height: 1.65;
 }
 
-.farmora-switch-action {
-  display: inline-flex;
-  min-width: 148px;
-  min-height: 46px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 22px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 7px;
-  color: #fff !important;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none !important;
-  transition: background-color 160ms ease, color 160ms ease;
+/* "Don't have an account? Create an account" line under the form (set up by auth-panel.js). */
+#kc-info,
+#kc-info-wrapper,
+#kc-registration-container,
+#kc-form-options {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
-.farmora-switch-action:hover {
-  color: var(--farmora-green-dark) !important;
-  background: #fff;
+.farmora-switch-line {
+  display: block;
+  margin-top: 20px;
+  color: var(--farmora-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.farmora-switch-line a {
+  margin-left: 2px;
 }
 
 @media (max-width: 760px) {
-  body {
+  .pf-v5-c-login {
     align-items: flex-start;
     padding: 14px;
   }
 
   .pf-v5-c-login__container {
     width: min(100%, 520px);
+    height: auto;
     min-height: 0;
+    max-height: none;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 220px auto;
     margin: 0 auto;
@@ -361,19 +465,14 @@ body {
 
   .farmora-switch-panel {
     inset: 0 0 auto;
-    display: grid;
     width: 100%;
     height: 220px;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto auto auto;
-    align-content: center;
-    gap: 4px 12px;
+    justify-content: flex-end;
     padding: 18px 22px;
   }
 
   .farmora-switch-brand {
-    grid-column: 1 / -1;
-    margin: 0 0 4px;
+    margin: 0 0 auto;
     font-size: 18px;
   }
 
@@ -383,33 +482,18 @@ body {
   }
 
   .farmora-switch-eyebrow {
-    grid-column: 1 / -1;
-    margin: 0 0 2px;
+    margin: 0 0 4px;
     font-size: 9px;
   }
 
   .farmora-switch-panel h2 {
-    grid-column: 1;
-    grid-row: 3;
     margin: 0 0 4px;
     font-size: 24px;
   }
 
   .farmora-switch-description {
-    grid-column: 1;
-    grid-row: 4;
-    margin: 0;
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.4;
-  }
-
-  .farmora-switch-action {
-    min-width: 112px;
-    min-height: 40px;
-    grid-column: 2;
-    grid-row: 3 / 5;
-    padding: 0 12px;
-    font-size: 11px;
   }
 
   .pf-v5-c-login__main {
@@ -418,6 +502,7 @@ body {
     grid-row: 2;
     margin: 0 auto;
     padding: 28px 22px;
+    overflow: visible;
     box-shadow: none;
   }
 
@@ -425,24 +510,22 @@ body {
     font-size: 30px;
   }
 
-  #kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div > div {
-    width: 100%;
-    min-height: 54px;
-    margin-right: 0;
+  #kc-register-form > .pf-v5-c-form__group:has(#firstName),
+  #kc-register-form > .pf-v5-c-form__group:has(#lastName) {
+    grid-column: 1 / -1;
+  }
+
+  #kc-register-form .pf-v5-c-form__group:has(input[name="account_type"]) > div:not([class*="group-label"]):not([id]) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   #kc-register-form label[for^="account_type-"] {
-    min-height: 54px;
-    padding: 10px 12px;
+    min-height: 48px;
+    justify-content: flex-start;
+    text-align: left;
   }
 
   .pf-v5-c-login__main-footer {
     padding-bottom: 16px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .farmora-switch-action {
-    transition-duration: 1ms;
   }
 }
