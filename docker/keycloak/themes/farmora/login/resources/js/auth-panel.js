@@ -1,30 +1,36 @@
 (() => {
-  const initialize = () => {
-    const container = document.querySelector(".pf-v5-c-login__container");
-    const registrationForm = document.querySelector("#kc-register-form");
-    const loginForm = document.querySelector("#kc-form-login");
-    const resetForm = document.querySelector("#kc-reset-password-form");
+  const COPY = {
+    signin: {
+      label: "Welcome to Farmora",
+      heading: "Welcome back.",
+      description: "Sign in and keep bringing supply, demand, and delivery into sync.",
+    },
+    signup: {
+      label: "Join Farmora",
+      heading: "Good things grow together.",
+      description: "Join the network connecting agricultural supply, demand, and logistics.",
+    },
+    reset: {
+      label: "Reset your Farmora password",
+      heading: "A fresh start is close.",
+      description: "We will help you get back to coordinating your harvest.",
+    },
+  };
 
-    if (!container || (!registrationForm && !loginForm && !resetForm)) return;
+  // Replaces the native Keycloak switch link text with "<prompt> <link>" under the form.
+  const rewriteSwitchLink = (link, prompt, text) => {
+    if (!link) return;
+    const line = link.parentElement;
+    link.textContent = text;
+    line.classList.add("farmora-switch-line");
+    line.replaceChildren(...(prompt ? [`${prompt} `, link] : [link]));
+  };
 
-    const isRegistration = Boolean(registrationForm);
-    const isReset = Boolean(resetForm);
-    const mode = isRegistration ? "signup" : "signin";
-    const targetPattern = loginForm
-      ? /login-actions\/registration/
-      : /login-actions\/authenticate/;
-    const targetLink = [...container.querySelectorAll("a[href]")].find((link) =>
-      targetPattern.test(link.href),
-    );
-
-    if (!targetLink) return;
-
+  const buildPanel = (container, mode) => {
+    const copy = COPY[mode];
     const panel = document.createElement("aside");
     panel.className = "farmora-switch-panel";
-    panel.setAttribute(
-      "aria-label",
-      isRegistration ? "Sign in to Farmora" : isReset ? "Forgot your password?" : "Create a Farmora account",
-    );
+    panel.setAttribute("aria-label", copy.label);
 
     const brand = document.createElement("div");
     brand.className = "farmora-switch-brand";
@@ -45,37 +51,39 @@
     eyebrow.textContent = "GROW TOGETHER";
 
     const heading = document.createElement("h2");
-    heading.textContent = isRegistration
-      ? "Welcome back."
-      : isReset
-        ? "A fresh start is close."
-        : "Good things grow together.";
+    heading.textContent = copy.heading;
 
     const description = document.createElement("p");
     description.className = "farmora-switch-description";
-    description.textContent = isRegistration
-      ? "Sign in and keep bringing supply, demand, and delivery into sync."
-      : isReset
-        ? "Return to sign in whenever you are ready to continue."
-        : "Join the network connecting agricultural supply, demand, and logistics.";
+    description.textContent = copy.description;
 
-    const action = document.createElement("a");
-    action.className = "farmora-switch-action";
-    action.href = targetLink.href;
-    action.textContent = isRegistration ? "Sign in" : isReset ? "Back to sign in" : "Create an account";
-    action.setAttribute(
-      "aria-label",
-      isRegistration || isReset ? "Go to sign in" : "Go to sign up",
-    );
-
-    panel.append(brand, eyebrow, heading, description, action);
+    panel.append(brand, eyebrow, heading, description);
     container.append(panel);
     container.classList.add(`auth-mode-${mode}`);
+  };
 
-    if (isRegistration || isReset) {
-      targetLink.remove();
+  const initialize = () => {
+    const container = document.querySelector(".pf-v5-c-login__container");
+    const registrationForm = document.querySelector("#kc-register-form");
+    const loginForm = document.querySelector("#kc-form-login");
+    const resetForm = document.querySelector("#kc-reset-password-form");
+
+    if (!container || (!registrationForm && !loginForm && !resetForm)) return;
+
+    const mode = registrationForm ? "signup" : resetForm ? "reset" : "signin";
+    buildPanel(container, mode);
+
+    const findLink = (pattern) =>
+      [...container.querySelectorAll(".pf-v5-c-login__main a[href]")].find((link) =>
+        pattern.test(link.href),
+      );
+
+    if (mode === "signin") {
+      rewriteSwitchLink(findLink(/login-actions\/registration/), "Don't have an account?", "Create an account");
+    } else if (mode === "signup") {
+      rewriteSwitchLink(findLink(/login-actions\/authenticate/), "Already have an account?", "Sign in");
     } else {
-      (targetLink.closest("#kc-registration") ?? targetLink).remove();
+      rewriteSwitchLink(findLink(/login-actions\/authenticate/), "", "Back to sign in");
     }
   };
 

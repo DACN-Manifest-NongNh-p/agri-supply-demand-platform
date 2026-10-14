@@ -139,7 +139,17 @@ The `account-type-claim` mapper copies `account_type` into the tokens as informa
 
 ## Authorization: Keycloak realm roles
 
-Permissions come from realm roles in the `agri-platform` realm (not `master`): `BUYER`, `PRODUCER`, `LOGISTICS`, `COORDINATOR`, `ADMIN`. They are declared in `docker/keycloak/realms/agri-platform-realm.json`; on an existing database create them under **agri-platform → Realm roles**.
+Permissions come from realm roles in the `agri-platform` realm (not `master`). They are declared in `docker/keycloak/realms/agri-platform-realm.json`; on an existing database create them under **agri-platform → Realm roles**.
+
+| Role | Who | Responsibilities | How the account gets the role |
+| --- | --- | --- | --- |
+| `BUYER` | External user | Buys agricultural products | Self-registration (automatic) |
+| `PRODUCER` | External user: producer or cooperative | Supplies products | Self-registration (automatic) |
+| `LOGISTICS` | External user: logistics provider | Delivers orders | Self-registration (automatic) |
+| `COORDINATOR` | Farmora operations staff (business side) | Coordinates supply, demand, and delivery; handles operational incidents | Granted by an `ADMIN`; cannot be self-registered |
+| `ADMIN` | Farmora system administrator | Manages the platform: site content and configuration without code changes, staff accounts and roles | Pre-provisioned account; cannot be self-registered |
+
+The application `ADMIN` role is **not** the Keycloak administrator. The `admin` user in the `master` realm manages Keycloak itself (realms, clients, themes); an `agri-platform` user with the `ADMIN` role manages Farmora business data. Keep them as separate accounts.
 
 Keycloak puts a user's realm roles in the access token claim `realm_access.roles`. `KeycloakRoleConverter` maps each one to a Spring authority `ROLE_<name>`, so controllers use:
 
@@ -162,6 +172,53 @@ docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update realms/agri-platf
 From Git Bash, prefix that command with `MSYS_NO_PATHCONV=1`; Windows PowerShell 5.1 strips the inner quotes, so run it from Git Bash or the Admin Console (**Realm settings → Events → Event listeners**).
 
 Users created in the Admin Console do not trigger `REGISTER`; assign their roles under **Users → user → Role mapping → Assign role → Filter by realm roles**. A user must log in again (or refresh the token) after a role change.
+
+### Staff accounts: COORDINATOR and ADMIN
+
+Staff accounts never go through the public registration form. They sign in on the same Farmora login page as everyone else; only how the account is created differs.
+
+- **ADMIN** accounts are provisioned ahead of time and the person only logs in. See [Pre-provisioned admin account](#pre-provisioned-admin-account) below.
+- **COORDINATOR** accounts are created, or granted the role, by an `ADMIN`. Today this is done in the Keycloak Admin Console (**agri-platform → Users**). *Planned:* an in-app user management page that calls the Keycloak Admin API through a backend service-account client with the `manage-users` permission.
+- Give each staff member a personal account (for example `admin.quynh`, `coord.an`) rather than a shared login, so actions can be traced and an account can be disabled individually.
+- *Recommended:* require OTP (two-factor) for `ADMIN` and `COORDINATOR` with Keycloak's conditional OTP flow, so external users are not affected.
+
+### Pre-provisioned admin account
+
+The realm import creates one application admin for local development:
+
+| Field | Value |
+| --- | --- |
+| Login page | `http://localhost:5173` → **Log in** (same page as every user) |
+| Username | `farmora.admin` (or email `admin@farmora.local`) |
+| Temporary password | `Admin@123` |
+| Realm role | `ADMIN` |
+
+On first login Keycloak requires a new password (`UPDATE_PASSWORD`), so `Admin@123` only works once per environment. This is **not** the Keycloak console login (`admin` / `admin` in the `master` realm).
+
+The account is defined under `users` in `docker/keycloak/realms/agri-platform-realm.json`, so it only exists on a fresh import. On a database that already has the realm, create it once:
+
+```powershell
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh create users -r agri-platform -s username=farmora.admin -s email=admin@farmora.local -s firstName=Farmora -s lastName=Admin -s enabled=true -s emailVerified=true
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh set-password -r agri-platform --username farmora.admin --new-password Admin@123 --temporary
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh add-roles -r agri-platform --uusername farmora.admin --rolename ADMIN
+```
+
+To reset a forgotten admin password, run the `set-password` command again.
+
+The temporary password is committed on purpose for local development only. For any shared or production environment, create admins with the same commands but pass the password from an environment variable, and never commit it.
+
+**Why staff accounts are not asked for `account_type`:** `account_type` is required on the registration form, and Keycloak's *Verify Profile* required action would otherwise force every user missing it (including staff created by an admin) to pick Buyer / Producer / Logistics on login. The realm therefore disables `VERIFY_PROFILE` in `requiredActions`; registration still enforces `account_type`. On an existing realm, disable it once under **Authentication → Required actions → Verify Profile**, or:
+
+```powershell
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update authentication/required-actions/VERIFY_PROFILE -r agri-platform -s enabled=false
+```
+
+*Planned* application behaviour by role:
+
+- After login the frontend routes users by role: `ADMIN` to `/admin`, `COORDINATOR` to the coordination dashboard, and external roles to their own screens.
+- Editable site content (for example landing-page text and banners) is stored in the application database and changed through API endpoints guarded by `@PreAuthorize("hasRole('ADMIN')")`.
+- Incident and coordination endpoints are guarded by `hasRole('COORDINATOR')`.
 
 ## Current API security
 
