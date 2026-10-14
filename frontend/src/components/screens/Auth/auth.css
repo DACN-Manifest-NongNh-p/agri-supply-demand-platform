@@ -88,11 +88,11 @@
 .auth-visual-copy h2 {
   margin: 18px 0 12px;
   color: white;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(31px, 3.5vw, 43px);
-  font-weight: 400;
-  line-height: 1.08;
-  letter-spacing: 0;
+  font-family: var(--sans);
+  font-size: clamp(30px, 3.4vw, 40px);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .auth-visual-copy p,
@@ -121,11 +121,11 @@
 .auth-heading h1 {
   margin: 10px 0 7px;
   color: var(--auth-ink);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 34px;
-  font-weight: 400;
+  font-family: var(--sans);
+  font-size: 30px;
+  font-weight: 650;
   line-height: 1.15;
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
 }
 .auth-heading p { color: var(--auth-muted); font-size: 13px; line-height: 1.55; }
 .auth-form { display: grid; gap: 14px; }
