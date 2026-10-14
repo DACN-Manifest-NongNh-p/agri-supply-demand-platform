@@ -14,7 +14,11 @@ services:
       retries: 10
 
   keycloak:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.3.3}
+    build:
+      context: ./docker/keycloak
+      args:
+        KEYCLOAK_VERSION: ${KEYCLOAK_VERSION:-26.3.3}
+    image: farmora-keycloak:${KEYCLOAK_VERSION:-26.3.3}
     command:
       - start-dev
       - --import-realm

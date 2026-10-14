@@ -51,6 +51,13 @@ export function isKeycloakAuthenticated() {
   return Boolean(keycloak.authenticated);
 }
 
+export type AppRole = "BUYER" | "PRODUCER" | "LOGISTICS" | "COORDINATOR" | "ADMIN";
+
+// UI-only check; the backend enforces the same roles from the access token.
+export function hasRole(role: AppRole) {
+  return keycloak.hasRealmRole(role);
+}
+
 export function getKeycloakUsername() {
   return keycloak.tokenParsed?.preferred_username ?? keycloak.tokenParsed?.email ?? "";
 }

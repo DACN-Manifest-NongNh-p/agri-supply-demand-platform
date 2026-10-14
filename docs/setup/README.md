@@ -25,9 +25,11 @@ The examples use local-only defaults. `.env` configures Keycloak/PostgreSQL; `fr
 From the repository root:
 
 ```powershell
-docker compose up -d
+docker compose up -d --build
 docker compose ps
 ```
+
+`--build` builds the Keycloak image with the Farmora role-assigner extension (`docker/keycloak/Dockerfile`). Rebuild after changing anything under `docker/keycloak/extensions/`.
 
 Wait until `keycloak-db` is `healthy` and `keycloak` is `Up`. On first startup, Keycloak imports `docker/keycloak/realms/agri-platform-realm.json`. Open the admin console at `http://localhost:8081/admin`; default local credentials are `admin` / `admin` unless overridden in `.env`.
 

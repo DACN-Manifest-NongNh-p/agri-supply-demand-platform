@@ -144,3 +144,6 @@ vite.config.ts.timestamp-*
 
 # Maven
 target/
+
+# IntelliJ IDEA
+.idea/
