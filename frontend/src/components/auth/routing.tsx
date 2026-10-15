@@ -1,7 +1,10 @@
 import { useEffect, type ReactNode } from "react";
 import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
-import { ShieldAlert } from "lucide-react";
+import { ArrowRight, Lock, LogOut } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 import {
+  getKeycloakUsername,
+  getRoleHome,
   getRoleHomePath,
   hasRole,
   isKeycloakAuthenticated,
@@ -45,23 +48,79 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
   return <>{children}</>;
 }
 
+const AUDIENCE: Record<AppRole, string> = {
+  BUYER: "buyers",
+  PRODUCER: "producers",
+  LOGISTICS: "logistics providers",
+  COORDINATOR: "coordinators",
+  ADMIN: "administrators",
+};
+
+/** How a role is named in a sentence ("a buyer account"). */
+const ACCOUNT: Record<AppRole, string> = {
+  BUYER: "Buyer",
+  PRODUCER: "Producer",
+  LOGISTICS: "Logistics provider",
+  COORDINATOR: "Coordinator",
+  ADMIN: "Administrator",
+};
+
 function NoAccess({ role }: { role: AppRole }) {
-  const home = getRoleHomePath();
+  const home = getRoleHome();
+  const username = getKeycloakUsername();
+
   return (
     <main className="access-page">
       <section className="access-card" aria-labelledby="no-access-title">
-        <span className="access-icon"><ShieldAlert size={22} /></span>
-        <h1 id="no-access-title">This area is for {role.toLowerCase()}s</h1>
-        <p className="access-muted">
-          Your account doesn't have the {role} role. If you think it should, ask a Farmora administrator to update your account.
-        </p>
-        <div className="access-actions">
-          <Link to={home ?? "/"} className="access-btn access-btn--primary">
-            {home ? "Go to your dashboard" : "Back to home"}
-          </Link>
-          <button type="button" className="access-btn" onClick={() => void logoutFromKeycloak()}>
-            Sign in with another account
-          </button>
+        <div className="access-visual" aria-hidden="true">
+          <span className="access-brand">
+            <img src={logoImage} alt="" />
+            Farmora
+          </span>
+          <p>Fresh produce, matched from farm to dock.</p>
+        </div>
+
+        <div className="access-body">
+          <span className="access-tag">
+            <Lock size={13} aria-hidden="true" /> {ACCOUNT[role]} area
+          </span>
+          <h1 id="no-access-title">This area is for {AUDIENCE[role]}</h1>
+
+          <div className="access-account">
+            <span className="access-avatar" aria-hidden="true">
+              {(username || "?").charAt(0).toUpperCase()}
+            </span>
+            <span>
+              <strong>{username || "Signed in"}</strong>
+              <small>{home ? `${ACCOUNT[home.role]} account` : "No role with its own area yet"}</small>
+            </span>
+          </div>
+
+          <p className="access-muted">
+            {home
+              ? `Your account opens the ${ACCOUNT[home.role].toLowerCase()} pages. To use ${AUDIENCE[role]} pages, sign in with a ${ACCOUNT[role].toLowerCase()} account.`
+              : `To use ${AUDIENCE[role]} pages, sign in with a ${ACCOUNT[role].toLowerCase()} account.`}
+          </p>
+
+          <div className="access-actions">
+            <Link to={home?.path ?? "/"} className="access-btn access-btn--primary">
+              {home ? `Go to ${ACCOUNT[home.role]} dashboard` : "Back to home"}
+              <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <button type="button" className="access-btn" onClick={() => void logoutFromKeycloak()}>
+              <LogOut size={15} aria-hidden="true" /> Switch account
+            </button>
+          </div>
+
+          <p className="access-foot">
+            Should your account have this role? Ask a Farmora administrator.
+            {home && (
+              <>
+                {" "}
+                <Link to="/">Farmora home</Link>
+              </>
+            )}
+          </p>
         </div>
       </section>
     </main>

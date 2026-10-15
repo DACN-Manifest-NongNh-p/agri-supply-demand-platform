@@ -48,6 +48,12 @@ export async function logoutFromKeycloak() {
   return keycloak.logout({ redirectUri: `${window.location.origin}/` });
 }
 
+/** Keycloak's account console: password, two-step login and active sessions. */
+export async function openAccountConsole() {
+  await initializeKeycloak().catch(() => false);
+  return keycloak.accountManagement();
+}
+
 export async function getAccessToken() {
   const authenticated = await initializeKeycloak();
   if (!authenticated || !keycloak.authenticated) return null;
@@ -76,10 +82,16 @@ const ROLE_HOMES: { role: AppRole; path: string }[] = [
   { role: "PRODUCER", path: "/producer" },
   { role: "BUYER", path: "/buyer" },
   { role: "COORDINATOR", path: "/coordinator" },
+  { role: "LOGISTICS", path: "/logistics" },
 ];
+
+/** The signed-in user's role that has an area, with that area's path; null if none. */
+export function getRoleHome(): { role: AppRole; path: string } | null {
+  if (!keycloak.authenticated) return null;
+  return ROLE_HOMES.find(({ role }) => hasRole(role)) ?? null;
+}
 
 /** Home page for the signed-in user's role, or null if their role has no area yet. */
 export function getRoleHomePath(): string | null {
-  if (!keycloak.authenticated) return null;
-  return ROLE_HOMES.find(({ role }) => hasRole(role))?.path ?? null;
+  return getRoleHome()?.path ?? null;
 }

@@ -1,5 +1,7 @@
 # Coordinator Flow
 
+How this role fits into the whole system, and the demo order for all roles: [system flow and demo script](../system/README.md).
+
 Access: all `/coordinator` routes require the Keycloak `COORDINATOR` role, and coordinators land on `/coordinator` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
 
 This document describes how a coordinator uses Farmora to run the whole market. It covers the current frontend in `frontend/src/components/screens/Coordinator/`.
@@ -152,7 +154,8 @@ Only the coordinator sees the driver, the vehicle plate and the carrier's dispat
 | `sections/HubMap.tsx` | Overview map |
 | `sections/QueueList.tsx` | Needs action list on the overview |
 | `sections/Overview.tsx` | Supply vs demand, on the road, supply without a buyer |
-| `sections/CoordinatorSidebar.tsx` | Navigation, theme switch and account |
+| `sections/CoordinatorSidebar.tsx` | Coordinator navigation, built on `sections/AreaSidebar.tsx` (sidebar shell shared with the logistics area) |
+| `data/theme.ts` | Light/dark theme remembered per browser, shared with the logistics area |
 | `CoordinatorHome.tsx`, `MatchingPage.tsx`, `RequestsPage.tsx`, `DeliveriesPage.tsx`, `DeliveryDetailPage.tsx` | Screens |
 | `styles/Coordinator.css` | `co-*` styles on top of the producer and buyer styles |
 | `../Producer/data/mapGeometry.ts` | Route splitting and WebGL check, shared by the delivery map and the overview map |

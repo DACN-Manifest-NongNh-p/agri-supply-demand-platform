@@ -21,11 +21,18 @@ import CoordinatorHome from './components/screens/Coordinator/CoordinatorHome'
 import MatchingPage from './components/screens/Coordinator/MatchingPage'
 import RequestsPage from './components/screens/Coordinator/RequestsPage'
 import CoordinatorDeliveriesPage from './components/screens/Coordinator/DeliveriesPage'
+import LogisticsLayout from './components/screens/Logistics/LogisticsLayout'
+import LogisticsHome from './components/screens/Logistics/LogisticsHome'
+import OrdersPage from './components/screens/Logistics/OrdersPage'
+import TripsPage from './components/screens/Logistics/TripsPage'
+import FleetPage from './components/screens/Logistics/FleetPage'
+import AccountPage from './components/screens/Logistics/AccountPage'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
 const BuyerDeliveryDetailPage = lazy(() => import('./components/screens/Buyer/DeliveryDetailPage'))
 const CoordinatorDeliveryDetailPage = lazy(() => import('./components/screens/Coordinator/DeliveryDetailPage'))
+const TripDetailPage = lazy(() => import('./components/screens/Logistics/TripDetailPage'))
 
 const deliveryFallback = <main className="ph-main"><p className="ph-empty">Loading delivery…</p></main>
 
@@ -108,6 +115,28 @@ function App() {
               </Suspense>
             }
           />
+        </Route>
+        <Route
+          path="/logistics"
+          element={
+            <RequireRole role="LOGISTICS">
+              <LogisticsLayout />
+            </RequireRole>
+          }
+        >
+          <Route index element={<LogisticsHome />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="trips" element={<TripsPage />} />
+          <Route
+            path="trips/:id"
+            element={
+              <Suspense fallback={deliveryFallback}>
+                <TripDetailPage />
+              </Suspense>
+            }
+          />
+          <Route path="fleet" element={<FleetPage />} />
+          <Route path="account" element={<AccountPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
