@@ -1,5 +1,7 @@
 # Coordinator Flow
 
+How this role fits into the whole system, and the demo order for all roles: [system flow and demo script](../system/README.md).
+
 Access: all `/coordinator` routes require the Keycloak `COORDINATOR` role, and coordinators land on `/coordinator` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
 
 This document describes how a coordinator uses Farmora to run the whole market. It covers the current frontend in `frontend/src/components/screens/Coordinator/`.

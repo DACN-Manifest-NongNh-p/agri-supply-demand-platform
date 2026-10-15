@@ -1,5 +1,7 @@
 # Logistics Provider Flow
 
+How this role fits into the whole system, and the demo order for all roles: [system flow and demo script](../system/README.md).
+
 Access: all `/logistics` routes require the Keycloak `LOGISTICS` role, and logistics providers land on `/logistics` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
 
 This document describes how a logistics provider (a carrier) uses Farmora: declaring what it can carry, answering the transport orders Farmora offers, moving trips along, and reporting problems on the road. It covers the current frontend in `frontend/src/components/screens/Logistics/`.

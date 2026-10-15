@@ -1,5 +1,7 @@
 # Buyer Flow
 
+How this role fits into the whole system, and the demo order for all roles: [system flow and demo script](../system/README.md).
+
 Access: all `/buyer` routes require the Keycloak `BUYER` role, and buyers land on `/buyer` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
 
 This document describes how a buyer (supermarket, wholesaler, processor) uses Farmora: posting demands, getting system-suggested supply, reserving batches, checking producers and following deliveries. It covers the current frontend in `frontend/src/components/screens/Buyer/`.

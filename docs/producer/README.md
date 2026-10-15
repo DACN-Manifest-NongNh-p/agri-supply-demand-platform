@@ -1,5 +1,7 @@
 # Producer Flow
 
+How this role fits into the whole system, and the demo order for all roles: [system flow and demo script](../system/README.md).
+
 Access: all `/producer` routes require the Keycloak `PRODUCER` role, and producers land on `/producer` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
 
 This document describes how a producer (farm or cooperative) uses Farmora: declaring supply, reviewing system-generated matches, offering batches to buyers, confirming allocations and following deliveries. It covers the current frontend in `frontend/src/components/screens/Producer/`.
