@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import LandingPage from './components/screens/LandingPage/LandingPage'
 import { LoginPage, SignUpPage } from './components/screens/Auth/AuthPages'
+import { AuthCallback, RequireRole } from './components/auth/routing'
+import { AUTH_CALLBACK_PATH } from './lib/keycloak'
 import ProducerLayout from './components/screens/Producer/ProducerLayout'
 import ProducerHome from './components/screens/Producer/ProducerHome'
 import BatchesPage from './components/screens/Producer/BatchesPage'
@@ -24,7 +26,15 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/producer" element={<ProducerLayout />}>
+        <Route path={AUTH_CALLBACK_PATH} element={<AuthCallback />} />
+        <Route
+          path="/producer"
+          element={
+            <RequireRole role="PRODUCER">
+              <ProducerLayout />
+            </RequireRole>
+          }
+        >
           <Route index element={<ProducerHome />} />
           <Route path="batches" element={<BatchesPage />} />
           <Route path="calendar" element={<LegacyCalendarRedirect />} />

@@ -1,5 +1,7 @@
 # Producer Flow
 
+Access: all `/producer` routes require the Keycloak `PRODUCER` role, and producers land on `/producer` after login (see [auth docs](../auth/README.md#frontend-routing-by-role)).
+
 This document describes how a producer (farm or cooperative) uses Farmora: declaring supply, reviewing system-generated matches, offering batches to buyers, confirming allocations and following deliveries. It covers the current frontend in `frontend/src/components/screens/Producer/`.
 
 > **Status:** UI prototype on demo data. Matching, offers, deliveries and market insights run in the browser on mock data (`data/mockProducer.ts`); nothing is persisted and there is no backend API yet. The rules below are the intended behaviour the backend should take over.
@@ -208,5 +210,4 @@ The delivery detail page shows:
 - Backend API and persistence for batches, demands, matches, offers, allocations and deliveries; matching should move server-side.
 - Real AI insight generation and data sources (e.g. a weather API such as Open-Meteo, market price feeds).
 - Live vehicle positions and sensor readings for deliveries.
-- Role-based access: `/producer` routes are not yet restricted to the `PRODUCER` role, and login does not redirect by role.
 - Producer profile editing.

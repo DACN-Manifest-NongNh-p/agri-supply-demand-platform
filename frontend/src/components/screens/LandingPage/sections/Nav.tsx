@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import logoImage from "@/assets/logo.png";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   getKeycloakUsername,
+  getRoleHomePath,
   isKeycloakAuthenticated,
   loginWithKeycloak,
   logoutFromKeycloak,
@@ -36,6 +38,7 @@ export function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const authenticated = isKeycloakAuthenticated();
   const username = getKeycloakUsername();
+  const dashboard = getRoleHomePath();
   const logIn = () => void loginWithKeycloak().catch(console.error);
   const signUp = () => void registerWithKeycloak().catch(console.error);
   const logOut = () => void logoutFromKeycloak().catch(console.error);
@@ -70,6 +73,7 @@ export function Nav() {
           {authenticated ? (
             <>
               <span className="nav-user">{username}</span>
+              {dashboard && <Link to={dashboard} className="nav-signup">Dashboard</Link>}
               <button type="button" onClick={logOut} className="nav-login">Log out</button>
             </>
           ) : (
@@ -105,6 +109,11 @@ export function Nav() {
             {authenticated ? (
               <>
                 <span className="nav-mobile-user">{username}</span>
+                {dashboard && (
+                  <Link to={dashboard} onClick={() => setOpen(false)} className="nav-mobile-signup">
+                    Dashboard
+                  </Link>
+                )}
                 <button type="button" onClick={() => { setOpen(false); logOut(); }} className="nav-mobile-login">
                   Log out
                 </button>
