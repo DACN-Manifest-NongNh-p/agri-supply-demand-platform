@@ -75,6 +75,7 @@ export function getKeycloakUsername() {
 const ROLE_HOMES: { role: AppRole; path: string }[] = [
   { role: "PRODUCER", path: "/producer" },
   { role: "BUYER", path: "/buyer" },
+  { role: "COORDINATOR", path: "/coordinator" },
 ];
 
 /** Home page for the signed-in user's role, or null if their role has no area yet. */

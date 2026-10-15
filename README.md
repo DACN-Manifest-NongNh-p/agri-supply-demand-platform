@@ -8,6 +8,7 @@ Farmora is a React SPA backed by a Spring Boot API. Keycloak provides identity, 
 - [Local setup, ports, and run instructions](docs/setup/README.md)
 - [Producer flow](docs/producer/README.md)
 - [Buyer flow](docs/buyer/README.md)
+- [Coordinator flow](docs/coordinator/README.md)
 
 ## Main folders
 

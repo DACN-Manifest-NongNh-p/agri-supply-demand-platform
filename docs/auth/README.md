@@ -232,12 +232,13 @@ After login or registration Keycloak redirects to `/auth/callback` (allowed by t
 | --- | --- |
 | `PRODUCER` | `/producer` |
 | `BUYER` | `/buyer` |
-| `LOGISTICS`, `COORDINATOR`, `ADMIN` | `/` (no dedicated area yet) |
+| `COORDINATOR` | `/coordinator` |
+| `LOGISTICS`, `ADMIN` | `/` (no dedicated area yet) |
 
 Protected routes are wrapped in `<RequireRole role="...">`:
 
 - not signed in: redirect to Keycloak login, then back to the same page;
-- signed in without the role: a "This area is for producers" (or "buyers") page with links home and to sign in with another account.
+- signed in without the role: a "This area is for producers" (or "buyers", "coordinators") page with links home and to sign in with another account.
 
 ```mermaid
 flowchart LR
@@ -249,6 +250,7 @@ flowchart LR
     Landing["Log in on landing page"] --> KC2["Keycloak login"] --> CB2["/auth/callback"] --> Home{"Role home?"}
     Home -- "PRODUCER" --> PH["/producer"]
     Home -- "BUYER" --> BH["/buyer"]
+    Home -- "COORDINATOR" --> CH["/coordinator"]
     Home -- "other" --> L["/"]
 ```
 
