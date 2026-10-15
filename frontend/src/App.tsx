@@ -16,10 +16,16 @@ import DemandDetailPage from './components/screens/Buyer/DemandDetailPage'
 import SupplyPage from './components/screens/Buyer/SupplyPage'
 import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
 import BuyerDeliveriesPage from './components/screens/Buyer/DeliveriesPage'
+import CoordinatorLayout from './components/screens/Coordinator/CoordinatorLayout'
+import CoordinatorHome from './components/screens/Coordinator/CoordinatorHome'
+import MatchingPage from './components/screens/Coordinator/MatchingPage'
+import RequestsPage from './components/screens/Coordinator/RequestsPage'
+import CoordinatorDeliveriesPage from './components/screens/Coordinator/DeliveriesPage'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
 const BuyerDeliveryDetailPage = lazy(() => import('./components/screens/Buyer/DeliveryDetailPage'))
+const CoordinatorDeliveryDetailPage = lazy(() => import('./components/screens/Coordinator/DeliveryDetailPage'))
 
 const deliveryFallback = <main className="ph-main"><p className="ph-empty">Loading delivery…</p></main>
 
@@ -78,6 +84,27 @@ function App() {
             element={
               <Suspense fallback={deliveryFallback}>
                 <BuyerDeliveryDetailPage />
+              </Suspense>
+            }
+          />
+        </Route>
+        <Route
+          path="/coordinator"
+          element={
+            <RequireRole role="COORDINATOR">
+              <CoordinatorLayout />
+            </RequireRole>
+          }
+        >
+          <Route index element={<CoordinatorHome />} />
+          <Route path="matching" element={<MatchingPage />} />
+          <Route path="requests" element={<RequestsPage />} />
+          <Route path="deliveries" element={<CoordinatorDeliveriesPage />} />
+          <Route
+            path="deliveries/:id"
+            element={
+              <Suspense fallback={deliveryFallback}>
+                <CoordinatorDeliveryDetailPage />
               </Suspense>
             }
           />
