@@ -3755,3 +3755,590 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* ---- Matching page: hero header + pair cards ---- */
+.ph-mp-hero {
+  margin-bottom: 20px;
+}
+
+.producer-home .ph-mp-title {
+  color: #fff;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.ph-mp-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 18px;
+}
+
+.ph-mp-stats div {
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.ph-mp-stats dt {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+}
+
+.ph-mp-stats dd {
+  margin: 2px 0 0;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ph-mp-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ph-mp-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ph-mp-seg button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.78);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ph-mp-seg button:hover {
+  color: #fff;
+}
+
+.ph-mp-seg button[aria-pressed="true"] {
+  color: var(--g-900, #1c3826);
+  background: var(--ph-lime);
+  font-weight: 600;
+}
+
+.ph-mp-seg button:focus-visible {
+  outline: 2px solid var(--ph-lime);
+  outline-offset: 1px;
+}
+
+.ph-mp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-mp-card {
+  padding: 18px;
+  border: 1px solid var(--ph-line);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--ph-shadow);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.ph-mp-card:hover,
+.ph-mp-card--open {
+  border-color: var(--g-300, var(--ph-line-strong));
+  box-shadow: 0 14px 32px -22px rgba(28, 56, 38, 0.45);
+}
+
+.ph-mp-type {
+  margin-left: 6px;
+  color: var(--ph-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ph-mp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.ph-mp-foot .ph-featured-criteria {
+  margin: 0;
+}
+
+.ph-mp-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ph-mp-details {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ph-line);
+}
+
+.ph-mp-details .ph-match-details {
+  padding: 0;
+}
+
+.ph-mp-unmatched {
+  margin-bottom: 24px;
+  padding: 18px 20px;
+  border: 1px dashed var(--ph-line-strong);
+  border-radius: 16px;
+  background: var(--ph-subtle);
+}
+
+.ph-mp-unmatched ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-mp-miss + .ph-mp-miss {
+  margin-top: 10px;
+}
+
+.ph-mp-miss {
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ph-mp-miss-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ph-mp-miss-icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: var(--ph-muted);
+  background: #eceee9;
+}
+
+.ph-mp-miss-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.ph-mp-miss-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ph-mp-miss-reason {
+  margin: 2px 0 0;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .ph-mp-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .ph-mp-miss-row {
+    flex-wrap: wrap;
+  }
+
+  .ph-mp-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* ---- Your offers: cards with a dot stepper ---- */
+.ph-offer-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-offer-card {
+  padding: 16px 18px 18px;
+  border: 1px solid var(--ph-line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.ph-offer-card--action {
+  border-color: var(--g-300, #a9c9ab);
+  background: linear-gradient(180deg, var(--g-50, #f3f8f2), #fff 70%);
+  box-shadow: 0 10px 26px -20px rgba(28, 56, 38, 0.5);
+}
+
+.ph-offer-card--done {
+  background: var(--ph-subtle);
+}
+
+.ph-offer-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ph-offer-card-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ph-offer-card-title span {
+  color: var(--ph-muted);
+  font-weight: 400;
+}
+
+.ph-offer-card-meta {
+  margin: 2px 0 0;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.ph-offer-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ph-offer-chip--wait {
+  color: var(--g-900, #1c3826);
+  background: var(--g-100, #e9f2e7);
+}
+
+.ph-offer-chip--done {
+  color: var(--g-700, #2f6340);
+  background: var(--g-100, #e9f2e7);
+}
+
+.ph-offer-chip--declined {
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+}
+
+.ph-offer-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-offer-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--ph-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+/* Connector to the previous step */
+.ph-offer-step + .ph-offer-step::before {
+  position: absolute;
+  top: 10px;
+  right: calc(50% + 14px);
+  left: calc(-50% + 14px);
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ph-line-strong);
+  content: "";
+}
+
+.ph-offer-step + .ph-offer-step--done::before {
+  background: var(--g-700, var(--ph-green));
+}
+
+.ph-offer-step + .ph-offer-step--next::before {
+  background: repeating-linear-gradient(90deg, var(--g-300, #a9c9ab) 0 6px, transparent 6px 10px);
+}
+
+.ph-offer-dot {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--ph-line-strong);
+  border-radius: 50%;
+  color: #fff;
+  background: #fff;
+}
+
+.ph-offer-step--done {
+  color: var(--ph-ink);
+}
+
+.ph-offer-step--done .ph-offer-dot {
+  border-color: var(--g-700, var(--ph-green));
+  background: var(--g-700, var(--ph-green));
+}
+
+.ph-offer-step--next {
+  color: var(--g-900, var(--ph-ink));
+  font-weight: 600;
+}
+
+.ph-offer-step--next .ph-offer-dot {
+  border-color: var(--g-700, var(--ph-green));
+  box-shadow: 0 0 0 5px var(--g-100, #e9f2e7);
+}
+
+.ph-offer-card--action .ph-offer-step--next .ph-offer-dot {
+  border-color: var(--g-900, #1c3826);
+  background: var(--ph-lime);
+}
+
+@media (max-width: 560px) {
+  .ph-offer-step-label {
+    font-size: 12px;
+  }
+}
+
+/* ---- Matching palette: deep moss + cream (colour only; layout unchanged) ---- */
+.producer-home {
+  --moss-900: #12241a;
+  --moss-800: #1d3a29;
+  --moss-700: #2c4a36;
+  --cream: #e8dcb5;
+  --cream-soft: #f6f2e6;
+  --cream-ink: #5a4a1f;
+}
+
+.ph-match-hero {
+  background:
+    radial-gradient(circle at 90% -20%, rgba(232, 220, 181, 0.12), transparent 50%),
+    linear-gradient(135deg, var(--moss-900), var(--moss-800));
+}
+
+.ph-match-hero-eyebrow,
+.ph-match-more-unmatched,
+.ph-match-more .ph-offered,
+.ph-match-hero-empty a {
+  color: var(--cream);
+}
+
+.ph-featured-tag {
+  color: var(--moss-900);
+  background: var(--cream);
+}
+
+/* Pair card: warm neutrals instead of pastel green */
+.ph-featured-side {
+  background: #f7f6f2;
+}
+
+.ph-featured-side--batch {
+  background: var(--cream-soft);
+}
+
+.ph-featured-kicker {
+  color: #7a7563;
+}
+
+.ph-chip-criterion--pass {
+  color: var(--moss-800);
+  background: var(--cream-soft);
+}
+
+.ph-ring-value {
+  stroke: var(--moss-700);
+}
+
+.ph-ring-track {
+  stroke: #ece8dc;
+}
+
+.ph-featured .ph-btn--primary,
+.ph-mp-card .ph-btn--primary {
+  border-color: var(--ph-green);
+  background: var(--ph-green);
+}
+
+.ph-featured .ph-btn--primary:hover,
+.ph-mp-card .ph-btn--primary:hover {
+  border-color: var(--ph-green-dark);
+  background: var(--ph-green-dark);
+}
+
+.ph-featured .ph-link-btn,
+.ph-mp-card .ph-link-btn {
+  color: var(--moss-700);
+}
+
+/* Score chips on the dark band */
+.ph-match-more .ph-match-score--high,
+.ph-match-more .ph-match-score--medium {
+  color: var(--moss-900);
+  background: var(--cream);
+}
+
+/* Matching page header */
+.ph-mp-stats div {
+  border-color: rgba(232, 220, 181, 0.18);
+  background: rgba(232, 220, 181, 0.06);
+}
+
+.ph-mp-seg button[aria-pressed="true"] {
+  color: var(--moss-900);
+  background: var(--cream);
+}
+
+.ph-mp-seg button:focus-visible {
+  outline-color: var(--cream);
+}
+
+.ph-mp-card:hover,
+.ph-mp-card--open {
+  border-color: #d9d0b4;
+}
+
+/* ---- More glass on the matching surfaces (layout unchanged) ----
+   Soft cream/moss blobs behind the band give the blur something to show. */
+.ph-match-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ph-match-hero::before,
+.ph-match-hero::after {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  content: "";
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.ph-match-hero::before {
+  top: -120px;
+  right: 8%;
+  width: 420px;
+  height: 320px;
+  background: rgba(232, 220, 181, 0.22);
+}
+
+.ph-match-hero::after {
+  bottom: -160px;
+  left: 18%;
+  width: 520px;
+  height: 340px;
+  background: rgba(150, 200, 140, 0.22);
+}
+
+/* Best match card: frosted white */
+.ph-featured {
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 20px 50px -24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+.ph-featured .ph-featured-side {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(247, 246, 242, 0.7);
+}
+
+.ph-featured .ph-featured-side--batch {
+  background: rgba(246, 242, 230, 0.75);
+}
+
+/* Dark glass: more matches, stats, filters */
+.ph-match-more,
+.ph-mp-stats div,
+.ph-mp-seg {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 10px 30px -18px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.ph-match-hero-link {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .ph-match-hero::before,
+  .ph-match-hero::after {
+    display: none;
+  }
+
+  .ph-featured {
+    background: #fff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .ph-match-more,
+  .ph-mp-stats div,
+  .ph-mp-seg {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ---- Deep moss everywhere ----
+   The whole producer area takes its greens from the matching band, so every section
+   (attention cards, calendar, buttons, farm card, deliveries) uses the same moss family. */
+.producer-home {
+  --g-900: #12241a;
+  --g-700: #1d3a29;
+  --g-500: #2c4a36;
+  --g-300: #a3b5a2;
+  --g-200: #d5ddd0;
+  --g-100: #e9eee4;
+  --g-50: #f3f5ef;
+  --ph-green: #2c4a36;
+  --ph-green-dark: #1d3a29;
+  --ph-green-soft: #e9eee4;
+  --ph-blue: #1d3a29;
+  --ph-blue-soft: #e9eee4;
+}
+
+/* Farm card photo wash in the same moss */
+.ph-farm {
+  background:
+    linear-gradient(160deg, rgba(18, 36, 26, 0.82), rgba(18, 36, 26, 0.94)),
+    url("@/assets/card-farmer.jpg") center / cover;
+}

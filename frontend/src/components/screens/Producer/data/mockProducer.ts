@@ -140,6 +140,8 @@ export const batches: Batch[] = [
   { code: "B-099", product: "Mango", variety: "Cat Hoa Loc", quantityKg: 1800, allocatedKg: 1800, grade: "B", plot: "Plot 1", harvestDay: -6, readyDay: -4, sellByDay: 2, status: "in_transit" },
   { code: "B-107", product: "Dragon fruit", variety: "White flesh", quantityKg: 5000, allocatedKg: 0, grade: "A", plot: "Plot 2", harvestDay: 3, readyDay: 4, sellByDay: 10, status: "expected" },
   { code: "B-110", product: "Pomelo", variety: "Da xanh", quantityKg: 3200, allocatedKg: 0, grade: "B", plot: "Plot 7", harvestDay: 7, readyDay: 9, sellByDay: 13, status: "expected" },
+  // No buyer fits this one (mango demand wants grade A–B): shows up under "Batches without a buyer".
+  { code: "B-112", product: "Mango", variety: "Cat Chu", quantityKg: 1200, allocatedKg: 0, grade: "C", plot: "Plot 8", harvestDay: 1, readyDay: 2, sellByDay: 6, status: "expected" },
   // Earlier batches, referenced by deliveries and offers; they appear in the batch list and history.
   { code: "B-100", product: "Dragon fruit", variety: "White flesh", quantityKg: 1500, allocatedKg: 1500, grade: "A", plot: "Plot 4", harvestDay: -2, readyDay: -1, sellByDay: 5, status: "in_transit" },
   { code: "B-095", product: "Dragon fruit", variety: "Red flesh", quantityKg: 2400, allocatedKg: 2400, grade: "A", plot: "Plot 5", harvestDay: -9, readyDay: -8, sellByDay: -2, status: "delivered" },

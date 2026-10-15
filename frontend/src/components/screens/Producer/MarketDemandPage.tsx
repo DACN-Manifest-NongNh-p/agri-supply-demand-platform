@@ -1,10 +1,10 @@
-import { Fragment, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, CircleCheck, Info, Minus, X } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Check, ChevronDown, CircleCheck, Minus, Package, PackageX, Store, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
-import { MatchScore } from "./sections/MatchScore";
+import { MatchScore, ScoreRing } from "./sections/MatchScore";
 import { OfferTracker } from "./sections/OfferTracker";
 import { demands, producer } from "./data/mockProducer";
-import { matchAll, type CriterionState, type MatchResult } from "./data/matching";
+import { batchesWithoutBuyer, matchAll, type CriterionState, type MatchResult } from "./data/matching";
 import { formatDay, formatKg } from "./data/format";
 import { useProducer } from "./data/producerContext";
 
@@ -13,7 +13,7 @@ type View = "all" | "matched" | "unmatched";
 const VIEWS: { id: View; label: string }[] = [
   { id: "all", label: "All" },
   { id: "matched", label: "Matched" },
-  { id: "unmatched", label: "No match" },
+  { id: "unmatched", label: "No buyer yet" },
 ];
 
 const CRITERION_ICON: Record<CriterionState, typeof Check> = { pass: Check, partial: Minus, fail: X };
@@ -29,11 +29,26 @@ export default function MarketDemandPage() {
   const [helpAsked, setHelpAsked] = useState<Record<string, boolean>>({});
 
   const matches = matchAll(demands, batches);
-  const matchedCount = matches.filter((match) => match.best).length;
-  const visible = matches.filter(
-    (match) =>
-      (product === "All" || match.demand.product === product) &&
-      (view === "all" || (view === "matched" ? Boolean(match.best) : !match.best)),
+  const matched = matches.filter((match) => match.best);
+  const sellableKg = matched.reduce((sum, match) => sum + Math.min(match.demand.quantityKg, match.best!.batch.quantityKg - match.best!.batch.allocatedKg), 0);
+  const averageScore = matched.length ? Math.round(matched.reduce((sum, match) => sum + match.best!.score, 0) / matched.length) : 0;
+
+  const byProduct = (match: MatchResult) => product === "All" || match.demand.product === product;
+  const shownMatched = view === "unmatched" ? [] : matched.filter(byProduct);
+  // The producer's "no match" is supply nobody is asking for; demands without a batch are the buyer's side.
+  const unsold = batchesWithoutBuyer(demands, batches);
+  const shownUnmatched = view === "matched" ? [] : unsold.filter((item) => product === "All" || item.batch.product === product);
+
+  const detailsFor = (match: MatchResult) => (
+    <MatchDetails
+      match={match}
+      offered={offers[match.demand.id]}
+      chosen={chosen[match.demand.id] ?? match.best?.batch.code}
+      onChoose={(code) => setChosen((current) => ({ ...current, [match.demand.id]: code }))}
+      onOffer={(code) => offer(match.demand.id, code)}
+      helpAsked={Boolean(helpAsked[match.demand.id])}
+      onAskHelp={() => setHelpAsked((current) => ({ ...current, [match.demand.id]: true }))}
+    />
   );
 
   return (
@@ -42,135 +57,164 @@ export default function MarketDemandPage() {
         <ArrowLeft size={16} /> Back to home
       </Link>
 
-      <section className="ph-page-head">
-        <div>
-          <p className="ph-eyebrow">Market demand</p>
-          <h1>Matching opportunities</h1>
-          <p className="ph-hello-summary">
-            {demands.length} open demands for what you grow · {matchedCount} matched to your batches ·{" "}
-            {demands.length - matchedCount} without a suitable batch
-          </p>
+      <section className="ph-match-hero ph-mp-hero" aria-labelledby="mp-title">
+        <div className="ph-match-hero-head">
+          <div>
+            <p className="ph-match-hero-eyebrow">Matching</p>
+            <h1 id="mp-title" className="ph-mp-title">
+              {matched.length} {matched.length === 1 ? "buyer matches" : "buyers match"} your batches
+            </h1>
+            <p className="ph-match-hero-sub">Farmora checks every open demand against what you have declared. Review a match, then offer the batch.</p>
+          </div>
         </div>
-      </section>
 
-      <section className="ph-card" aria-label="Match list">
-        <div className="ph-cal-toolbar">
-          <div className="ph-segmented" role="group" aria-label="Show">
+        <dl className="ph-mp-stats">
+          <div>
+            <dt>Open demand</dt>
+            <dd>{demands.length}</dd>
+          </div>
+          <div>
+            <dt>Matched</dt>
+            <dd>{matched.length}</dd>
+          </div>
+          <div>
+            <dt>You could sell</dt>
+            <dd>{formatKg(sellableKg)}</dd>
+          </div>
+          <div>
+            <dt>Average match</dt>
+            <dd>{averageScore}%</dd>
+          </div>
+        </dl>
+
+        <div className="ph-mp-filters">
+          <div className="ph-mp-seg" role="group" aria-label="Show">
             {VIEWS.map((option) => (
               <button key={option.id} type="button" aria-pressed={view === option.id} onClick={() => setView(option.id)}>
                 {option.label}
               </button>
             ))}
           </div>
-          <div className="ph-chips" role="group" aria-label="Filter by product">
+          <div className="ph-mp-seg" role="group" aria-label="Filter by product">
             {["All", ...producer.products].map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={product === item ? "ph-chip ph-chip--active" : "ph-chip"}
-                aria-pressed={product === item}
-                onClick={() => setProduct(item)}
-              >
-                {item}
+              <button key={item} type="button" aria-pressed={product === item} onClick={() => setProduct(item)}>
+                {item === "All" ? "All products" : item}
               </button>
             ))}
           </div>
         </div>
-
-        <p className="ph-match-note">
-          <Info size={14} /> Farmora matches open buyer demand against the batches you have declared. Review a match, then offer the batch if it works for you.
-        </p>
-
-        <div className="ph-table-scroll">
-          <table className="ph-match-table">
-            <thead>
-              <tr>
-                <th scope="col">Buyer</th>
-                <th scope="col">Demand</th>
-                <th scope="col" className="ph-num">Required</th>
-                <th scope="col">Needed by</th>
-                <th scope="col">Matched batch</th>
-                <th scope="col">Match</th>
-                <th scope="col"><span className="ph-sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="ph-empty">Nothing here for this filter.</td>
-                </tr>
-              )}
-              {visible.map((match) => {
-                const { demand, best } = match;
-                const isOpen = openId === demand.id;
-                const offered = offers[demand.id];
-                return (
-                  <Fragment key={demand.id}>
-                    <tr className={isOpen ? "ph-match-tr ph-match-tr--open" : "ph-match-tr"}>
-                      <td>
-                        <strong>{demand.buyer}</strong>
-                        <small>{demand.buyerType}</small>
-                      </td>
-                      <td>
-                        {demand.product}
-                        <small>{demand.gradeWanted}</small>
-                      </td>
-                      <td className="ph-num">{formatKg(demand.quantityKg)}</td>
-                      <td>{formatDay(demand.neededByDay)}</td>
-                      <td>
-                        {best ? (
-                          <>
-                            {best.batch.code}
-                            <small>{formatKg(best.batch.quantityKg - best.batch.allocatedKg)} open</small>
-                          </>
-                        ) : (
-                          <span className="ph-muted">—</span>
-                        )}
-                      </td>
-                      <td>{best ? <MatchScore score={best.score} /> : <span className="ph-match-none">No match</span>}</td>
-                      <td>
-                        <div className="ph-row-actions">
-                          {offered ? (
-                            <span className="ph-offered"><CircleCheck size={16} /> Offered {offered}</span>
-                          ) : best ? (
-                            <button type="button" className="ph-btn ph-btn--primary" onClick={() => offer(demand.id, best.batch.code)}>
-                              Offer batch
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="ph-btn ph-btn--icon"
-                            aria-expanded={isOpen}
-                            aria-label={`${isOpen ? "Hide" : "View"} match details for ${demand.buyer}`}
-                            onClick={() => setOpenId(isOpen ? null : demand.id)}
-                          >
-                            <ChevronDown size={16} className={isOpen ? "ph-flip" : undefined} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                    {isOpen && (
-                      <tr className="ph-match-details-row">
-                        <td colSpan={7}>
-                          <MatchDetails
-                            match={match}
-                            offered={offered}
-                            chosen={chosen[demand.id] ?? best?.batch.code}
-                            onChoose={(code) => setChosen((current) => ({ ...current, [demand.id]: code }))}
-                            onOffer={(code) => offer(demand.id, code)}
-                            helpAsked={Boolean(helpAsked[demand.id])}
-                            onAskHelp={() => setHelpAsked((current) => ({ ...current, [demand.id]: true }))}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
       </section>
+
+      {shownMatched.length > 0 && (
+        <ul className="ph-mp-list" aria-label="Matches">
+          {shownMatched.map((match) => {
+            const { demand, best } = match;
+            if (!best) return null;
+            const batch = best.batch;
+            const offered = offers[demand.id];
+            const isOpen = openId === demand.id;
+            return (
+              <li key={demand.id} className={isOpen ? "ph-mp-card ph-mp-card--open" : "ph-mp-card"}>
+                <div className="ph-featured-pair">
+                  <div className="ph-featured-side">
+                    <p className="ph-featured-kicker"><Store size={14} /> Buyer demand</p>
+                    <p className="ph-featured-name">{demand.buyer} <span className="ph-mp-type">{demand.buyerType}</span></p>
+                    <p className="ph-featured-big">{formatKg(demand.quantityKg)}</p>
+                    <p className="ph-featured-meta">
+                      {demand.product} · {demand.gradeWanted}
+                      <br />
+                      Needed by {formatDay(demand.neededByDay)} · {demand.destination}
+                    </p>
+                  </div>
+
+                  <div className="ph-featured-link" aria-hidden="true">
+                    <span className="ph-featured-line" />
+                    <ScoreRing score={best.score} size={80} />
+                    <span className="ph-featured-line" />
+                  </div>
+
+                  <div className="ph-featured-side ph-featured-side--batch">
+                    <p className="ph-featured-kicker"><Package size={14} /> Your batch</p>
+                    <p className="ph-featured-name">{batch.code} · {batch.product}</p>
+                    <p className="ph-featured-big">{formatKg(batch.quantityKg - batch.allocatedKg)}</p>
+                    <p className="ph-featured-meta">
+                      open · {batch.variety}, grade {batch.grade}
+                      <br />
+                      Ready {formatDay(batch.readyDay)} · sell by {formatDay(batch.sellByDay)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="ph-mp-foot">
+                  <ul className="ph-featured-criteria" aria-label="Why it matches">
+                    {best.criteria.map((criterion) => {
+                      const Icon = CRITERION_ICON[criterion.state];
+                      return (
+                        <li key={criterion.name} className={`ph-chip-criterion ph-chip-criterion--${criterion.state}`} title={criterion.detail}>
+                          <Icon size={12} strokeWidth={3} /> {criterion.name}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <div className="ph-mp-actions">
+                    <button
+                      type="button"
+                      className="ph-link-btn"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpenId(isOpen ? null : demand.id)}
+                    >
+                      {isOpen ? "Hide details" : "See why"} <ChevronDown size={14} className={isOpen ? "ph-flip" : undefined} />
+                    </button>
+                    {offered ? (
+                      <span className="ph-offered"><CircleCheck size={16} /> Offered {offered}</span>
+                    ) : (
+                      <button type="button" className="ph-btn ph-btn--primary" onClick={() => offer(demand.id, batch.code)}>
+                        Offer {batch.code}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {isOpen && <div className="ph-mp-details">{detailsFor(match)}</div>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {shownUnmatched.length > 0 && (
+        <section className="ph-mp-unmatched" aria-labelledby="mp-unmatched-title">
+          <h2 id="mp-unmatched-title">Batches without a buyer</h2>
+          <p className="ph-section-sub">Supply no open demand fits yet. Farmora keeps checking new demand; a coordinator can also look for buyers.</p>
+          <ul>
+            {shownUnmatched.map(({ batch, openKg, reason }) => (
+              <li key={batch.code} className="ph-mp-miss">
+                <div className="ph-mp-miss-row">
+                  <span className="ph-mp-miss-icon"><PackageX size={18} /></span>
+                  <div className="ph-mp-miss-main">
+                    <p className="ph-mp-miss-title">
+                      {batch.code} · {formatKg(openKg)} {batch.product.toLowerCase()} <span className="ph-mp-type">grade {batch.grade}, sell by {formatDay(batch.sellByDay)}</span>
+                    </p>
+                    <p className="ph-mp-miss-reason">{reason}</p>
+                  </div>
+                  <div className="ph-mp-actions">
+                    <Link to={`/producer/batches?batch=${batch.code}`} className="ph-link-btn">View batch</Link>
+                    {helpAsked[batch.code] ? (
+                      <span className="ph-offered"><CircleCheck size={16} /> Coordinator notified</span>
+                    ) : (
+                      <button type="button" className="ph-btn" onClick={() => setHelpAsked((current) => ({ ...current, [batch.code]: true }))}>
+                        Find me a buyer
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {shownMatched.length === 0 && shownUnmatched.length === 0 && <p className="ph-empty">Nothing here for this filter.</p>}
 
       <OfferTracker offers={offerLog} />
     </main>

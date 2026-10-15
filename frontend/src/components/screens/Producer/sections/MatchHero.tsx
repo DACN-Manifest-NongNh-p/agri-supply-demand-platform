@@ -1,6 +1,8 @@
 import { ArrowRight, Check, CircleCheck, Minus, Package, Store, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { CriterionState, MatchResult } from "../data/matching";
+import { batchesWithoutBuyer, type CriterionState, type MatchResult } from "../data/matching";
+import { demands } from "../data/mockProducer";
+import { useProducer } from "../data/producerContext";
 import { formatDay, formatKg } from "../data/format";
 import { MatchScore, ScoreRing } from "./MatchScore";
 
@@ -15,8 +17,9 @@ type Props = {
 
 /** The centrepiece of the producer home: system-generated matches, best one featured. */
 export function MatchHero({ matches, offers, onOffer }: Props) {
+  const { batches } = useProducer();
   const matched = matches.filter((match) => match.best);
-  const unmatched = matches.length - matched.length;
+  const unsold = batchesWithoutBuyer(demands, batches).length;
   // Feature the best match the producer has not acted on yet; fall back to the best overall.
   const featured = matched.find((match) => !offers[match.demand.id]) ?? matched[0];
   const others = matched.filter((match) => match !== featured).slice(0, MORE_COUNT);
@@ -59,9 +62,9 @@ export function MatchHero({ matches, offers, onOffer }: Props) {
                 </li>
               ))}
             </ul>
-            {unmatched > 0 && (
+            {unsold > 0 && (
               <Link to="/producer/demand?view=unmatched" className="ph-match-more-unmatched">
-                {unmatched} {unmatched === 1 ? "demand has" : "demands have"} no suitable batch <ArrowRight size={14} />
+                {unsold} {unsold === 1 ? "batch has" : "batches have"} no buyer yet <ArrowRight size={14} />
               </Link>
             )}
           </aside>

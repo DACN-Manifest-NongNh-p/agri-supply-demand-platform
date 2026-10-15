@@ -121,3 +121,40 @@ export function matchAll(demands: Demand[], batches: Batch[]) {
     .map((demand) => matchDemand(demand, batches))
     .sort((a, b) => (b.best?.score ?? -1) - (a.best?.score ?? -1));
 }
+
+export type UnmatchedBatch = {
+  batch: Batch;
+  openKg: number;
+  /** Why no buyer demand fits, in plain words. */
+  reason: string;
+};
+
+/**
+ * The producer's side of "no match": batches with open quantity that no open demand fits.
+ * (Demands without a suitable batch are the buyer's / coordinator's concern, not shown here.)
+ */
+export function batchesWithoutBuyer(demands: Demand[], batches: Batch[]): UnmatchedBatch[] {
+  return batches
+    .filter((batch) => !UNAVAILABLE.includes(batch.status) && batch.quantityKg - batch.allocatedKg > 0)
+    .flatMap((batch) => {
+      const evaluated = demands.map((demand) => ({ demand, result: evaluate(demand, batch) }));
+      if (evaluated.some(({ result }) => result.eligible)) return [];
+
+      const sameProduct = evaluated.filter(({ demand }) => demand.product === batch.product);
+      let reason: string;
+      if (sameProduct.length === 0) {
+        reason = `No buyer is asking for ${batch.product.toLowerCase()} right now.`;
+      } else {
+        // Closest miss: the same-product demand that fails the fewest criteria.
+        const closest = [...sameProduct].sort(
+          (a, b) =>
+            a.result.criteria.filter((criterion) => criterion.state === "fail").length -
+            b.result.criteria.filter((criterion) => criterion.state === "fail").length,
+        )[0];
+        const blocker = closest.result.criteria.find((criterion) => criterion.state === "fail");
+        reason = `Closest buyer: ${closest.demand.buyer}. ${blocker ? blocker.detail : "Not every requirement is met"}.`;
+      }
+      return [{ batch, openKg: batch.quantityKg - batch.allocatedKg, reason }];
+    })
+    .sort((a, b) => a.batch.sellByDay - b.batch.sellByDay);
+}
