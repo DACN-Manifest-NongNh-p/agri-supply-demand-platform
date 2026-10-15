@@ -220,6 +220,38 @@ docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update authentication/re
 - Editable site content (for example landing-page text and banners) is stored in the application database and changed through API endpoints guarded by `@PreAuthorize("hasRole('ADMIN')")`.
 - Incident and coordination endpoints are guarded by `hasRole('COORDINATOR')`.
 
+## Frontend routing by role
+
+After login or registration Keycloak redirects to `/auth/callback` (allowed by the client's `http://localhost:5173/*` redirect URI). `AuthCallback` (`frontend/src/components/auth/routing.tsx`) then sends the user to:
+
+1. the page they were trying to open (`?returnTo=`, same-app paths only), otherwise
+2. the home page for their role (`getRoleHomePath()` in `frontend/src/lib/keycloak.ts`), otherwise
+3. the landing page.
+
+| Role | Home after login |
+| --- | --- |
+| `PRODUCER` | `/producer` |
+| `BUYER`, `LOGISTICS`, `COORDINATOR`, `ADMIN` | `/` (no dedicated area yet) |
+
+Protected routes are wrapped in `<RequireRole role="...">`:
+
+- not signed in: redirect to Keycloak login, then back to the same page;
+- signed in without the role: a "This area is for producers" page with links home and to sign in with another account.
+
+```mermaid
+flowchart LR
+    Visit["Open /producer/…"] --> Auth{"Signed in?"}
+    Auth -- "no" --> KC["Keycloak login"] --> CB["/auth/callback?returnTo=…"] --> Visit
+    Auth -- "yes" --> Role{"Has PRODUCER?"}
+    Role -- "yes" --> Page["Producer page"]
+    Role -- "no" --> Denied["No-access page"]
+    Landing["Log in on landing page"] --> KC2["Keycloak login"] --> CB2["/auth/callback"] --> Home{"Role home?"}
+    Home -- "PRODUCER" --> PH["/producer"]
+    Home -- "other" --> L["/"]
+```
+
+When signed in, the landing page nav shows a **Dashboard** link to the user's role home. These checks only shape the UI; the API enforces roles separately (see above). Add a role's area by adding it to `ROLE_HOMES` in `keycloak.ts` and wrapping its routes in `RequireRole`.
+
 ## Current API security
 
 `backend/src/main/java/com/agrisupply/platform/config/SecurityConfig.java` configures a stateless OAuth2 resource server:
