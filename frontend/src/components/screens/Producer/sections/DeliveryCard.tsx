@@ -17,14 +17,23 @@ function splitEta(delivery: Delivery) {
   return { day, time, revised };
 }
 
+type Props = {
+  delivery: Delivery;
+  reported?: DeliveryIssue;
+  /** Link target; defaults to the producer's delivery page. */
+  to?: string;
+  /** Headline; defaults to "batch → buyer" (the buyer area shows the producer instead). */
+  title?: string;
+};
+
 /** Home "ticket": arrival time on the stub, shipment and route on the body. */
-export function DeliveryCard({ delivery, reported }: { delivery: Delivery; reported?: DeliveryIssue }) {
+export function DeliveryCard({ delivery, reported, to, title }: Props) {
   const problem = problemOf(delivery, reported);
   const percent = Math.round(Math.min(1, Math.max(0, delivery.progress)) * 100);
   const { day, time, revised } = splitEta(delivery);
 
   return (
-    <Link to={`/producer/deliveries/${delivery.id}`} className={problem ? "ph-ticket ph-ticket--issue" : "ph-ticket"}>
+    <Link to={to ?? `/producer/deliveries/${delivery.id}`} className={problem ? "ph-ticket ph-ticket--issue" : "ph-ticket"}>
       <span className="ph-ticket-stub">
         <small>{day}</small>
         <strong>{time || "—"}</strong>
@@ -33,7 +42,7 @@ export function DeliveryCard({ delivery, reported }: { delivery: Delivery; repor
 
       <span className="ph-ticket-body">
         <span className="ph-ticket-title">
-          {delivery.batch} → {delivery.buyer}
+          {title ?? `${delivery.batch} → ${delivery.buyer}`}
           {problem && <TriangleAlert size={16} className="ph-ticket-alert" aria-label="Needs attention" />}
         </span>
 
@@ -57,21 +66,19 @@ export function DeliveryCard({ delivery, reported }: { delivery: Delivery; repor
   );
 }
 
-/** List row for /producer/deliveries. */
-export function DeliveryRow({ delivery, reported }: { delivery: Delivery; reported?: DeliveryIssue }) {
+/** List row for /producer/deliveries (and /buyer/deliveries, with `to` and `title`). */
+export function DeliveryRow({ delivery, reported, to, title }: Props) {
   const status = deliveryStatus(delivery, reported);
   const problem = problemOf(delivery, reported);
 
   return (
-    <Link to={`/producer/deliveries/${delivery.id}`} className={`ph-delivery-row ph-delivery-row--${status}`}>
+    <Link to={to ?? `/producer/deliveries/${delivery.id}`} className={`ph-delivery-row ph-delivery-row--${status}`}>
       <span className="ph-delivery-row-main">
         <span className="ph-delivery-row-top">
           <span className={`ph-status-pill ph-status-pill--${status}`}>{DELIVERY_STATUS_LABEL[status]}</span>
           <span className="ph-delivery-id">{delivery.id}</span>
         </span>
-        <span className="ph-delivery-title">
-          {delivery.batch} → {delivery.buyer}
-        </span>
+        <span className="ph-delivery-title">{title ?? `${delivery.batch} → ${delivery.buyer}`}</span>
         <span className="ph-delivery-meta">
           {formatKg(delivery.quantityKg)} {delivery.product} · {delivery.carrier}
         </span>

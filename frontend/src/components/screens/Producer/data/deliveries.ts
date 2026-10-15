@@ -25,7 +25,7 @@ export function deliveryStatus(delivery: Delivery, reported?: DeliveryIssue): De
 }
 
 /** Active deliveries first (problems on top), then delivered ones. */
-export function sortDeliveries(list: Delivery[], reported: Record<string, DeliveryIssue>) {
+export function sortDeliveries<T extends Delivery>(list: T[], reported: Record<string, DeliveryIssue>) {
   const rank: Record<DeliveryStatus, number> = { issue: 0, in_transit: 1, delivered: 2 };
   return [...list].sort((a, b) => rank[deliveryStatus(a, reported[a.id])] - rank[deliveryStatus(b, reported[b.id])]);
 }

@@ -28,6 +28,8 @@ export type Batch = {
   readyDay: number;
   sellByDay: number;
   status: BatchStatus;
+  /** Photos the producer took of the batch; the first is the cover buyers see. */
+  photos?: string[];
 };
 
 export type Demand = {

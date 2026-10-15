@@ -4342,3 +4342,261 @@
     linear-gradient(160deg, rgba(18, 36, 26, 0.82), rgba(18, 36, 26, 0.94)),
     url("@/assets/card-farmer.jpg") center / cover;
 }
+
+/* ---------- Batch photos ---------- */
+.ph-field-hint {
+  margin: -2px 0 2px;
+  color: var(--ph-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.ph-field-error {
+  margin: 0;
+  color: var(--ph-red);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ph-photo-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ph-photo-thumb,
+.ph-photo-add {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ph-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ph-photo-thumb figcaption {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(16, 24, 18, 0.7);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ph-photo-thumb button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(16, 24, 18, 0.7);
+  cursor: pointer;
+}
+
+.ph-photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1.5px dashed var(--ph-line-strong);
+  color: var(--ph-green);
+  background: var(--ph-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ph-photo-add:hover {
+  border-color: var(--ph-green);
+  background: var(--ph-green-soft);
+}
+
+.ph-photo-add:focus-within {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+}
+
+.ph-photo-cover {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--ph-subtle);
+  cursor: zoom-in;
+}
+
+.ph-photo-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.ph-photo-cover:hover img {
+  transform: scale(1.03);
+}
+
+.ph-photo-cover:focus-visible {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+}
+
+.ph-photo-cover--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--ph-muted);
+  font-size: 12px;
+  cursor: default;
+}
+
+.ph-photo-count {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(16, 24, 18, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ph-batch-photo {
+  flex: 0 0 auto;
+  width: 120px;
+  height: 90px;
+  border-radius: 10px;
+}
+
+.ph-photo-viewer {
+  width: min(960px, calc(100% - 32px));
+  max-height: 90vh;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0d130f;
+}
+
+.ph-photo-viewer::backdrop {
+  background: rgba(10, 14, 11, 0.82);
+}
+
+.ph-photo-viewer img {
+  display: block;
+  width: 100%;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.ph-photo-viewer-close,
+.ph-photo-viewer-nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(16, 24, 18, 0.6);
+  cursor: pointer;
+}
+
+.ph-photo-viewer-close {
+  top: 12px;
+  right: 12px;
+}
+
+.ph-photo-viewer-nav {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ph-photo-viewer-nav--prev {
+  left: 12px;
+}
+
+.ph-photo-viewer-nav--next {
+  right: 12px;
+}
+
+.ph-photo-viewer-count {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgba(16, 24, 18, 0.6);
+  font-size: 12px;
+}
+
+@media (max-width: 560px) {
+  .ph-photo-picker {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ph-photo-cover--static {
+  cursor: inherit;
+}
+
+.ph-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ph-gallery-main {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+}
+
+.ph-gallery-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-gallery-thumbs .ph-photo-cover {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 10px;
+}
+
+.ph-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

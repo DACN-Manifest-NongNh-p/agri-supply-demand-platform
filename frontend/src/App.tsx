@@ -9,9 +9,19 @@ import ProducerHome from './components/screens/Producer/ProducerHome'
 import BatchesPage from './components/screens/Producer/BatchesPage'
 import MarketDemandPage from './components/screens/Producer/MarketDemandPage'
 import DeliveriesPage from './components/screens/Producer/DeliveriesPage'
+import BuyerLayout from './components/screens/Buyer/BuyerLayout'
+import BuyerHome from './components/screens/Buyer/BuyerHome'
+import DemandsPage from './components/screens/Buyer/DemandsPage'
+import DemandDetailPage from './components/screens/Buyer/DemandDetailPage'
+import SupplyPage from './components/screens/Buyer/SupplyPage'
+import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
+import BuyerDeliveriesPage from './components/screens/Buyer/DeliveriesPage'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
+const BuyerDeliveryDetailPage = lazy(() => import('./components/screens/Buyer/DeliveryDetailPage'))
+
+const deliveryFallback = <main className="ph-main"><p className="ph-empty">Loading delivery…</p></main>
 
 // /producer/calendar became /producer/batches; keep old links (and their ?batch=) working.
 function LegacyCalendarRedirect() {
@@ -43,8 +53,31 @@ function App() {
           <Route
             path="deliveries/:id"
             element={
-              <Suspense fallback={<main className="ph-main"><p className="ph-empty">Loading delivery…</p></main>}>
+              <Suspense fallback={deliveryFallback}>
                 <DeliveryDetailPage />
+              </Suspense>
+            }
+          />
+        </Route>
+        <Route
+          path="/buyer"
+          element={
+            <RequireRole role="BUYER">
+              <BuyerLayout />
+            </RequireRole>
+          }
+        >
+          <Route index element={<BuyerHome />} />
+          <Route path="demands" element={<DemandsPage />} />
+          <Route path="demands/:id" element={<DemandDetailPage />} />
+          <Route path="supply" element={<SupplyPage />} />
+          <Route path="supply/:code" element={<SupplyDetailPage />} />
+          <Route path="deliveries" element={<BuyerDeliveriesPage />} />
+          <Route
+            path="deliveries/:id"
+            element={
+              <Suspense fallback={deliveryFallback}>
+                <BuyerDeliveryDetailPage />
               </Suspense>
             }
           />

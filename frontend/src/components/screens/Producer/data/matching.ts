@@ -38,7 +38,8 @@ function acceptedGrades(gradeWanted: string) {
   return gradeWanted.replace("Grade", "").split(/[–-]/).map((grade) => grade.trim());
 }
 
-function evaluate(demand: Demand, batch: Batch): Candidate {
+/** Scores one batch against one demand. Exported so the buyer area ranks supply with the same rules. */
+export function evaluate(demand: Demand, batch: Batch): Candidate {
   const open = UNAVAILABLE.includes(batch.status) ? 0 : batch.quantityKg - batch.allocatedKg;
   const coverage = Math.min(1, open / demand.quantityKg);
   const gradeOk = acceptedGrades(demand.gradeWanted).includes(batch.grade);
