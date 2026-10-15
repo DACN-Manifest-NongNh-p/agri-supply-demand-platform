@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { PhotoPicker } from "./BatchPhotos";
 import { CircleCheck, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { demands, producer, type Batch } from "../data/mockProducer";
@@ -38,11 +39,25 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [declared, setDeclared] = useState<{ code: string; matches: number } | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [photoError, setPhotoError] = useState("");
+  // Photos of a batch that was never declared are released when the dialog goes away.
+  const kept = useRef({ photos: [] as string[], declared: false });
+  useEffect(() => {
+    kept.current.photos = photos;
+  }, [photos]);
 
   // See MarketInsights: no close() in cleanup, because StrictMode re-runs effects.
   useEffect(() => {
     const dialog = dialogRef.current;
     if (dialog && !dialog.open) dialog.showModal();
+  }, []);
+
+  useEffect(() => {
+    const state = kept.current;
+    return () => {
+      if (!state.declared) state.photos.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, []);
 
   const submit = (form: HTMLFormElement) => {
@@ -58,6 +73,7 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
     if (!text("variety")) problems.push("Enter the variety.");
     if (readyDay < harvestDay) problems.push("The ready date cannot be before the harvest date.");
     if (sellByDay <= readyDay) problems.push("The sell-by date must be after the ready date.");
+    if (photos.length === 0) problems.push("Add at least one photo of the batch.");
     setErrors(problems);
     if (problems.length > 0) return;
 
@@ -70,7 +86,9 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
       harvestDay,
       readyDay,
       sellByDay,
+      photos,
     };
+    kept.current.declared = true;
     setDeclared({ code: onDeclare(draft), matches: matchesFor(draft) });
   };
 
@@ -143,7 +161,7 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
           <div className="ph-field-row">
             <label className="ph-field">
               <span>Quantity (kg)</span>
-              <input name="quantity" type="number" min="1" step="50" inputMode="numeric" placeholder="e.g. 2,000" />
+              <input name="quantity" type="number" min="1" inputMode="numeric" placeholder="e.g. 2,000" />
             </label>
             <label className="ph-field">
               <span>Plot</span>
@@ -176,6 +194,24 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
               <span>Sell by</span>
               <input name="sellBy" type="date" defaultValue={toInputDate(10)} />
             </label>
+          </div>
+
+          <div className="ph-field">
+            <span id="photos-label">Photos of the batch</span>
+            <p className="ph-field-hint" id="photos-hint">
+              1 to 4 photos: the crates as packed and a close-up of the fruit. Buyers see them before they reserve.
+            </p>
+            <div role="group" aria-labelledby="photos-label" aria-describedby="photos-hint">
+              <PhotoPicker
+                photos={photos}
+                onChange={(next) => {
+                  setPhotos(next);
+                  setPhotoError("");
+                }}
+                onError={setPhotoError}
+              />
+            </div>
+            {photoError && <p className="ph-field-error">{photoError}</p>}
           </div>
 
           {errors.length > 0 && (

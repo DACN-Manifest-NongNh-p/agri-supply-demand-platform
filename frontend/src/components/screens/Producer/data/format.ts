@@ -21,6 +21,12 @@ export function formatDay(offset: number) {
   return dayFormat.format(dateFromToday(offset));
 }
 
+/** formatDay for the middle of a sentence: "today", while dates keep their capitals ("Sat 17 Oct"). */
+export function formatDayInText(offset: number) {
+  const label = formatDay(offset);
+  return label.includes(" ") ? label : label.toLowerCase();
+}
+
 export function stageLabel(status: BatchStatus) {
   return BATCH_STAGES.find((stage) => stage.status === status)?.label ?? status;
 }

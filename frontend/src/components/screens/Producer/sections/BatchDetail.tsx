@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TriangleAlert } from "lucide-react";
 import { BATCH_STAGES, type Batch, type BatchStatus } from "../data/mockProducer";
 import { formatDay, formatKg, nextStatus, stageLabel } from "../data/format";
+import { PhotoCover } from "./BatchPhotos";
 
 const ISSUE_REASONS = ["Lower yield than declared", "Quality problem", "Batch no longer available", "Harvest delayed"];
 
@@ -20,6 +21,7 @@ export function BatchDetail({ batch, issue, onAdvance, onReport }: Props) {
   return (
     <article className="ph-batch-detail" aria-live="polite">
       <header>
+        <PhotoCover photos={batch.photos} alt={`${batch.code}, ${batch.product}`} className="ph-batch-photo" />
         <div>
           <p className="ph-eyebrow">{batch.code} · {batch.plot}</p>
           <h3>{batch.product} <span>{batch.variety}, grade {batch.grade}</span></h3>

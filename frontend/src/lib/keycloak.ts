@@ -72,7 +72,10 @@ export function getKeycloakUsername() {
 }
 
 /** Roles that have their own area in the app, in priority order, with the area's home path. */
-const ROLE_HOMES: { role: AppRole; path: string }[] = [{ role: "PRODUCER", path: "/producer" }];
+const ROLE_HOMES: { role: AppRole; path: string }[] = [
+  { role: "PRODUCER", path: "/producer" },
+  { role: "BUYER", path: "/buyer" },
+];
 
 /** Home page for the signed-in user's role, or null if their role has no area yet. */
 export function getRoleHomePath(): string | null {

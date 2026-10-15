@@ -1,0 +1,94 @@
+import { ArrowRight, MapPin, Pencil } from "lucide-react";
+import { Link } from "react-router-dom";
+import { DeliveryCard } from "../../Producer/sections/DeliveryCard";
+import { deliveryStatus, sortDeliveries, type DeliveryIssue } from "../../Producer/data/deliveries";
+import { DEMAND_STAGES, type DemandStatus } from "../data/demands";
+import type { BuyerDelivery } from "../data/mockBuyer";
+import { buyer } from "../data/mockBuyer";
+
+export function CompanyCard() {
+  return (
+    <section className="ph-farm" aria-labelledby="company-title">
+      <p className="ph-eyebrow">Your company</p>
+      <h2 id="company-title">{buyer.name}</h2>
+      <p className="ph-farm-meta">
+        <MapPin size={14} /> {buyer.destination}
+      </p>
+      <ul className="ph-tags">
+        {buyer.products.map((product) => (
+          <li key={product}>{product}</li>
+        ))}
+      </ul>
+      <p className="ph-farm-contact">
+        {buyer.contact}, {buyer.role.toLowerCase()}
+      </p>
+      <button type="button" className="ph-link-btn">
+        <Pencil size={14} /> Edit company and delivery points
+      </button>
+    </section>
+  );
+}
+
+/** Count of demands per status; each row filters the demand list. */
+export function DemandPipeline({ counts }: { counts: Record<DemandStatus, number> }) {
+  const max = Math.max(1, ...Object.values(counts));
+  return (
+    <section className="ph-card bu-pipeline" aria-labelledby="pipeline-title">
+      <div className="ph-section-head">
+        <h2 id="pipeline-title">Demand pipeline</h2>
+      </div>
+      <ul>
+        {DEMAND_STAGES.map((stage) => (
+          <li key={stage.status}>
+            <Link to={`/buyer/demands?status=${stage.status}`}>
+              <span className="bu-pipeline-label">{stage.label}</span>
+              <span className="bu-pipeline-bar" aria-hidden="true">
+                <span style={{ width: `${(counts[stage.status] / max) * 100}%` }} />
+              </span>
+              <strong>{counts[stage.status]}</strong>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+const HOME_COUNT = 2;
+
+/** Home block: allocated supply on its way to you, problems first. */
+export function IncomingDeliveries({ deliveries, reported }: { deliveries: BuyerDelivery[]; reported: Record<string, DeliveryIssue> }) {
+  const active = sortDeliveries(deliveries, reported).filter(
+    (delivery) => deliveryStatus(delivery, reported[delivery.id]) !== "delivered",
+  );
+
+  return (
+    <section id="deliveries" className="ph-deliveries" aria-labelledby="deliveries-title">
+      <div className="ph-section-head">
+        <div>
+          <h2 id="deliveries-title">On the way to you</h2>
+          <p className="ph-section-sub">{active.length} {active.length === 1 ? "shipment" : "shipments"} in transit</p>
+        </div>
+        <Link to="/buyer/deliveries" className="ph-btn">
+          View all deliveries <ArrowRight size={16} />
+        </Link>
+      </div>
+      {active.length === 0 ? (
+        <p className="ph-muted">Nothing on the road right now.</p>
+      ) : (
+        <ul className="ph-trips">
+          {active.slice(0, HOME_COUNT).map((delivery) => (
+            <li key={delivery.id}>
+              <DeliveryCard
+                delivery={delivery}
+                reported={reported[delivery.id]}
+                to={`/buyer/deliveries/${delivery.id}`}
+                title={`${delivery.batch} from ${delivery.producer}`}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}

@@ -96,7 +96,7 @@ stateDiagram-v2
 
 Statuses in code: `expected`, `ready`, `on_hold`, `allocated`, `in_transit`, `delivered`. A producer can advance a batch one step at a time from the batch detail, or report an issue (lower yield, quality problem, no longer available, harvest delayed), which goes to a coordinator.
 
-**Declaring a batch** (`DeclareBatchDialog`): product, variety, plot, quantity, grade A/B/C, expected harvest, ready-to-sell and sell-by dates. Validation: quantity > 0, ready ≥ harvest, sell-by > ready. After saving, the dialog reports how many open demands the new batch already matches.
+**Declaring a batch** (`DeclareBatchDialog`): product, variety, plot, quantity, grade A/B/C, expected harvest, ready-to-sell and sell-by dates, and 1–4 photos of the batch (image files up to 10 MB; the first is the cover buyers see). Validation: quantity > 0, ready ≥ harvest, sell-by > ready, at least one photo. After saving, the dialog reports how many open demands the new batch already matches.
 
 ## Matching
 
