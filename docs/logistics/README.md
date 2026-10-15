@@ -52,7 +52,7 @@ Set in `data/capacity.ts`. A vehicle fits when all of these hold:
 | Not on another trip on any day from pickup to drop-off | "on another trip today" |
 | Not marked unavailable by the provider on those days | "marked unavailable tomorrow" |
 
-Fitting vehicles are listed smallest first, so big trucks stay free for big loads. When none fits, the order card says why for each vehicle and suggests declining. Orders that fall outside what the provider declared are still offered, with a one-line warning:
+Fitting vehicles are listed smallest first, so big trucks stay free for big loads. When none fits, the order card says so and groups the vehicles by their main reason (too small, not refrigerated, on another trip, unavailable), and suggests declining. Orders that fall outside what the provider declared are still offered, with a one-line warning:
 
 | Declared | Warning when |
 | --- | --- |

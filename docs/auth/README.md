@@ -239,7 +239,7 @@ After login or registration Keycloak redirects to `/auth/callback` (allowed by t
 Protected routes are wrapped in `<RequireRole role="...">`:
 
 - not signed in: redirect to Keycloak login, then back to the same page;
-- signed in without the role: a "This area is for producers" (or "buyers", "coordinators", "logistics providers") page with links home and to sign in with another account.
+- signed in without the role: a "This area is for producers" (or "buyers", "coordinators", "logistics providers") page that shows who is signed in and with which account type, a button to that account's own dashboard (for example "Go to Buyer dashboard"), and **Switch account** (signs out so another account can sign in).
 
 ```mermaid
 flowchart LR

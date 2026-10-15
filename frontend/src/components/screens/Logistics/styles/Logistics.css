@@ -562,6 +562,51 @@
   color: #8a5a10;
 }
 
+/* No vehicle fits: a title, then one row per reason with the vehicles it applies to. */
+.lg-nofit {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fbf1df;
+}
+
+.lg-nofit-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  color: #8a5a10;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.lg-nofit dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.lg-nofit dl div {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 12px;
+  align-items: baseline;
+}
+
+.lg-nofit dt {
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.lg-nofit dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  color: var(--ph-ink);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .lg-order-actions {
   display: flex;
   flex-wrap: wrap;
@@ -919,6 +964,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .lg-nofit dl div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
   .lg-signin {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -937,6 +987,14 @@
 [data-theme="dark"] .lg-status--wait {
   color: #d3a050;
   background: rgba(211, 160, 80, 0.14);
+}
+
+[data-theme="dark"] .lg-nofit {
+  background: rgba(211, 160, 80, 0.12);
+}
+
+[data-theme="dark"] .lg-nofit-title {
+  color: #d3a050;
 }
 
 [data-theme="dark"] .lg-flag {

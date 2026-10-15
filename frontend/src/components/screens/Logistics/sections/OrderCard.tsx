@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { ArrowRight, Check, Snowflake } from "lucide-react";
+import { ArrowRight, Check, Snowflake, TriangleAlert } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDay, formatKg } from "../../Producer/data/format";
-import { fitsFor, formatVnd, orderWarnings } from "../data/capacity";
+import { blockersFor, fitsFor, formatVnd, orderWarnings } from "../data/capacity";
 import { DECLINE_REASONS, type TransportOrder } from "../data/mockLogistics";
 import { useLogistics } from "../data/logisticsContext";
 
@@ -91,7 +91,23 @@ export function OrderCard({ order }: { order: TransportOrder }) {
       {order.note && <p className="lg-note">{order.note}</p>}
 
       {open && usable.length === 0 && (
-        <p className="lg-flag">No vehicle fits: {fits.map(({ vehicle, problems }) => `${vehicle.plate} ${problems[0]}`).join("; ")}.</p>
+        <div className="lg-nofit" role="note">
+          <p className="lg-nofit-title">
+            <TriangleAlert size={15} aria-hidden="true" /> No vehicle can take this order
+          </p>
+          <dl>
+            {blockersFor(fits).map((blocker) => (
+              <div key={blocker.label}>
+                <dt>{blocker.label}</dt>
+                <dd>
+                  {blocker.vehicles.map((vehicle) => (
+                    <span key={vehicle}>{vehicle}</span>
+                  ))}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       )}
       {open && warnings.length > 0 && (
         <p className="lg-flag">
