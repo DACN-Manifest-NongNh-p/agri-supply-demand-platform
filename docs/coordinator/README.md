@@ -152,7 +152,8 @@ Only the coordinator sees the driver, the vehicle plate and the carrier's dispat
 | `sections/HubMap.tsx` | Overview map |
 | `sections/QueueList.tsx` | Needs action list on the overview |
 | `sections/Overview.tsx` | Supply vs demand, on the road, supply without a buyer |
-| `sections/CoordinatorSidebar.tsx` | Navigation, theme switch and account |
+| `sections/CoordinatorSidebar.tsx` | Coordinator navigation, built on `sections/AreaSidebar.tsx` (sidebar shell shared with the logistics area) |
+| `data/theme.ts` | Light/dark theme remembered per browser, shared with the logistics area |
 | `CoordinatorHome.tsx`, `MatchingPage.tsx`, `RequestsPage.tsx`, `DeliveriesPage.tsx`, `DeliveryDetailPage.tsx` | Screens |
 | `styles/Coordinator.css` | `co-*` styles on top of the producer and buyer styles |
 | `../Producer/data/mapGeometry.ts` | Route splitting and WebGL check, shared by the delivery map and the overview map |

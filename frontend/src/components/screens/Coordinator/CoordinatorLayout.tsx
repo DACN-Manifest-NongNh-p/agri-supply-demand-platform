@@ -10,23 +10,11 @@ import type { CoordinatorState, DeliveryUpdate, Resolution } from "./data/coordi
 import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "./styles/Coordinator.css";
-
-const THEME_KEY = "coordinator-theme";
-
-export type Theme = "light" | "dark";
-
-// The theme is a per-browser convenience; storage can be unavailable, so it falls back to light.
-function storedTheme(): Theme {
-  try {
-    return localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
-  } catch {
-    return "light";
-  }
-}
+import { useStoredTheme } from "./data/theme";
 
 /** Shell for all coordinator pages: sidebar plus the demo state shared between them. */
 export default function CoordinatorLayout() {
-  const [theme, setTheme] = useState<Theme>(storedTheme);
+  const { theme, toggleTheme } = useStoredTheme("coordinator-theme");
   const [blocked, setBlocked] = useState<string[]>([]);
   const [verified, setVerified] = useState<string[]>([]);
   // The matching engine has already run over the demo market: clean proposals start out as holds.
@@ -126,16 +114,6 @@ export default function CoordinatorLayout() {
         ...current,
         [deliveryId]: [...(current[deliveryId] ?? []), { text, time: new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) }],
       })),
-  };
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    try {
-      localStorage.setItem(THEME_KEY, next);
-    } catch {
-      // Not remembered, but the switch still applies for this visit.
-    }
   };
 
   return (

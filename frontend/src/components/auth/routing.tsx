@@ -45,13 +45,21 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
   return <>{children}</>;
 }
 
+const AUDIENCE: Record<AppRole, string> = {
+  BUYER: "buyers",
+  PRODUCER: "producers",
+  LOGISTICS: "logistics providers",
+  COORDINATOR: "coordinators",
+  ADMIN: "administrators",
+};
+
 function NoAccess({ role }: { role: AppRole }) {
   const home = getRoleHomePath();
   return (
     <main className="access-page">
       <section className="access-card" aria-labelledby="no-access-title">
         <span className="access-icon"><ShieldAlert size={22} /></span>
-        <h1 id="no-access-title">This area is for {role.toLowerCase()}s</h1>
+        <h1 id="no-access-title">This area is for {AUDIENCE[role]}</h1>
         <p className="access-muted">
           Your account doesn't have the {role} role. If you think it should, ask a Farmora administrator to update your account.
         </p>
