@@ -20,7 +20,7 @@ export default function DeliveryDetailPage() {
   if (!delivery) {
     return (
       <main className="ph-main">
-        <Link to="/buyer/deliveries" className="ph-back"><ArrowLeft size={16} /> All deliveries</Link>
+        <Link to="/buyer/orders?tab=deliveries" className="ph-back"><ArrowLeft size={16} /> All deliveries</Link>
         <p className="ph-empty">Delivery {id} was not found.</p>
       </main>
     );
@@ -38,7 +38,7 @@ export default function DeliveryDetailPage() {
 
   return (
     <main className="ph-main">
-      <Link to="/buyer/deliveries" className="ph-back">
+      <Link to="/buyer/orders?tab=deliveries" className="ph-back">
         <ArrowLeft size={16} /> All deliveries
       </Link>
 

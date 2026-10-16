@@ -31,8 +31,8 @@ flowchart LR
     Unsold -- "Find me a buyer" --> Coord["Coordinator"]
     Match -- "held by the system or a buyer" --> ToConfirm["Order: to confirm"]
     Review -- "Offer batch" --> Offered["Order: offered"]
-    Offered -- "buyer accepts" --> ToConfirm
-    ToConfirm -- "Confirm" --> Confirmed["Order: confirmed"]
+    Offered -- "buyer accepts" --> Confirmed["Order: confirmed"]
+    ToConfirm -- "Confirm" --> Confirmed
     Confirmed --> Ship["On the way"]
     Ship --> Done["Delivered + proof of delivery"]
     Ship -. "problem" .-> Coord
@@ -50,7 +50,7 @@ The top bar has four entries: **Home**, **Matches**, **Orders** (with a red coun
 | `/producer/batches` | Batches | Planning calendar and full batch list, declare a new batch, per-batch history (matches, orders, shipments) |
 | `/producer/deliveries/:id` | Delivery detail | Opened from an order: live route map with the truck's temperature, timeline, proof of delivery, report a problem |
 
-`/producer/calendar` redirects to `/producer/batches` (query string kept), and the old `/producer/deliveries` list redirects to Orders (*In progress*).
+`/producer/calendar` redirects to `/producer/batches` (query string kept), and the old `/producer/deliveries` list redirects to Orders (*Deliveries*).
 
 ```mermaid
 flowchart TB
@@ -146,7 +146,8 @@ sequenceDiagram
     P->>UI: See why it matches
     UI-->>P: Criteria, buyer note, batches considered
     P->>UI: Offer batch
-    UI-->>P: Order listed under Orders as "Offered"
+    UI-->>P: Popup "Offer sent", View order → Orders (Offered)
+    UI-->>P: Buyer accepts → order Confirmed (popup and Orders update)
     alt No demand fits the batch
         UI-->>P: Listed under "Batches without a buyer"
         P->>UI: Find me a buyer
@@ -156,13 +157,22 @@ sequenceDiagram
 
 ## Orders
 
-`/producer/orders` (`OrdersPage`, orders in `data/orders.ts`, merged in `ProducerLayout`) is the one list for every sale on the farm's batches, from offered to delivered. The top bar shows a red count next to **Orders** while some wait for confirmation.
+`/producer/orders` (`OrdersPage`, orders in `data/orders.ts`, merged in `ProducerLayout`) is the one place for every sale on the farm's batches, from the first step to delivery. The top bar shows a red count next to **Orders** while some wait for confirmation.
+
+An order is **confirmed once both sides agree**, either way round:
+
+- a buyer (or the matching engine) reserves a batch, the buyer pays the deposit, and the producer confirms;
+- the producer offers a batch, and the buyer accepts it by paying the deposit.
+
+Each order card says whether the buyer's deposit is paid (*… paid a 50% deposit · the rest on delivery*).
+
+Only a confirmed order gets a truck. This is the same rule the buyer sees.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Offered: Producer offers a batch
     [*] --> ToConfirm: System or buyer holds a batch
-    Offered --> ToConfirm: Buyer accepts
+    Offered --> Confirmed: Buyer accepts
     ToConfirm --> Confirmed: Producer confirms
     ToConfirm --> Declined: Producer declines
     Confirmed --> OnTheWay: Carrier picks up
@@ -173,14 +183,40 @@ stateDiagram-v2
 
 | Stage | Meaning | Action on the row |
 | --- | --- | --- |
-| Offered | The producer offered a batch to a matched demand; the buyer decides | — (*Waiting for the buyer*) |
+| Offered | The producer offered a batch to a matched demand; the buyer decides | — (*Buyer decides*) |
 | To confirm | The matching engine or a buyer holds kilograms of a batch; the producer has a set number of hours | **Confirm** or **Decline**, with the hours left in red |
-| Confirmed | Waiting for the carrier to pick up | — |
+| Confirmed | Both agreed; a truck is being booked to pick up at the packhouse | — |
 | On the way | Picked up; shows *Problem on the road* when the delivery has an issue | **Track S-…** (delivery detail) |
 | Delivered | Receipt signed | **Proof of delivery** |
 | Declined | The quantity went back to the market | — |
 
-Each row shows the buyer, the demand and when the order was placed or offered, the kilograms and batch, when and where it is needed. Tabs: *To confirm*, *In progress* (offered, confirmed, on the way), *Delivered*, *All*; `?tab=active` / `?tab=all` open a tab directly. Confirming or declining here and on the home page's *Needs your attention* card is the same action, so both stay in sync, and confirming moves the batch to *Allocated*.
+**Tabs**, in lifecycle order: *To confirm* (red count), *Offered*, *Confirmed*, **Deliveries**, *Declined*. Each tab has one line on what it means. **Deliveries** holds both orders on the way and delivered ones: the shipment list with route progress and arrival time, filtered by *In transit*, *Delivered* and *Issues* (`sections/DeliveriesList.tsx`). A row opens the delivery detail. `/producer/deliveries` redirects to it.
+
+- The page opens on the first tab with something in it.
+- `?tab=offered` opens a tab directly.
+- A link to one order (`#order-OF-D-551`) opens its tab and scrolls to it.
+
+**Each order is a card** (shared with the buyer area, `components/orders/`). It shows:
+
+- kg, product and buyer;
+- buyer type, batch, needed-by date and destination;
+- the demand, and when it was placed or offered;
+- the stage pill;
+- the lifecycle as four dots, *Buyer reserved* (or *You offered*) → *Both agreed* → *On the way* → *Delivered*;
+- who acts next ("Your answer · 5 h left", "GreenBasket decides", "Truck being booked");
+- the action for the stage.
+
+Confirming or declining here and on the home page's *Needs your attention* card is the same action, so both stay in sync, and confirming moves the batch to *Allocated*.
+
+**After offering** a batch (matching band on Home, or Matches), a popup (`sections/OfferSentNotice.tsx`) shows:
+
+- to whom and what was offered;
+- the steps *You offered → Buyer accepts → On the way → Delivered*;
+- **View order** and **Keep browsing**.
+
+Where the offer was made, the line says *Offered B-104 · waiting for …* or *Accepted*, with a **View order** link.
+
+**Demo behaviour.** The areas do not share state, so the buyer "accepts" six seconds after an offer. The order moves to *Confirmed*, the batch to *Allocated*, and the popup updates if it is open.
 
 ## Deliveries
 
@@ -211,6 +247,59 @@ The delivery detail page shows:
 | Order | Reserves a batch (a hold for the producer to confirm), or accepts the producer's offer | Decides matches the system would not hold on its own; extends or releases holds |
 | Problems | Checks goods on arrival | Handles batch issues, delivery problems and "find me a buyer" requests |
 
+## Shelf life and spoilage risk
+
+Batches are managed by **time left**, not as static stock (`components/freshness/`, shared by producer and coordinator).
+
+- **Shelf-life bar** (`ShelfLifeBar`). It covers harvest (06:00 on the harvest day) to the end of the sell-by day, and shrinks as time passes, refreshed every 30 s.
+  - Colour: green above 50 % left, amber 20–50 %, red below 20 %.
+  - The time left is shown as text ("2 d 14 h left", "9 h 20 m left"); the exact sell-by time is in the tooltip.
+- **Spoilage risk index** (`spoilageRisk`, 0–100). A transparent rule-based score, recomputed every 15 s and whenever the data changes. It adds up:
+  - how much of the shelf life is used (up to 60);
+  - the unsold share (up to 25, weighted more once a third of the shelf life is gone);
+  - a cold-chain product (+6);
+  - a reported temperature excursion (+45).
+
+  Levels: *Low* below 40, *Watch* 40–69, *High* from 70. The badge's tooltip lists why. A trained model could replace the function later without changing the screens.
+- **Instant alerts** (`useSpoilageAlerts`, `RiskToasts`). When an unsold batch reaches *High*, an alert appears at once, with no reload needed:
+  - a floating card in the top-right corner (up to three at a time), with what, how much is unsold, the time left and the main reason, plus an action;
+  - the same alert under the bell (coordinator).
+
+  Dismissing the card keeps the alert under the bell.
+
+**Demo behaviour.** There are no real sensors or push server. About 20 s after the area opens, a simulated cold-room reading ("cold room read 11 °C for 40 min") is reported for the unsold cold-chain batch closest to its sell-by date. That pushes its risk over 70, so the alert pops up live. With a backend this would be a WebSocket or server-sent events stream fed by the risk job and the sensors.
+
+Where the producer sees it: **Batches**, in the table columns *Shelf life* (bar + sell-by date) and *Spoilage risk* (badge; *Sold* when nothing is open). Alerts float over every producer page, and *Find buyers* opens Matches at the batches without a buyer.
+
+## Pre-harvest auctions
+
+Shared with the buyer area (`components/auction/`). How a batch is handled changes with where it is in its life:
+
+| Stage | Mechanism |
+| --- | --- |
+| Not harvested yet (`expected`) | **Pre-harvest auction**: buyers compete to secure it |
+| Ready | Automatic matching |
+
+**Flow**
+
+1. The producer opens an auction from a batch that is not harvested yet (Batches → batch → *Open a pre-harvest auction*). They set:
+   - the estimated yield range;
+   - the opening price;
+   - how long it runs (10 minutes for the demo, 1 hour or 24 hours).
+2. Farmora shows a **yield confidence** score (`yieldConfidence`). It is built from how tight the estimate is, how far off the harvest is, the plot's yield history and certified practices, and it drops by 30 when the producer reports a risk. It is labelled as a decision aid, not a promise.
+3. Buyers bid at `/buyer/auctions/:id`:
+   - The current bid, who leads (other buyers stay anonymous) and a live countdown are shown.
+   - The minimum next bid is the current bid plus the step; quick buttons offer +0, +1 and +2 steps.
+   - The bid history updates live.
+4. **Concurrent bids.** Every bid names the auction *version* it was made against (compare-and-set in `placeBid`). If another bid landed in between, the bid is refused with "Another buyer bid … a moment before you". Two bids can never both become the highest. On a server this is an atomic update or a lock on the auction row, with WebSocket or SSE pushing the new state.
+5. When the timer ends, the highest bid wins. It becomes a **Future Supply Commitment**: the batch and price for the expected harvest, with the quantity estimated from the range. With no bids, the batch simply goes on to Ready and normal matching.
+6. After harvest, the producer records the **actual quantity**. The commitment then continues as a normal order (Ready → Allocated → In transit → Delivered).
+7. Before harvest, the producer can **report a risk** (storm, pest, date moved, lower yield). The auction goes *Under review* for a coordinator and its confidence drops.
+
+Where: the **Pre-harvest auctions** tab of Batches (`/producer/auctions`, `AuctionsPage`; *Batches* stays highlighted): the farm's auctions with bids arriving live, the commitment, *Record harvest* and *Report a risk before harvest*. On a not-yet-harvested batch in Batches: `sections/PreHarvestAuction.tsx`.
+
+**Demo behaviour.** Other buyers are simulated (`useAuctionSimulation`). They bid now and then, more often near the end, up to about 20 % over the opening price, through the same compare-and-set as a real bid. Auctions live in the browser tab, so they reset on reload. Three auctions are seeded: B-107 dragon fruit (ends about 9 minutes after opening the app), L-079 avocado and B-110 pomelo.
+
 ## Files
 
 | Path | Contents |
@@ -218,7 +307,9 @@ The delivery detail page shows:
 | `ProducerLayout.tsx` | Top bar + state shared by all producer pages (batches, tasks, orders including this session's offers, issues) |
 | `ProducerHome.tsx` | Home |
 | `MarketDemandPage.tsx` | Matches page |
-| `OrdersPage.tsx`, `data/orders.ts` | Orders, offered to delivered |
+| `OrdersPage.tsx`, `data/orders.ts` | Orders by stage tab, lifecycle steps, next step |
+| `sections/OfferSentNotice.tsx` | Popup after offering a batch |
+| `../../orders/` (`LifecycleSteps.tsx`, `orders.css`) | Lifecycle dots, order cards, tabs and popup styles shared with the buyer area |
 | `BatchesPage.tsx` | Batches page |
 | `DeliveryDetailPage.tsx` | Delivery detail, opened from an order |
 | `sections/` | Building blocks (MatchHero, AttentionList, CalendarGrid, BatchDetail, DeclareBatchDialog, RouteMap, LiveTemperature, MarketInsights…) |

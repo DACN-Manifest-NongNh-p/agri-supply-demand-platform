@@ -99,6 +99,8 @@ export type SupplyBatch = Batch & {
   distanceKm: number;
   /** A supply problem the producer reported on this batch. */
   issue?: string;
+  /** Asking price in VND per kilogram (market batches in the buyer area all have one). */
+  pricePerKg?: number;
 };
 
 export type BuyerDemand = {
@@ -117,14 +119,40 @@ export type BuyerDemand = {
   note?: string;
 };
 
-/** Held → allocated → in transit → delivered. A hold reserves quantity until the producer confirms. */
-export type AllocationStage = "held" | "allocated" | "in_transit" | "delivered";
+/**
+ * One order, from the first step to delivery:
+ *   you pick a batch      → locked    (kept for you for a few minutes while you pay the deposit; then released)
+ *   you pay the deposit   → held      (the producer has a few hours to confirm; a decline refunds it)
+ *   a producer offers one → offered  (you accept by paying the deposit, or decline)
+ *   → confirmed (both sides agreed; a truck is being booked) → in_transit → delivered.
+ * Declined ends it. Only confirmed kilograms count as covered, and only a confirmed order gets a delivery.
+ */
+export type AllocationStage = "locked" | "offered" | "held" | "confirmed" | "in_transit" | "delivered" | "declined";
 
 export const ALLOCATION_STAGE_LABEL: Record<AllocationStage, string> = {
-  held: "Reserved",
-  allocated: "Allocated",
+  locked: "Locked for you",
+  offered: "Offer to review",
+  held: "Waiting for producer",
+  confirmed: "Confirmed",
   in_transit: "On the way",
   delivered: "Delivered",
+  declined: "Declined",
+};
+
+export type PaymentMethod = "bank" | "card" | "wallet";
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  bank: "Bank transfer (VietQR)",
+  card: "Card",
+  wallet: "MoMo e-wallet",
+};
+
+export type Deposit = {
+  amount: number;
+  percent: number;
+  method: PaymentMethod;
+  /** Payment reference shown on the receipt. */
+  ref: string;
 };
 
 export type Allocation = {
@@ -134,24 +162,40 @@ export type Allocation = {
   producer: string;
   kg: number;
   stage: AllocationStage;
+  /** Who started it: you reserved the batch, or the producer offered it to your demand. */
+  origin?: "reserved" | "offered";
+  /** While locked: when the lock runs out (epoch ms) and the kilograms go back on the market. */
+  lockExpiresAt?: number;
   /** Hours until a hold lapses if the producer has not confirmed it. */
   holdHoursLeft?: number;
+  /** Hours until an offer expires if you have not answered it. */
+  offerHoursLeft?: number;
+  /** The producer's note with an offer. */
+  note?: string;
+  /** Why it ended (declined by you or by the producer). */
+  closedNote?: string;
+  /** Price per kg agreed for this order, in VND. */
+  pricePerKg?: number;
+  /** The deposit paid to confirm the order; the rest is due on delivery. */
+  deposit?: Deposit;
+  /** The balance was paid on delivery. */
+  paidInFull?: boolean;
   deliveryId?: string;
 };
 
 export type BuyerDelivery = Delivery & { producer: string; demandId: string };
 
 export const supply: SupplyBatch[] = [
-  { code: "B-104", producer: "Hoa Phat Dragon Fruit Cooperative", region: "Ham Thuan Nam, Binh Thuan", distanceKm: 210, product: "Dragon fruit", variety: "Red flesh", quantityKg: 2600, allocatedKg: 0, grade: "A", plot: "Plot 5", harvestDay: -1, readyDay: 0, sellByDay: 6, status: "ready" },
-  { code: "B-107", producer: "Hoa Phat Dragon Fruit Cooperative", region: "Ham Thuan Nam, Binh Thuan", distanceKm: 210, product: "Dragon fruit", variety: "White flesh", quantityKg: 5000, allocatedKg: 0, grade: "A", plot: "Plot 2", harvestDay: 3, readyDay: 4, sellByDay: 10, status: "expected" },
-  { code: "H-215", producer: "Ham Kiem Green Farm", region: "Ham Kiem, Binh Thuan", distanceKm: 195, product: "Dragon fruit", variety: "White flesh", quantityKg: 1800, allocatedKg: 0, grade: "B", plot: "North field", harvestDay: 0, readyDay: 1, sellByDay: 7, status: "expected" },
-  { code: "M-331", producer: "Thuan Nam Mango Growers", region: "Thuan Nam, Binh Thuan", distanceKm: 205, product: "Mango", variety: "Cat Hoa Loc", quantityKg: 1500, allocatedKg: 1000, grade: "A", plot: "Orchard 2", harvestDay: -2, readyDay: 0, sellByDay: 4, status: "ready" },
-  { code: "M-334", producer: "Thuan Nam Mango Growers", region: "Thuan Nam, Binh Thuan", distanceKm: 205, product: "Mango", variety: "Cat Chu", quantityKg: 900, allocatedKg: 0, grade: "B", plot: "Orchard 4", harvestDay: 1, readyDay: 2, sellByDay: 7, status: "expected" },
-  { code: "G-118", producer: "Green Hills Farm", region: "Tanh Linh, Binh Thuan", distanceKm: 160, product: "Mango", variety: "Cat Chu", quantityKg: 700, allocatedKg: 0, grade: "C", plot: "Block C", harvestDay: 0, readyDay: 1, sellByDay: 3, status: "expected" },
-  { code: "P-140", producer: "Muong Man Pomelo Cooperative", region: "Muong Man, Binh Thuan", distanceKm: 190, product: "Pomelo", variety: "Da xanh", quantityKg: 2000, allocatedKg: 1200, grade: "A", plot: "Garden 1", harvestDay: -2, readyDay: -1, sellByDay: 9, status: "allocated", issue: "Storm damage on part of the garden: the producer may ship 1,000 kg instead of 1,200 kg." },
-  { code: "B-110", producer: "Bac Binh Citrus Farm", region: "Bac Binh, Binh Thuan", distanceKm: 230, product: "Pomelo", variety: "Da xanh", quantityKg: 3200, allocatedKg: 0, grade: "B", plot: "Plot 7", harvestDay: 7, readyDay: 9, sellByDay: 13, status: "expected" },
-  { code: "L-077", producer: "Lam Ha Avocado Cooperative", region: "Lam Ha, Lam Dong", distanceKm: 300, product: "Avocado", variety: "Booth 7", quantityKg: 1200, allocatedKg: 0, grade: "A", plot: "Hill 3", harvestDay: 2, readyDay: 3, sellByDay: 9, status: "expected" },
-  { code: "L-079", producer: "Lam Ha Avocado Cooperative", region: "Lam Ha, Lam Dong", distanceKm: 300, product: "Avocado", variety: "034", quantityKg: 600, allocatedKg: 0, grade: "B", plot: "Hill 1", harvestDay: 5, readyDay: 6, sellByDay: 11, status: "expected" },
+  { code: "B-104", producer: "Hoa Phat Dragon Fruit Cooperative", region: "Ham Thuan Nam, Binh Thuan", distanceKm: 210, product: "Dragon fruit", variety: "Red flesh", quantityKg: 2600, allocatedKg: 0, grade: "A", plot: "Plot 5", harvestDay: -1, readyDay: 0, sellByDay: 6, status: "ready", pricePerKg: 26000 },
+  { code: "B-107", producer: "Hoa Phat Dragon Fruit Cooperative", region: "Ham Thuan Nam, Binh Thuan", distanceKm: 210, product: "Dragon fruit", variety: "White flesh", quantityKg: 5000, allocatedKg: 0, grade: "A", plot: "Plot 2", harvestDay: 3, readyDay: 4, sellByDay: 10, status: "expected", pricePerKg: 25000 },
+  { code: "H-215", producer: "Ham Kiem Green Farm", region: "Ham Kiem, Binh Thuan", distanceKm: 195, product: "Dragon fruit", variety: "White flesh", quantityKg: 1800, allocatedKg: 0, grade: "B", plot: "North field", harvestDay: 0, readyDay: 1, sellByDay: 7, status: "expected", pricePerKg: 22000 },
+  { code: "M-331", producer: "Thuan Nam Mango Growers", region: "Thuan Nam, Binh Thuan", distanceKm: 205, product: "Mango", variety: "Cat Hoa Loc", quantityKg: 1500, allocatedKg: 1000, grade: "A", plot: "Orchard 2", harvestDay: -2, readyDay: 0, sellByDay: 4, status: "ready", pricePerKg: 38000 },
+  { code: "M-334", producer: "Thuan Nam Mango Growers", region: "Thuan Nam, Binh Thuan", distanceKm: 205, product: "Mango", variety: "Cat Chu", quantityKg: 900, allocatedKg: 0, grade: "B", plot: "Orchard 4", harvestDay: 1, readyDay: 2, sellByDay: 7, status: "expected", pricePerKg: 30000 },
+  { code: "G-118", producer: "Green Hills Farm", region: "Tanh Linh, Binh Thuan", distanceKm: 160, product: "Mango", variety: "Cat Chu", quantityKg: 700, allocatedKg: 0, grade: "C", plot: "Block C", harvestDay: 0, readyDay: 1, sellByDay: 3, status: "expected", pricePerKg: 24000 },
+  { code: "P-140", producer: "Muong Man Pomelo Cooperative", region: "Muong Man, Binh Thuan", distanceKm: 190, product: "Pomelo", variety: "Da xanh", quantityKg: 2000, allocatedKg: 1200, grade: "A", plot: "Garden 1", harvestDay: -2, readyDay: -1, sellByDay: 9, status: "allocated", issue: "Storm damage on part of the garden: the producer may ship 1,000 kg instead of 1,200 kg.", pricePerKg: 35000 },
+  { code: "B-110", producer: "Bac Binh Citrus Farm", region: "Bac Binh, Binh Thuan", distanceKm: 230, product: "Pomelo", variety: "Da xanh", quantityKg: 3200, allocatedKg: 0, grade: "B", plot: "Plot 7", harvestDay: 7, readyDay: 9, sellByDay: 13, status: "expected", pricePerKg: 32000 },
+  { code: "L-077", producer: "Lam Ha Avocado Cooperative", region: "Lam Ha, Lam Dong", distanceKm: 300, product: "Avocado", variety: "Booth 7", quantityKg: 1200, allocatedKg: 0, grade: "A", plot: "Hill 3", harvestDay: 2, readyDay: 3, sellByDay: 9, status: "expected", pricePerKg: 45000 },
+  { code: "L-079", producer: "Lam Ha Avocado Cooperative", region: "Lam Ha, Lam Dong", distanceKm: 300, product: "Avocado", variety: "034", quantityKg: 600, allocatedKg: 0, grade: "B", plot: "Hill 1", harvestDay: 5, readyDay: 6, sellByDay: 11, status: "expected", pricePerKg: 40000 },
 ];
 
 export const demands: BuyerDemand[] = [
@@ -164,11 +208,34 @@ export const demands: BuyerDemand[] = [
 ];
 
 export const allocations: Allocation[] = [
-  { id: "A-1", demandId: "D-565", batchCode: "M-329", producer: "Thuan Nam Mango Growers", kg: 400, stage: "in_transit", deliveryId: "S-305" },
-  { id: "A-2", demandId: "D-565", batchCode: "M-331", producer: "Thuan Nam Mango Growers", kg: 600, stage: "held", holdHoursLeft: 4 },
-  { id: "A-3", demandId: "D-570", batchCode: "P-140", producer: "Muong Man Pomelo Cooperative", kg: 1200, stage: "allocated" },
-  { id: "A-4", demandId: "D-558", batchCode: "H-209", producer: "Ham Kiem Green Farm", kg: 1500, stage: "in_transit", deliveryId: "S-307" },
-  { id: "A-5", demandId: "D-536", batchCode: "B-095", producer: "Hoa Phat Dragon Fruit Cooperative", kg: 2400, stage: "delivered", deliveryId: "S-296" },
+  { id: "A-1", demandId: "D-565", batchCode: "M-329", producer: "Thuan Nam Mango Growers", kg: 400, stage: "in_transit", origin: "reserved", deliveryId: "S-305", pricePerKg: 38000, deposit: { amount: 7600000, percent: 50, method: "bank", ref: "FM-24081" } },
+  { id: "A-2", demandId: "D-565", batchCode: "M-331", producer: "Thuan Nam Mango Growers", kg: 600, stage: "held", origin: "reserved", holdHoursLeft: 4, pricePerKg: 38000, deposit: { amount: 11400000, percent: 50, method: "wallet", ref: "FM-24112" } },
+  { id: "A-3", demandId: "D-570", batchCode: "P-140", producer: "Muong Man Pomelo Cooperative", kg: 1200, stage: "confirmed", origin: "reserved", pricePerKg: 35000, deposit: { amount: 21000000, percent: 50, method: "bank", ref: "FM-24095" } },
+  { id: "A-4", demandId: "D-558", batchCode: "H-209", producer: "Ham Kiem Green Farm", kg: 1500, stage: "in_transit", origin: "reserved", deliveryId: "S-307", pricePerKg: 25000, deposit: { amount: 18750000, percent: 50, method: "card", ref: "FM-24060" } },
+  { id: "A-5", demandId: "D-536", batchCode: "B-095", producer: "Hoa Phat Dragon Fruit Cooperative", kg: 2400, stage: "delivered", origin: "reserved", deliveryId: "S-296", pricePerKg: 25000, deposit: { amount: 30000000, percent: 50, method: "bank", ref: "FM-23977" }, paidInFull: true },
+  // Offers producers sent to open demands: not counted until you accept.
+  {
+    id: "A-7",
+    demandId: "D-572",
+    batchCode: "L-077",
+    producer: "Lam Ha Avocado Cooperative",
+    kg: 800,
+    stage: "offered",
+    origin: "offered",
+    offerHoursLeft: 10,
+    note: "Booth 7, grade A. We can pack in 10 kg cartons and ship refrigerated on day 3.",
+  },
+  {
+    id: "A-8",
+    demandId: "D-565",
+    batchCode: "M-334",
+    producer: "Thuan Nam Mango Growers",
+    kg: 200,
+    stage: "offered",
+    origin: "offered",
+    offerHoursLeft: 5,
+    note: "Covers the last 200 kg of your mango order; same truck as your other mango if you accept today.",
+  },
 ];
 
 const greenBasketDelivered = producerDeliveries.find((delivery) => delivery.id === "S-296")!;
@@ -235,3 +302,10 @@ export const deliveries: BuyerDelivery[] = [
   },
   { ...greenBasketDelivered, producer: "Hoa Phat Dragon Fruit Cooperative", demandId: "D-536" },
 ];
+
+/** Order value and deposit for `kg` at `pricePerKg`, with the deposit share from the operating rules. */
+export function depositFor(kg: number, pricePerKg: number, percent: number) {
+  const total = kg * pricePerKg;
+  const deposit = Math.round((total * percent) / 100 / 1000) * 1000;
+  return { total, deposit, balance: total - deposit };
+}

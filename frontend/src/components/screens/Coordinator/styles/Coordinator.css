@@ -1721,3 +1721,335 @@
 .co-unmet .co-side-top small {
   font-weight: 400;
 }
+
+/* Shelf-life bar and spoilage risk in the unsold lists. */
+.co-unsold-fresh {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 4px;
+}
+
+.co-unsold-fresh .fr-shelf {
+  flex: 1;
+  max-width: 220px;
+}
+
+/* The spoilage watch spans the whole overview grid. */
+.co-grid-wide {
+  grid-column: 1 / -1;
+}
+
+.co-grid-wide .fr-watch {
+  margin: 0;
+}
+
+/* ---------- Rescue: proposals laid out like requests ---------- */
+.co-requests--flush {
+  padding: 0;
+}
+
+.co-rescue-done {
+  margin-top: 16px;
+}
+
+.co-rescue-edit {
+  display: grid;
+  gap: 10px;
+}
+
+.co-rescue-edit label {
+  display: grid;
+  gap: 4px;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.co-resolve :is(select, textarea),
+.co-rescue-edit input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 8px;
+  color: var(--ph-ink);
+  background: var(--ph-card);
+  font: inherit;
+  font-size: 13.5px;
+}
+
+/* ---------- Light mode: solid cards instead of glass ----------
+   White glass on the pale green page made cards sink into it. Pages read better with solid
+   white cards and a clear edge; only the panels over the map keep their glass. */
+.coordinator-area:not([data-theme="dark"]) .ph-card {
+  border: 1px solid #dde3d6;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 30, 22, 0.05), 0 6px 18px rgba(20, 30, 22, 0.05);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.coordinator-area:not([data-theme="dark"]) .co-pills {
+  border-color: #dde3d6;
+  background: #f1f4ed;
+}
+
+/* ---------- Rescue: proposals laid out like matches to decide ---------- */
+.co-rescue-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.co-rescue-stack .co-match .fr-shelf {
+  margin-top: 8px;
+  max-width: 260px;
+}
+
+.co-rescue-ring--high .ph-ring-value {
+  stroke: var(--ph-red);
+}
+
+.co-rescue-ring--watch .ph-ring-value {
+  stroke: #d29a2a;
+}
+
+.co-rescue-ring--low .ph-ring-value,
+.co-rescue-ring--good .ph-ring-value {
+  stroke: var(--ph-green);
+}
+
+.co-rescue-ring--high .ph-ring-label strong {
+  color: var(--ph-red);
+}
+
+.co-rescue-parts {
+  display: grid;
+  gap: 2px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+}
+
+.co-rescue-edit {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--ph-subtle);
+}
+
+.co-rescue-edit label {
+  display: grid;
+  gap: 4px;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.co-rescue-edit :is(select, input) {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 8px;
+  color: var(--ph-ink);
+  background: var(--ph-card);
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.co-rescue-edit .co-match-actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.co-rescue-why {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+  font-size: 13px;
+}
+
+.co-rescue-why svg {
+  flex: none;
+  color: var(--ph-muted);
+}
+
+/* ---------- Demand / batch detail drawer ---------- */
+.co-detail-link {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 30%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.co-detail-link:hover {
+  color: var(--ph-green-dark);
+  text-decoration-color: currentColor;
+}
+
+.co-detail-link:focus-visible {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.co-detail-backdrop {
+  position: fixed;
+  z-index: 90;
+  inset: 0;
+  background: rgba(16, 24, 18, 0.28);
+  animation: co-detail-fade 160ms ease-out;
+}
+
+.co-detail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px, 100vw);
+  overflow-y: auto;
+  padding: 28px 26px;
+  color: var(--ph-ink);
+  background: var(--ph-card, #fff);
+  box-shadow: -18px 0 50px -20px rgba(16, 24, 18, 0.4);
+  animation: co-detail-in 200ms ease-out;
+}
+
+.coordinator-area:not([data-theme="dark"]) .co-detail {
+  background: #fff;
+}
+
+.co-detail-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ph-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.co-detail-close:hover {
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+}
+
+.producer-home .co-detail h2 {
+  margin: 4px 36px 6px 0;
+  font-size: 21px;
+  font-weight: 650;
+}
+
+.producer-home .co-detail h3 {
+  margin: 22px 0 8px;
+  color: var(--ph-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.co-detail-lead {
+  margin: 0;
+  font-size: 15px;
+}
+
+.co-detail-trust {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.co-detail-fresh {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.co-detail-fresh .fr-shelf {
+  flex: 1;
+}
+
+.co-detail-facts {
+  margin: 16px 0 0;
+}
+
+.co-detail-facts div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--ph-line);
+  font-size: 13.5px;
+}
+
+.co-detail-facts dt {
+  color: var(--ph-muted);
+}
+
+.co-detail-facts dd {
+  margin: 0;
+}
+
+.co-detail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-detail-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 8px 0;
+  border-top: 1px solid var(--ph-line);
+  font-size: 13.5px;
+}
+
+.co-detail-list li > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+@keyframes co-detail-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes co-detail-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .co-detail,
+  .co-detail-backdrop {
+    animation: none;
+  }
+}

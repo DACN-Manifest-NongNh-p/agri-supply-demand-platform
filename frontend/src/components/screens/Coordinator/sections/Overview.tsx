@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { deliveryStatus, etaText } from "../../Producer/data/deliveries";
 import { formatDayInText, formatKg } from "../../Producer/data/format";
 import { RULES } from "@/lib/site";
+import { RiskBadge, ShelfLifeBar } from "@/components/freshness/ShelfLifeBar";
+import { useCoordinator } from "../data/coordinatorContext";
 import { BALANCE_WINDOWS, type BoardRow, type ProductBalance, type UnsoldBatch, type UnsoldReason } from "../data/market";
 import type { MarketDelivery } from "../data/mockCoordinator";
 
@@ -103,6 +105,7 @@ function ReasonTag({ reason }: { reason: UnsoldReason }) {
 
 function UnsoldRow({ item }: { item: UnsoldBatch }) {
   const { batch, openKg } = item;
+  const { excursions } = useCoordinator();
   return (
     <li key={batch.code}>
       <Link to={item.to}>
@@ -114,6 +117,10 @@ function UnsoldRow({ item }: { item: UnsoldBatch }) {
         </span>
         <span className="ph-muted">
           {batch.producer} · <span className={batch.sellByDay <= 1 ? "co-low" : undefined}>{sellsBy(batch.sellByDay)}</span>
+        </span>
+        <span className="co-unsold-fresh">
+          <ShelfLifeBar batch={batch} compact />
+          <RiskBadge batch={{ ...batch, openKg }} excursion={excursions[batch.code]} />
         </span>
         <ReasonTag reason={item.reason} />
       </Link>

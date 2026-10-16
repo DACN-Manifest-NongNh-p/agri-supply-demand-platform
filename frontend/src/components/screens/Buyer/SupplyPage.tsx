@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { SupplyTabs } from "./sections/SupplyTabs";
 import { ArrowLeft, MapPin, Search, Sprout, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MatchScore } from "../Producer/sections/MatchScore";
@@ -89,6 +90,8 @@ export default function SupplyPage() {
           </p>
         </div>
       </section>
+
+      <SupplyTabs />
 
       <section className="ph-card bu-filters" aria-label="Filters">
         <form className="bu-search" role="search" onSubmit={(event) => event.preventDefault()}>

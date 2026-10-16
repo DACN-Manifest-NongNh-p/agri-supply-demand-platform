@@ -1,0 +1,691 @@
+/* Pre-harvest auctions, shared by the producer and buyer areas (--ph-* tokens from each area). */
+
+.au-muted {
+  color: var(--ph-muted);
+}
+
+.au-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.au-status--live {
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+}
+
+.au-status--closing {
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+}
+
+.au-status .ord-timer {
+  font-weight: 600;
+}
+
+.au-status--live svg {
+  color: var(--ph-muted);
+}
+
+.au-status--closed {
+  color: var(--ph-muted);
+  background: var(--ph-subtle);
+}
+
+.au-status--review {
+  color: #7a520c;
+  background: #fbefd2;
+}
+
+
+/* List */
+.au-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 14px 18px;
+  border: 1px solid var(--ph-line);
+  border-radius: 14px;
+  color: inherit;
+  background: var(--ph-card);
+  text-decoration: none;
+}
+
+.au-row:hover {
+  border-color: var(--ph-line-strong);
+}
+
+.au-row strong {
+  font-weight: 600;
+}
+
+.au-row-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.au-row-main strong {
+  font-size: 15px;
+}
+
+.au-row small {
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+/* Detail */
+.au-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.au-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 14px 0 0;
+}
+
+.au-facts dt {
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.au-facts dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.au-farming {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-farming li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+  font-size: 12.5px;
+}
+
+.au-confidence {
+  display: flex;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--ph-line);
+  border-radius: 12px;
+}
+
+.au-confidence-score {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.au-confidence-score strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.au-confidence-score small {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.au-confidence--high .au-confidence-score {
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+}
+
+.au-confidence--medium .au-confidence-score {
+  color: #7a520c;
+  background: #fbefd2;
+}
+
+.au-confidence--low .au-confidence-score {
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+}
+
+.au-confidence-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.au-confidence ul {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--ph-ink);
+  font-size: 13px;
+}
+
+.au-confidence-note {
+  margin: 8px 0 0;
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+/* Bid panel */
+.au-bid-panel {
+  position: sticky;
+  top: 90px;
+}
+
+.au-current {
+  margin: 10px 0 2px;
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.au-current small {
+  color: var(--ph-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.au-lead {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.au-lead.is-you {
+  color: var(--ph-green-dark);
+  font-weight: 600;
+}
+
+.au-lead.is-outbid {
+  color: var(--ph-red);
+  font-weight: 600;
+}
+
+.au-bid-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.au-bid-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 10px;
+  color: var(--ph-ink);
+  background: var(--ph-card);
+  font: inherit;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.au-quick {
+  display: flex;
+  gap: 6px;
+}
+
+.au-quick .ph-btn {
+  flex: 1;
+  justify-content: center;
+}
+
+.au-bid-form .ph-btn--primary {
+  justify-content: center;
+  min-height: 44px;
+}
+
+.au-message {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.au-message--error {
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+}
+
+.au-message--ok {
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+}
+
+.au-bids {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-bids li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 70px;
+  gap: 10px;
+  padding: 7px 0;
+  border-top: 1px solid var(--ph-line);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  animation: au-in 300ms ease-out;
+}
+
+.au-bids li.is-leading strong {
+  color: var(--ph-green-dark);
+}
+
+.au-bids small {
+  color: var(--ph-muted);
+  text-align: right;
+}
+
+@keyframes au-in {
+  from {
+    background: var(--ph-green-soft);
+  }
+}
+
+.au-result {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--ph-subtle);
+  font-size: 13.5px;
+}
+
+.au-result strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 15px;
+}
+
+.au-result.is-won {
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+}
+
+@media (max-width: 900px) {
+  .au-detail,
+  .au-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .au-bid-panel {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au-bids li {
+    animation: none;
+  }
+}
+
+/* Headings and producer-side blocks */
+.producer-home .au-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 18px 0 8px;
+  color: var(--ph-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.producer-home .au-title {
+  margin: 6px 0 2px;
+  font-size: 24px;
+}
+
+.au-batch {
+  margin-top: 16px;
+}
+
+.au-batch-lead {
+  margin: 4px 0 12px;
+  color: var(--ph-muted);
+  font-size: 13.5px;
+}
+
+.au-batch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.au-open-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.au-open-form label,
+.au-harvest label {
+  display: grid;
+  gap: 4px;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.au-open-form :is(input, select),
+.au-harvest :is(input, select) {
+  padding: 8px 10px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 8px;
+  color: var(--ph-ink);
+  background: var(--ph-card);
+  font: inherit;
+  font-size: 14px;
+}
+
+.au-open-confidence {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+.au-open-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 12px;
+}
+
+.au-producer {
+  scroll-margin-top: 90px;
+}
+
+.au-producer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.producer-home .au-producer-head h2 {
+  margin: 4px 0 2px;
+  font-size: 18px;
+}
+
+.au-producer-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.au-producer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.au-harvest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (max-width: 900px) {
+  .au-producer-body,
+  .au-open-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Live feel: timer, flash, sparkline, outbid ---------- */
+.au-timer {
+  margin: 12px 0 4px;
+}
+
+.au-timer-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.au-timer-top .ord-timer {
+  color: var(--ph-ink);
+  font-size: 22px;
+}
+
+.au-timer.is-ending .au-timer-top span,
+.au-timer.is-ending .ord-timer {
+  color: var(--ph-red);
+  font-weight: 700;
+}
+
+.au-timer-bar {
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ph-line);
+}
+
+.au-timer-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ph-green);
+  transition: width 1s linear;
+}
+
+.au-timer.is-ending .au-timer-bar > span {
+  background: var(--ph-red);
+}
+
+/* The price flashes each time a new bid lands (the element is re-keyed by the bid count). */
+.au-current-value {
+  display: inline-block;
+  border-radius: 8px;
+  animation: au-flash 900ms ease-out;
+}
+
+@keyframes au-flash {
+  0% {
+    color: var(--ph-green-dark);
+    background: var(--ph-green-soft);
+    transform: scale(1.04);
+  }
+  100% {
+    background: transparent;
+    transform: scale(1);
+  }
+}
+
+.au-raise {
+  margin: 4px 0 0;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.au-raise.is-fresh {
+  color: var(--ph-green-dark);
+  font-weight: 600;
+}
+
+.au-spark {
+  display: block;
+  overflow: visible;
+}
+
+.au-spark-line {
+  fill: none;
+  stroke: var(--ph-green);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.au-spark-fill {
+  fill: var(--ph-green-soft);
+  stroke: none;
+}
+
+.au-spark-dot {
+  fill: var(--ph-green);
+  stroke: var(--ph-card, #fff);
+  stroke-width: 2;
+}
+
+.au-outbid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.au-leading {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ---------- Auction cards (buyer list) ---------- */
+.au-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--ph-line);
+  border-radius: 16px;
+  color: inherit;
+  background: var(--ph-card);
+  text-decoration: none;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+
+.au-card:hover {
+  border-color: var(--ph-line-strong);
+  transform: translateY(-2px);
+}
+
+.au-card.is-ending {
+  border-color: rgba(191, 58, 43, 0.45);
+}
+
+.au-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.au-card h3 {
+  margin: 8px 0 0;
+  color: var(--ph-ink);
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.au-card-meta {
+  margin: 0;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.au-card-price {
+  margin: 12px 0 0;
+  color: var(--ph-ink);
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.au-card-price small {
+  color: var(--ph-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.au-card .au-spark {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.au-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  color: var(--ph-muted);
+  font-size: 12.5px;
+}
+
+.au-card-foot .is-you {
+  color: var(--ph-green-dark);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au-current-value,
+  .au-card,
+  .au-timer-bar > span {
+    animation: none;
+    transition: none;
+  }
+}

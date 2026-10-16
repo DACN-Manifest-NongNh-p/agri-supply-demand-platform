@@ -9,6 +9,10 @@ import java.math.BigDecimal;
 public enum PlatformRule {
     AUTO_MATCH_MIN_SCORE("autoMatchMinScore", "Auto-match score", "%",
             "Matches scoring at least this are held automatically; lower ones wait for a coordinator.", 75, 50, 100),
+    LOCK_MINUTES("lockMinutes", "Checkout lock", "min",
+            "Minutes a buyer has to pay the deposit after picking a batch; then the kilograms go back on the market.", 15, 1, 120),
+    DEPOSIT_PERCENT("depositPercent", "Deposit", "%",
+            "Share of the order value a buyer pays up front to confirm an order; the rest is paid on delivery.", 50, 10, 100),
     SIGN_OFF_KG("signOffKg", "Sign-off quantity", "kg",
             "Holds of this many kilograms or more need a coordinator's approval.", 3000, 100, 100000),
     HOLD_HOURS("holdHours", "Hold length", "h",

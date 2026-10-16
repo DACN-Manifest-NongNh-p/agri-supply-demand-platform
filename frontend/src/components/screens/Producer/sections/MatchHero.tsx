@@ -12,11 +12,13 @@ const MORE_COUNT = 3;
 type Props = {
   matches: MatchResult[];
   offers: Record<string, string>;
+  /** The buyer's answer to each offer, by demand id. */
+  answers: Record<string, "confirmed" | "declined">;
   onOffer: (demandId: string, batchCode: string) => void;
 };
 
 /** The centrepiece of the producer home: system-generated matches, best one featured. */
-export function MatchHero({ matches, offers, onOffer }: Props) {
+export function MatchHero({ matches, offers, answers, onOffer }: Props) {
   const { batches } = useProducer();
   const matched = matches.filter((match) => match.best);
   const unsold = batchesWithoutBuyer(demands, batches).length;
@@ -41,7 +43,7 @@ export function MatchHero({ matches, offers, onOffer }: Props) {
 
       {featured?.best ? (
         <div className="ph-match-hero-body">
-          <FeaturedMatch match={featured} offered={offers[featured.demand.id]} onOffer={onOffer} />
+          <FeaturedMatch match={featured} offered={offers[featured.demand.id]} answers={answers} onOffer={onOffer} />
 
           <aside className="ph-match-more" aria-label="More matches">
             <p className="ph-match-more-title">More matches</p>
@@ -79,7 +81,7 @@ export function MatchHero({ matches, offers, onOffer }: Props) {
   );
 }
 
-function FeaturedMatch({ match, offered, onOffer }: { match: MatchResult; offered?: string; onOffer: Props["onOffer"] }) {
+function FeaturedMatch({ match, offered, answers, onOffer }: { match: MatchResult; offered?: string; answers: Props["answers"]; onOffer: Props["onOffer"] }) {
   const { demand, best } = match;
   if (!best) return null;
   const batch = best.batch;
@@ -131,7 +133,10 @@ function FeaturedMatch({ match, offered, onOffer }: { match: MatchResult; offere
 
       <div className="ph-featured-actions">
         {offered ? (
-          <span className="ph-offered"><CircleCheck size={16} /> Offered {offered} · waiting for {demand.buyer}</span>
+          <span className="ph-offered">
+            <CircleCheck size={16} /> {answers[demand.id] === "confirmed" ? `${demand.buyer} accepted ${offered}` : `Offered ${offered} · waiting for ${demand.buyer}`} ·{" "}
+            <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+          </span>
         ) : (
           <button type="button" className="ph-btn ph-btn--primary ph-btn--large" onClick={() => onOffer(demand.id, batch.code)}>
             Offer {batch.code} to {demand.buyer}

@@ -9,7 +9,7 @@ import { producerProfile } from "../../Buyer/data/producers";
 import type { SupplyBatch } from "../../Buyer/data/mockBuyer";
 import type { MarketAllocation, MarketDemand } from "./mockCoordinator";
 
-const UNAVAILABLE: SupplyBatch["status"][] = ["in_transit", "delivered"];
+export const UNAVAILABLE: SupplyBatch["status"][] = ["in_transit", "delivered"];
 
 // Thresholds come from the operating rules an admin sets (RULES, src/lib/site.ts):
 // autoMatchMinScore (below it the system does not commit on its own), signOffKg (holds this large

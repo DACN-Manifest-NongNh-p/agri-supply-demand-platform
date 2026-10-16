@@ -9,7 +9,7 @@ export type AlertTone = "urgent" | "warning" | "info";
 
 export type BuyerAlert = {
   id: string;
-  kind: "short" | "waiting" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue";
+  kind: "short" | "waiting" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue" | "offer" | "confirmed" | "lock_expired";
   tone: AlertTone;
   /** One plain sentence: what is wrong. */
   title: string;
@@ -72,7 +72,19 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
   for (const allocation of allocations) {
     const batch = supply.find((item) => item.code === allocation.batchCode);
     const demand = demandOf(allocation.demandId);
-    const open = allocation.stage === "held" || allocation.stage === "allocated";
+    const open = allocation.stage === "held" || allocation.stage === "confirmed";
+
+    // A producer offered a batch to one of your demands: your answer is needed.
+    if (allocation.stage === "offered") {
+      alerts.push({
+        id: `offer-${allocation.id}`,
+        kind: "offer",
+        tone: "warning",
+        title: `${allocation.producer} offered ${formatKg(allocation.kg)} for ${allocation.demandId}`,
+        detail: `${allocation.batchCode} · expires in ${allocation.offerHoursLeft ?? "–"} h. Accept and pay the deposit to confirm the order.`,
+        link: { label: "Review offer", to: `/buyer/orders?tab=offered#order-${allocation.id}` },
+      });
+    }
 
     if (batch?.issue && open) {
       alerts.push({

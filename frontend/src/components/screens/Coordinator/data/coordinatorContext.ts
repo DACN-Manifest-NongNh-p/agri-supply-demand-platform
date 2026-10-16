@@ -3,12 +3,24 @@ import type { SupplyBatch } from "../../Buyer/data/mockBuyer";
 import type { BoardRow } from "./market";
 import type { HelpRequest, MarketAllocation, MarketDemand } from "./mockCoordinator";
 import type { QueueItem } from "./queue";
+import type { SpoilageItem } from "@/components/freshness/useSpoilageAlerts";
+import type { Proposal, RescueDecision, RescueEdit } from "./rescue";
 
 export type Resolution = { note: string };
 export type DeliveryUpdate = { text: string; time: string };
 
 /** State shared by every /coordinator page, owned by CoordinatorLayout. */
 export type CoordinatorState = {
+  /** Temperature excursions reported per batch code (they raise the spoilage risk). */
+  excursions: Record<string, string>;
+  /** Unsold batches watched for spoilage risk. */
+  spoilageItems: SpoilageItem[];
+  /** Rescue and redistribution proposals still waiting for a decision. */
+  proposals: Proposal[];
+  rescueDecisions: Record<string, RescueDecision>;
+  /** Carries out a proposal as the coordinator edited it: holds for a combine, a sale and a transport request otherwise. */
+  approveRescue: (proposal: Proposal, edit: RescueEdit) => void;
+  rejectRescue: (proposal: Proposal, reason: string) => void;
   demands: MarketDemand[];
   market: SupplyBatch[];
   /** Includes the holds the matching engine made on its own (`matchedBy: "system"`). */

@@ -29,7 +29,7 @@ export default function SupplyDetailPage() {
 
   const open = openOf(batch);
   const name = `${batch.code}, ${batch.product} ${batch.variety}`;
-  const yours = allocations.filter((allocation) => allocation.batchCode === batch.code);
+  const yours = allocations.filter((allocation) => allocation.batchCode === batch.code && allocation.stage !== "declined");
   const fits = demands
     .filter((demand) => demand.product === batch.product)
     .map((demand) => {
@@ -91,7 +91,7 @@ export default function SupplyDetailPage() {
             </button>
             <span className="ph-muted">
               {open === 0
-                ? "Fully allocated; nothing left to reserve."
+                ? "Fully taken; nothing left to reserve."
                 : canReserve
                   ? "Held for 24 hours while the producer confirms."
                   : `None of your open ${batch.product.toLowerCase()} demands fits this batch.`}

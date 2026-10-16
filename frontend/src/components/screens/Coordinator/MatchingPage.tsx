@@ -16,6 +16,8 @@ import {
   type UnsoldBatch,
 } from "./data/market";
 import { useCoordinator } from "./data/coordinatorContext";
+import { DetailLink } from "./sections/DetailDrawer";
+import { RiskBadge, ShelfLifeBar } from "@/components/freshness/ShelfLifeBar";
 
 type Tab = "decide" | "gaps" | "holds";
 
@@ -36,9 +38,11 @@ function MatchCard({ row, rivals, focused }: { row: BoardRow; rivals: BoardRow[]
       <div className="co-match-pair">
         <div className="co-match-side">
           <p className="co-kicker">
-            Demand {demand.id} · needed by {formatDayInText(demand.neededByDay)}
+            Demand <DetailLink kind="demand" id={demand.id}>{demand.id}</DetailLink> · needed by {formatDayInText(demand.neededByDay)}
           </p>
-          <h3>{demand.buyer}</h3>
+          <h3>
+            <DetailLink kind="demand" id={demand.id}>{demand.buyer}</DetailLink>
+          </h3>
           <p className="co-match-qty">
             {formatKg(fulfilment.openKg)} {demand.product.toLowerCase()} <span className="ph-muted">open of {formatKg(demand.quantityKg)} · {demand.gradeWanted}</span>
           </p>
@@ -52,9 +56,12 @@ function MatchCard({ row, rivals, focused }: { row: BoardRow; rivals: BoardRow[]
 
         <div className="co-match-side">
           <p className="co-kicker">
-            {candidate === row.best ? "Proposed" : "Chosen"} batch {batch.code} · {batch.readyDay <= 0 ? "ready now" : `ready ${formatDayInText(batch.readyDay)}`}
+            {candidate === row.best ? "Proposed" : "Chosen"} batch <DetailLink kind="batch" id={batch.code}>{batch.code}</DetailLink> ·{" "}
+            {batch.readyDay <= 0 ? "ready now" : `ready ${formatDayInText(batch.readyDay)}`}
           </p>
-          <h3>{batch.producer}</h3>
+          <h3>
+            <DetailLink kind="batch" id={batch.code}>{batch.producer}</DetailLink>
+          </h3>
           <p className="co-match-qty">
             {formatKg(openOf(batch))} {batch.variety} <span className="ph-muted">open · grade {batch.grade} · sells by {formatDay(batch.sellByDay)}</span>
           </p>
@@ -114,7 +121,7 @@ function MatchCard({ row, rivals, focused }: { row: BoardRow; rivals: BoardRow[]
           {[row.best!, ...row.alternatives].map((item) => (
             <li key={item.batch.code}>
               <span>
-                {item.batch.code} · {item.batch.producer}
+                <DetailLink kind="batch" id={item.batch.code}>{item.batch.code}</DetailLink> · {item.batch.producer}
                 <span className="ph-muted"> · grade {item.batch.grade}, {formatKg(openOf(item.batch))} open</span>
               </span>
               <MatchScore score={item.score} />
@@ -142,16 +149,21 @@ function sellsBy(day: number) {
 /** One unsold batch: what it is, how long it can still be sold, and why nobody has bought it. */
 function UnsoldGapRow({ item }: { item: UnsoldBatch }) {
   const { batch, openKg, reason } = item;
+  const { excursions } = useCoordinator();
   return (
     <li id={`batch-${batch.code}`}>
       <p className="co-gap-head">
         <span>
-          {batch.code} · {batch.producer}
+          <DetailLink kind="batch" id={batch.code}>{batch.code}</DetailLink> · {batch.producer}
         </span>
         <span>{formatKg(openKg)}</span>
       </p>
       <p className="ph-muted">
         {batch.product} {batch.variety}, grade {batch.grade} · <span className={batch.sellByDay <= 1 ? "co-low" : undefined}>{sellsBy(batch.sellByDay)}</span>
+      </p>
+      <p className="co-unsold-fresh">
+        <ShelfLifeBar batch={batch} compact />
+        <RiskBadge batch={{ ...batch, openKg }} excursion={excursions[batch.code]} />
       </p>
       {reason.kind === "no_demand" ? (
         <p className="co-gap-reason">{reason.text}</p>
@@ -192,7 +204,9 @@ function Gaps({ rows }: { rows: BoardRow[] }) {
             {missing.map(({ demand, fulfilment, reason }) => (
               <li key={demand.id} id={`demand-${demand.id}`}>
                 <p className="co-gap-head">
-                  <span>{demand.id} · {demand.buyer}</span>
+                  <span>
+                    <DetailLink kind="demand" id={demand.id}>{demand.id}</DetailLink> · {demand.buyer}
+                  </span>
                   <span>{formatKg(fulfilment.openKg)} {demand.product.toLowerCase()}</span>
                 </p>
                 <p className="ph-muted">
@@ -293,10 +307,12 @@ function Holds() {
                 const hours = allocation.holdHoursLeft ?? 0;
                 return (
                   <tr key={allocation.id}>
-                    <td>{allocation.batchCode}</td>
+                    <td>
+                      <DetailLink kind="batch" id={allocation.batchCode}>{allocation.batchCode}</DetailLink>
+                    </td>
                     <td>{allocation.producer}</td>
                     <td>
-                      {allocation.demandId}
+                      <DetailLink kind="demand" id={allocation.demandId}>{allocation.demandId}</DetailLink>
                       <span className="ph-muted"> · {demand?.buyer}</span>
                     </td>
                     <td>

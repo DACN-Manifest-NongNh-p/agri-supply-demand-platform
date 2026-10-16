@@ -94,6 +94,7 @@ flowchart TD
 | `/coordinator/matching` | Matching | Tabs **Needs your decision**, **Gaps**, **Holds** (`?tab=gaps`, `?tab=holds`; `?demand=D-xxx` highlights one demand) |
 | `/coordinator/requests` | Requests | Open and resolved requests from producers, buyers and carriers |
 | `/coordinator/deliveries` | Deliveries | All shipments on the platform, filterable by status; opens on **Issues** when there are any |
+| `/coordinator/rescue` | Rescue | System proposals for batches at risk and for big demands no single batch covers: approve, edit or reject (human in the loop) |
 | `/coordinator/deliveries/:id` | Delivery detail | Route map, live Cold chain block in the panel, ETA, carrier, driver and dispatch desk, timeline, proof, updates to both sides |
 
 The sidebar shows a count next to Matching (exceptions to decide), Requests (unresolved) and Deliveries (stuck shipments). A **bell** next to the brand holds the same Needs action items as notifications, so they are one click away from every page (`components/notifications/NotificationBell.tsx`, shared with the buyer and logistics areas). It has a light and dark theme, remembered per browser.
@@ -141,6 +142,54 @@ Resolving one requires a note of what was done; the note is sent to whoever rais
 
 Only the coordinator sees the driver, the vehicle plate and the carrier's dispatch desk number. On a delivery the coordinator can post an update, which is sent to both the producer and the buyer as a notification, for example a revised ETA after a breakdown. Sending an update clears the delivery from the Needs action list.
 
+## Shelf life and spoilage risk
+
+Batches are managed by **time left**, not as static stock (`components/freshness/`, shared by producer and coordinator).
+
+- **Shelf-life bar** (`ShelfLifeBar`). It covers harvest (06:00 on the harvest day) to the end of the sell-by day, and shrinks as time passes, refreshed every 30 s.
+  - Colour: green above 50 % left, amber 20–50 %, red below 20 %.
+  - The time left is shown as text ("2 d 14 h left", "9 h 20 m left"); the exact sell-by time is in the tooltip.
+- **Spoilage risk index** (`spoilageRisk`, 0–100). A transparent rule-based score, recomputed every 15 s and whenever the data changes. It adds up:
+  - how much of the shelf life is used (up to 60);
+  - the unsold share (up to 25, weighted more once a third of the shelf life is gone);
+  - a cold-chain product (+6);
+  - a reported temperature excursion (+45).
+
+  Levels: *Low* below 40, *Watch* 40–69, *High* from 70. The badge's tooltip lists why. A trained model could replace the function later without changing the screens.
+- **Instant alerts** (`useSpoilageAlerts`, `RiskToasts`). When an unsold batch reaches *High*, an alert appears at once, with no reload needed:
+  - a floating card in the top-right corner (up to three at a time), with what, how much is unsold, the time left and the main reason, plus an action;
+  - the same alert under the bell.
+
+  Dismissing the card keeps the alert under the bell.
+
+**Demo behaviour.** There are no real sensors or push server. About 20 s after the area opens, a simulated cold-room reading ("cold room read 11 °C for 40 min") is reported for the unsold cold-chain batch closest to its sell-by date. That pushes its risk over 70, so the alert pops up live. With a backend this would be a WebSocket or server-sent events stream fed by the risk job and the sensors.
+
+Where the coordinator sees it: **Overview → Unsold supply** and **Matching → Gaps** (bar and badge on every unsold batch). Alerts float over every coordinator page, and appear first under the bell; *Find a buyer* opens the batch in Gaps.
+
+## Rescue and redistribution (human in the loop)
+
+`/coordinator/rescue` (`RescuePage`, proposals in `data/rescue.ts`; the sidebar count is the number waiting). The matching engine analyses in the background and **proposes**; the coordinator **decides**. Nothing is allocated and no transport request goes out until the coordinator approves.
+
+| Proposal | Raised when | Approving it |
+| --- | --- | --- |
+| **Sell to processor** | A batch has spoilage risk 40 or more, or sells within 3 days with no demand that would take it. A processing plant accepts the product and grade (Tan Thanh juice and purée, Nafoods frozen and dried, Vinamit freeze-dried). The best price wins. | Takes the kilograms off the market as a sale. A transport request (`TO-…`) goes to the carrier: refrigerated for cold-chain products. |
+| **Rescue channel** | Same, when no processor fits (the Farmora rescue market, about 60 % of market price) | Same, to the rescue channel |
+| **Combine supply** | An open demand of 1.5 t or more that no single eligible batch covers, but two to four together cover at least 60 % | One hold per batch, so each farm confirms its part as usual |
+
+Proposals are laid out like requests, one per row in a single card:
+
+- a small line with the kind, batch and producer, and why now (risk score, shelf life left, main reason);
+- one sentence saying what to do;
+- one sentence with the price, the value recovered (and its share of market value), the pickup and the main check. For a combine, it lists the batches and kilograms.
+
+**Approve** carries the proposal out. **Edit** changes the partner (any accepting processor or the rescue channel, with their prices) or the kilograms per batch, then *Approve as edited*. **Reject** asks why: price too low, quality not suitable, the producer prefers to wait, handled outside Farmora, or a note.
+
+Decisions are listed under *Decided today*, with who decided, when and what happened (for example "Transport request TO-4821 sent to Delta Cold Chain, pickup tomorrow").
+
+The spoilage alerts and the Spoilage watch on the overview link straight to the batch's proposal (*See rescue options*).
+
+**Demo behaviour.** Partners and prices are mock data. The transport request is shown here, but it does not appear in the logistics area, because the areas do not share state.
+
 ## Code map
 
 | Path | Purpose |
@@ -150,6 +199,7 @@ Only the coordinator sees the driver, the vehicle plate and the carrier's dispat
 | `data/mockCoordinator.ts` | Coordinator, combined market, demands, allocations, deliveries, requests |
 | `data/market.ts` | Exception rules, auto-matching, match board, contested batches, supply without a buyer, unsold supply selling soon, supply vs demand |
 | `data/queue.ts` | Builds the Needs action list, detects delivery incidents |
+| `RescuePage.tsx`, `data/rescue.ts` | Rescue proposals, partners (processors, rescue channel), approve / edit / reject |
 | `data/places.ts` | Approximate map positions for farm areas and buyer cities |
 | `sections/HubMap.tsx` | Overview map |
 | `sections/QueueList.tsx` | Needs action list on the overview |

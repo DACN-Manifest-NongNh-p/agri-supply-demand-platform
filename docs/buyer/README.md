@@ -14,11 +14,13 @@ Matching is the platform's core feature. Buyers do not search for producers and 
 
 1. The buyer **posts a demand** (product, quantity, accepted grade, needed-by date).
 2. Farmora **matches** the open quantity against every declared producer batch, with the same rules and score the producer sees (see [producer docs](../producer/README.md#matching)).
-3. The buyer **reserves** kilograms from a suggested batch. A reservation is a **hold**: the producer has 24 hours to confirm it.
-4. The producer **confirms** and the quantity becomes **allocated**.
-5. The batch is **shipped**; the buyer follows the delivery and checks the goods on arrival.
+3. An **order** starts one of two ways:
+   - the buyer **picks** kilograms from a suggested batch. They are **locked** for 15 minutes with a live countdown, so nobody else can take them, while the buyer **pays a 50% deposit**. Paying places the order, which becomes a hold: the producer has 24 hours to confirm. If the lock runs out first, the kilograms go straight back on the market;
+   - a producer **offers** one of their batches to the demand. The buyer accepts by paying the deposit, or declines.
+4. Once **both sides agree** (the producer confirms the hold, or the buyer accepts the offer), the order is **confirmed**. Only confirmed kilograms count as covered.
+5. Only a confirmed order is **shipped**. The buyer follows the delivery and checks the goods on arrival.
 
-A demand can be covered by several batches from different producers. When no batch fits, the buyer can ask a coordinator to look for supply.
+A demand can be covered by several orders from different producers. When no batch fits, the buyer can ask a coordinator to look for supply.
 
 ```mermaid
 flowchart LR
@@ -26,29 +28,39 @@ flowchart LR
     Batch["Declared producer batches"] --> Match
     Match -- "fits" --> Suggest["Suggested supply<br/>(score + criteria)"]
     Match -- "nothing fits" --> Ask["Ask a coordinator"]
-    Suggest -- "Reserve kg" --> Hold["Hold (24 h)"]
-    Hold -- "producer confirms" --> Allocated["Allocated"]
+    Suggest -- "Pick kg" --> Lock["Locked for you (15 min countdown)"]
+    Lock -- "pay 50% deposit" --> Hold["Waiting for producer (24 h)"]
+    Lock -- "timer runs out / release" --> Market
+    Offer["Producer offers a batch"] --> Review["Offer to review"]
+    Hold -- "producer confirms" --> Confirmed["Confirmed (both agreed)"]
+    Review -- "accept + pay deposit" --> Confirmed
+    Review -- "buyer declines" --> Declined["Declined"]
     Hold -- "released / expired" --> Market["Back to the market"]
-    Allocated --> Ship["Delivery"]
+    Confirmed --> Ship["Delivery"]
     Ship --> Done["Delivered + proof of delivery"]
     Ship -. "problem" .-> Coord["Coordinator"]
 ```
 
 ## Pages
 
+The top bar has three entries: **Home**, **My demands** and **Find supply**, plus the **cart** and the bell.
+
+- *Find supply* has two tabs: **Ready now** (`/buyer/supply`) and **Pre-harvest auctions** (`/buyer/auctions`, with the number of live auctions). The entry stays highlighted on both.
+- **Deliveries** is a tab of the cart (`/buyer/orders?tab=deliveries`; the old `/buyer/deliveries` redirects there). It is also reached from *On the way to you* on Home, *Track* on an order, and delivery alerts.
+
 | Route | Page | Purpose |
 | --- | --- | --- |
 | `/buyer` | Home | Matching band (most urgent demand with its best batch), deliveries on the way, this week, on the market, company card, demand pipeline. Alerts are under the bell in the top bar |
 | `/buyer/demands` | My demands | All demands with how much is sourced; post a new demand |
 | `/buyer/demands/new` | Post a demand | Product, quantity and grade; needed-by date; which delivery point receives it; live count of batches that fit |
-| `/buyer/demands/:id` | Demand detail | Where the supply comes from, suggested batches, batches that do not fit |
+| `/buyer/demands/:id` | Demand detail | Orders for this demand (offers first, with Accept / Decline), suggested batches, batches that do not fit |
 | `/buyer/company` | Company | Company details and delivery points (add, edit, remove, make default) |
 | `/buyer/supply` | Find supply | Market of declared batches with filters; batches that fit an open demand first |
 | `/buyer/supply/:code` | Batch detail | Photos, batch facts, how it fits each open demand, producer track record, reserve |
-| `/buyer/deliveries` | Deliveries | All shipments to the buyer, filtered by in transit / delivered / issues |
+| `/buyer/orders` | Cart | Opened from the **cart icon** next to the username. Tabs: On hold (default), Offers, Confirmed, On the way, Delivered, Declined; each order with its lifecycle |
 | `/buyer/deliveries/:id` | Delivery detail | Route map, live Cold chain block, timeline, proof of delivery, report a problem |
 
-Query strings used by links: `/buyer/demands?status=partial` pre-filters by stage, `/buyer/supply?product=Mango` pre-selects a product, `/buyer/company?add=1` opens the new delivery point form, and `?returnTo=/buyer/demands/new` brings the buyer back to the demand they were posting. The old `/buyer/demands?new=1` link redirects to `/buyer/demands/new`.
+Query strings used by links: `/buyer/demands?status=partial` pre-filters by stage, `/buyer/orders?tab=offered` opens a cart tab (and `#order-A-7` opens the tab of that order and scrolls to it), `/buyer/supply?product=Mango` pre-selects a product, `/buyer/company?add=1` opens the new delivery point form, and `?returnTo=/buyer/demands/new` brings the buyer back to the demand they were posting. The old `/buyer/demands?new=1` link redirects to `/buyer/demands/new`.
 
 ```mermaid
 flowchart TB
@@ -108,10 +120,10 @@ The summary shows the demand as filled in so far and how many batches already fi
 
 | Status | Label | Rule |
 | --- | --- | --- |
-| `new` | New | Nothing reserved or allocated, posted today |
-| `sourcing` | Sourcing | Only holds, or posted before today with nothing allocated |
-| `partial` | Partly covered | Some quantity allocated, not all |
-| `fulfilled` | Fully covered | Allocated quantity ≥ demanded quantity |
+| `new` | New | Nothing reserved or confirmed, posted today |
+| `sourcing` | Sourcing | Only holds, or posted before today with nothing confirmed |
+| `partial` | Partly covered | Some quantity confirmed, not all |
+| `fulfilled` | Fully covered | Confirmed quantity ≥ demanded quantity |
 | `completed` | Completed | Delivered quantity ≥ demanded quantity |
 
 ```mermaid
@@ -119,19 +131,19 @@ stateDiagram-v2
     [*] --> New: Post demand
     New --> Sourcing: Reserve a batch / a day passes
     Sourcing --> Partial: Producer confirms part
-    Partial --> Fulfilled: Rest allocated
-    Sourcing --> Fulfilled: All allocated
+    Partial --> Fulfilled: Rest confirmed
+    Sourcing --> Fulfilled: All confirmed
     Fulfilled --> Completed: All delivered
     Completed --> [*]
 ```
 
-**Open quantity** = demanded − allocated − held. It is what suggestions try to cover; a demand "needs supply" while its open quantity is above 0.
+**Open quantity** = demanded − confirmed − held (offers do not count until accepted). It is what suggestions try to cover; a demand "needs supply" while its open quantity is above 0.
 
 The **My demands** list has four tabs: *All*, *Needs supply* (new, sourcing and partly covered), *Fully covered*, *Completed*. Open demands come first, soonest deadline first. A pipeline link to a single stage shows as an *Only {stage}* chip that can be cleared.
 
 **Demand detail** shows:
 
-- the demand with a fulfilment bar (allocated, held, open);
+- the demand with a fulfilment bar (confirmed, reserved, open);
 - **Where your supply comes from**: one row per allocation (batch, producer, kg, stage); holds show the hours left and can be **released** back to the market;
 - **Suggested supply**: eligible batches best first, each with score, criteria chips, *See why* (criterion-by-criterion reasons) and *Reserve*;
 - batches of the same product that were considered but fail a hard rule, with the rule;
@@ -143,19 +155,99 @@ The **My demands** list has four tabs: *All*, *Needs supply* (new, sourcing and 
 
 **Batch detail** (`SupplyDetailPage`) shows the producer's photos (gallery + full-screen viewer), open kg of total, any issue the producer reported, harvest / ready / sell-by / plot, how the batch scores against each open demand of the same product, what is already reserved from it, other batches from the same producer, and the producer card.
 
-**Reserving** (`ReserveDialog`, or the inline control on Home and demand detail): pick the demand, then the quantity, at most min(open kg of the batch, open kg of the demand). Only demands the batch is eligible for can be picked. Reserving creates a hold and takes the kilograms off the market at once. A popup confirms it right away (`ReservedNotice`, or the done step of `ReserveDialog`): how much, for which demand, from which batch and producer, the steps *Reserved → Producer confirms → Allocated*, **View order** (opens the demand at *Where your supply comes from*), **Keep browsing**, and **Undo this reservation** while the hold is unconfirmed.
+**Picking and locking** (`ReserveDialog` in Find supply, or the inline control on Home and demand detail): pick the demand, then the quantity, at most min(open kg of the batch, open kg of the demand). Only demands the batch is eligible for can be picked.
+
+**Checkout lock and deposit.** Picking locks the kilograms for **15 minutes** (operating rule `lockMinutes`, editable by the admin, 1–120). This prevents overbooking: the kilograms leave the market at once, so two buyers cannot take the same quantity.
+
+The lock is the time to **pay the deposit**: by default **50 %** of the order value, from the operating rule `depositPercent` (10–100). The popup (`ReservedNotice` with `sections/DepositPayment.tsx`) shows:
+
+- a **live mm:ss countdown**, red in the last two minutes;
+- the order value (kg × price per kg), the **deposit due now** and the balance due on delivery;
+- a payment method (bank transfer via VietQR, card, MoMo e-wallet);
+- **Pay** and **Release** buttons.
+
+What happens next:
+
+- **Pay**: after a short "Processing…" the order goes to the producer (stage `held`) with the deposit and a payment reference.
+- **Release**, or the timer runs out: the kilograms go back on the market. When the timer ran out, the popup says *The lock ran out* and the bell gets a notice.
+
+Payment is simulated: no money moves. The same countdown and **Pay deposit** button appear on the order in the cart (*On hold* tab). Accepting a producer's offer opens the same payment (**Accept & pay deposit**) and confirms the order once paid.
+
+After paying, the popup follows the order: *Deposit paid → Producer confirms → On the way → Delivered*, with **View order**, **Keep browsing** and **Cancel this order (deposit refunded)** while the producer has not answered. Every order card shows its money line: *Deposit 11.400.000 ₫ paid · 11.400.000 ₫ on delivery*, or *Paid in full* once delivered. Market batches carry a price per kg (`pricePerKg` in `mockBuyer.ts`).
+
+> In this demo the lock is a timer in the browser (`BuyerLayout`), so it does not protect against a buyer in another browser. On the server it would be a lock with a TTL (for example a Redis key per batch reservation with `SET … NX PX`, or a row with `expires_at` cleaned up by a job). Confirming would then turn it into a hold in one transaction.
+
+## Orders: one lifecycle
+
+The **cart icon** in the top bar, next to the username, opens `/buyer/orders` (`OrdersPage`). Its badge counts orders still being settled (on hold + offers) and turns red when an offer waits for an answer. The page has tabs: **On hold** (default), **Offers** (red count), **Confirmed**, **Deliveries**, **Declined**, each with one line on what it means. **Deliveries** lists the shipments of confirmed orders with route progress and arrival time, filtered by *In transit*, *Delivered* and *Issues* (`sections/DeliveriesList.tsx`); a row opens the delivery detail. `?tab=offered` opens a tab; a link to one order (`#order-A-7`) opens the tab it is in and scrolls to it. The demand detail shows the same order cards for one demand (`sections/OrderRow.tsx`).
+
+Each order shows:
+
+- kg and product, the batch, producer, grade and sell-by date, and the demand it is for;
+- the producer's note on an offer;
+- any batch issue;
+- the lifecycle as four dots, *You reserved* (or *Producer offered*) → *Both agreed* → *On the way* → *Delivered*;
+- who acts next ("Your answer · expires in 5 h", "Thuan Nam confirms · 4 h left", "Truck being booked");
+- the action for the stage: **Accept offer** / **Decline**, **Release**, or **Track** / **Proof of delivery**.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Held: Buyer reserves
-    Held --> Allocated: Producer confirms (within 24 h)
+    [*] --> Locked: Buyer picks a batch
+    Locked --> Held: Buyer pays the deposit (within 15 min)
+    Locked --> [*]: Timer runs out / buyer releases
+    [*] --> Offered: Producer offers a batch
+    Held --> Confirmed: Producer confirms (within 24 h)
     Held --> [*]: Buyer releases / hold expires
-    Allocated --> InTransit: Picked up by carrier
+    Offered --> Confirmed: Buyer accepts and pays the deposit
+    Offered --> Declined: Buyer declines
+    Confirmed --> InTransit: Truck picks it up
     InTransit --> Delivered: Proof of delivery
     Delivered --> [*]
+    Declined --> [*]
 ```
 
-Allocation stages in code: `held` (Reserved), `allocated`, `in_transit` (On the way), `delivered`. In the demo the hold countdown is static: holds do not expire and producers' confirmations are not simulated.
+| Stage in code | Label | Counts as covered | Batch kg taken off the market |
+| --- | --- | --- | --- |
+| `locked` | Locked for you | No (shown as reserved) | Yes, until the lock runs out |
+| `offered` | Offer to review | No | No (only after accepting) |
+| `held` | Waiting for producer | No (shown as reserved) | Yes |
+| `confirmed` | Confirmed | Yes | Yes |
+| `in_transit` | On the way | Yes | Yes |
+| `delivered` | Delivered | Yes | Yes |
+| `declined` | Declined | No | No |
+
+`data/orders.ts` holds the steps, the next-step text, the cart tabs and the sort order.
+
+**Demo behaviour.** The areas do not share state, so a producer cannot really answer a reservation made in the buyer area. Instead the producer "confirms" six seconds after a reservation. The order moves to *Confirmed*, the popup updates if it is open, and the bell gets a "… confirmed 600 kg of B-104" notice. Two offers are seeded: Lam Ha avocado for D-572 and Thuan Nam mango for D-565. Countdowns are static: holds and offers do not expire.
+
+## Pre-harvest auctions
+
+Shared with the producer area (`components/auction/`). How a batch is handled changes with where it is in its life:
+
+| Stage | Mechanism |
+| --- | --- |
+| Not harvested yet (`expected`) | **Pre-harvest auction**: buyers compete to secure it |
+| Ready | Automatic matching |
+
+**Flow**
+
+1. The producer opens an auction from a batch that is not harvested yet (Batches → batch → *Open a pre-harvest auction*). They set:
+   - the estimated yield range;
+   - the opening price;
+   - how long it runs (10 minutes for the demo, 1 hour or 24 hours).
+2. Farmora shows a **yield confidence** score (`yieldConfidence`). It is built from how tight the estimate is, how far off the harvest is, the plot's yield history and certified practices, and it drops by 30 when the producer reports a risk. It is labelled as a decision aid, not a promise.
+3. Buyers bid at `/buyer/auctions/:id`:
+   - The current bid, who leads (other buyers stay anonymous) and a live countdown are shown.
+   - The minimum next bid is the current bid plus the step; quick buttons offer +0, +1 and +2 steps.
+   - The bid history updates live.
+4. **Concurrent bids.** Every bid names the auction *version* it was made against (compare-and-set in `placeBid`). If another bid landed in between, the bid is refused with "Another buyer bid … a moment before you". Two bids can never both become the highest. On a server this is an atomic update or a lock on the auction row, with WebSocket or SSE pushing the new state.
+5. When the timer ends, the highest bid wins. It becomes a **Future Supply Commitment**: the batch and price for the expected harvest, with the quantity estimated from the range. With no bids, the batch simply goes on to Ready and normal matching.
+6. After harvest, the producer records the **actual quantity**. The commitment then continues as a normal order (Ready → Allocated → In transit → Delivered).
+7. Before harvest, the producer can **report a risk** (storm, pest, date moved, lower yield). The auction goes *Under review* for a coordinator and its confidence drops.
+
+Where: the **Pre-harvest auctions** tab of Find supply (`/buyer/auctions`, `AuctionsPage`, `AuctionDetailPage`): live auctions, the ones you won, and the ended ones.
+
+**Demo behaviour.** Other buyers are simulated (`useAuctionSimulation`). They bid now and then, more often near the end, up to about 20 % over the opening price, through the same compare-and-set as a real bid. Auctions live in the browser tab, so they reset on reload. Three auctions are seeded: B-107 dragon fruit (ends about 9 minutes after opening the app), L-079 avocado and B-110 pomelo.
 
 ## Producer trust
 
@@ -182,10 +274,13 @@ Alerts are derived from current data, not stored (`data/alerts.ts`), so they dis
 | --- | --- | --- |
 | Still short | Urgent | Needed within 3 days and part of it has no supply at all ("D-565 still needs 200 kg mango") |
 | Waiting for producers | Warning | Needed within 3 days, fully sourced, but part is still on hold; not shown when that hold already has a *Hold expiring* alert |
-| Supply issue | Urgent | The producer reported a problem on a batch the buyer holds or has been allocated |
+| Supply issue | Urgent | The producer reported a problem on a batch the buyer holds or has confirmed |
 | Hold expiring | Warning | A hold has 6 hours or less before it lapses |
-| Freshness | Warning | An allocated or held batch sells by 1 day or less after the demand's needed-by date |
+| Freshness | Warning | A confirmed or held batch sells by 1 day or less after the demand's needed-by date |
 | Delivery issue | Warning | A shipment has a carrier-reported issue or one the buyer reported |
+| Offer | Warning | A producer offered a batch to one of the buyer's demands; opens the offer in Orders |
+| Confirmed | Info | A producer confirmed an order (in the demo, a few seconds after confirming it) |
+| Lock ran out | Warning | A checkout lock ran out before the deposit was paid; the kilograms went back on the market |
 
 ## Deliveries
 
@@ -197,6 +292,7 @@ Same delivery views as the producer (route map with a live Cold chain block, sum
 | --- | --- | --- |
 | Supply | Declares batches with photos, grade and dates | — |
 | Hold | Confirms or declines within 24 h | Can place or release holds |
+| Offer | Offers a batch to a matched demand (Producer → Matches → *Offer*) | — |
 | No supply | — | Handles "Ask a coordinator" requests |
 | Problems | Reports batch issues (lower yield, quality, delay) | Handles batch issues and delivery problems |
 
@@ -208,8 +304,10 @@ Same delivery views as the producer (route map with a live Cold chain block, sum
 | `BuyerHome.tsx` | Home |
 | `DemandsPage.tsx`, `DemandDetailPage.tsx` | Demand list and detail |
 | `SupplyPage.tsx`, `SupplyDetailPage.tsx` | Market and batch detail |
+| `OrdersPage.tsx` | Every order with its lifecycle |
 | `DeliveriesPage.tsx`, `DeliveryDetailPage.tsx` | Deliveries list and detail |
-| `sections/` | Building blocks (DemandHero, AlertList, AddressForm, ReserveDialog, SupplyPair, Criteria, Fulfilment, ProducerTrust, SidePanels, BuyerTopBar) |
+| `sections/` | Building blocks (DemandHero, OrderRow, AddressForm, ReserveDialog, ReservedNotice, SupplyPair, Criteria, Fulfilment, ProducerTrust, SidePanels, BuyerTopBar) |
+| `data/orders.ts` | Order lifecycle: steps, next step, filters, sort |
 | `data/demands.ts` | Demand status, open quantity, supply ranking (reuses `Producer/data/matching.ts`) |
 | `data/alerts.ts` | Alert rules |
 | `data/producers.ts` | Producer track records and reviews |
@@ -219,7 +317,7 @@ Same delivery views as the producer (route map with a live Cold chain block, sum
 
 ## Not done yet
 
-- Backend API and persistence for demands, holds, allocations and deliveries; matching and hold expiry should run server-side.
+- Backend API and persistence for demands, holds, offers, orders and deliveries; matching, hold and offer expiry should run server-side, and producers' answers should come from the producer area instead of the demo timer.
 - Producer track records computed from real orders, and a way for buyers to rate a delivery.
 - Coordinator side of "Ask a coordinator" and reported problems.
 - Real batch photos (demo batches have none; producers add them when declaring a batch).

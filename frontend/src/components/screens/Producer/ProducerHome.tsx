@@ -9,9 +9,10 @@ import { deliveries, demands, insights, producer, tasks } from "./data/mockProdu
 import { matchAll } from "./data/matching";
 import { greeting } from "./data/format";
 import { useProducer } from "./data/producerContext";
+import { SpoilageWatch } from "@/components/freshness/SpoilageWatch";
 
 export default function ProducerHome() {
-  const { batches, outcomes, resolveTask, offers, offer, openTasks, deliveryIssues } = useProducer();
+  const { batches, outcomes, resolveTask, offers, offer, offerAnswers, openTasks, deliveryIssues, spoilageItems, excursions } = useProducer();
 
   const matches = matchAll(demands, batches);
   const openMatches = matches.filter((match) => match.best && !offers[match.demand.id]).length;
@@ -36,7 +37,9 @@ export default function ProducerHome() {
         </Link>
       </section>
 
-      <MatchHero matches={matches} offers={offers} onOffer={offer} />
+      <MatchHero matches={matches} offers={offers} answers={offerAnswers} onOffer={offer} />
+
+      <SpoilageWatch items={spoilageItems} excursions={excursions} limit={4} actionLabel="Find buyers" allTo="/producer/batches" />
 
       <div className="ph-columns">
         <div className="ph-col-main">

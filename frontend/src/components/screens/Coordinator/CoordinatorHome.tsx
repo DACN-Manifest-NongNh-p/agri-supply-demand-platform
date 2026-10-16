@@ -11,9 +11,10 @@ import { BALANCE_WINDOWS, balanceByProduct, needsDecision, unsoldSupply } from "
 import { coordinator, deliveries } from "./data/mockCoordinator";
 import { PROVINCES, provinceOf } from "./data/places";
 import { useCoordinator } from "./data/coordinatorContext";
+import { SpoilageWatch } from "@/components/freshness/SpoilageWatch";
 
 export default function CoordinatorHome() {
-  const { board, market, queue, allocations, notified, notifyProducers } = useCoordinator();
+  const { board, market, queue, allocations, notified, notifyProducers, spoilageItems, excursions } = useCoordinator();
   const [days, setDays] = useState<number>(BALANCE_WINDOWS[0]);
   const [params, setParams] = useSearchParams();
   const focus = PROVINCES.find((province) => province === params.get("region")) ?? undefined;
@@ -106,6 +107,14 @@ export default function CoordinatorHome() {
       </section>
 
       <div className="co-grid">
+        <div className="co-grid-wide">
+          <SpoilageWatch
+            items={spoilageItems.filter((item) => codes.has(item.code))}
+            excursions={excursions}
+            allTo="/coordinator/rescue"
+            actionLabel="Rescue options"
+          />
+        </div>
         <SupplyBalance balance={balanceByProduct(board, market, days)} days={days} onDaysChange={setDays} />
         <OnTheRoad deliveries={trips} />
         <UnsoldSupply batches={unsold} />

@@ -57,6 +57,8 @@ There are two different "admin" logins. They are easy to mix up.
 | Key | Rule | Default | Allowed | Used by |
 | --- | --- | --- | --- | --- |
 | `autoMatchMinScore` | Auto-match score | 75 % | 50–100 | Matches below it wait for a coordinator |
+| `lockMinutes` | Checkout lock | 15 min | 1–120 | How long a batch a buyer picked stays locked for them while they pay the deposit |
+| `depositPercent` | Deposit | 50 % | 10–100 | Share of the order value paid up front to confirm an order; the rest is due on delivery |
 | `signOffKg` | Sign-off quantity | 3,000 kg | 100–100,000 | Holds this large wait for a coordinator |
 | `holdHours` | Hold length | 24 h | 1–168 | Time a producer has to confirm a hold |
 | `holdWarningHours` | Hold warning | 6 h | 1–48 | "Hold expiring" alerts and Needs action. Must be shorter than the hold length. |

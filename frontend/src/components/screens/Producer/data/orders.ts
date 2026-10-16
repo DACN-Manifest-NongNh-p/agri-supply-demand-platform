@@ -3,6 +3,7 @@
 // confirmed, on the way, delivered. Demo data, using the same codes as the buyer and
 // coordinator areas (A-6 is the Phu Tho hold on B-102; S-301, S-303, S-296, S-288 are the trips).
 import type { TaskOutcome } from "../sections/AttentionList";
+import type { OrderTone } from "@/components/orders/LifecycleSteps";
 
 export type OrderStage = "offered" | "to_confirm" | "confirmed" | "in_transit" | "delivered" | "declined";
 
@@ -31,6 +32,10 @@ export type ProducerOrder = {
   stage: OrderStage;
   /** Hours left to confirm, while it waits for the producer. */
   confirmWithinHours?: number;
+  /** The buyer paid the deposit (an order only reaches "to confirm" or "confirmed" once they have). */
+  depositPaid?: boolean;
+  /** Who started it: a buyer (or the matching engine) reserved the batch, or you offered it. Defaults to buyer. */
+  origin?: "buyer" | "producer";
   /** The "confirm allocation" task on the home page that settles this order. */
   taskId?: string;
   deliveryId?: string;
@@ -109,6 +114,70 @@ export const orders: ProducerOrder[] = [
     deliveryId: "S-288",
   },
 ];
+
+/** The four steps of an order, from the producer's side. */
+export function producerSteps(order: Pick<ProducerOrder, "origin">) {
+  return [order.origin === "producer" ? "You offered" : "Buyer reserved", "Both agreed", "On the way", "Delivered"];
+}
+
+/** Index of the step reached (0–3); declined orders stop at the start. */
+export function producerStepIndex(stage: OrderStage) {
+  switch (stage) {
+    case "offered":
+    case "to_confirm":
+    case "declined":
+      return 0;
+    case "confirmed":
+      return 1;
+    case "in_transit":
+      return 2;
+    case "delivered":
+      return 3;
+  }
+}
+
+/** Who acts next, in a few words. */
+export function producerNextStep(order: ProducerOrder) {
+  switch (order.stage) {
+    case "to_confirm":
+      return `Your answer · ${order.confirmWithinHours ?? "–"} h left`;
+    case "offered":
+      return `${order.buyer} decides`;
+    case "confirmed":
+      return "Truck being booked · pickup at your packhouse";
+    case "in_transit":
+      return "On the road to the buyer";
+    case "delivered":
+      return "Delivered and signed for";
+    case "declined":
+      return "Declined · the batch is back on the market";
+  }
+}
+
+const TONE: Record<OrderStage, OrderTone> = {
+  to_confirm: "attention",
+  offered: "waiting",
+  confirmed: "active",
+  in_transit: "active",
+  delivered: "done",
+  declined: "closed",
+};
+
+export const producerTone = (stage: OrderStage) => TONE[stage];
+
+export type ProducerOrderTab = "to_confirm" | "offered" | "confirmed" | "deliveries" | "declined";
+
+/** Tabs of the Orders page, in lifecycle order. */
+export const PRODUCER_ORDER_TABS: { id: ProducerOrderTab; label: string; hint: string; empty: string }[] = [
+  { id: "to_confirm", label: "To confirm", hint: "Buyers reserved these batches. Confirm to make the order final, or decline to put the kilograms back on the market.", empty: "No order waits for your confirmation." },
+  { id: "offered", label: "Offered", hint: "You offered these batches to buyers. The order is confirmed when the buyer accepts.", empty: "No offers waiting for a buyer. Offer a batch from Matches." },
+  { id: "confirmed", label: "Confirmed", hint: "Both sides agreed. A truck is being booked to pick the batch up at your packhouse.", empty: "No confirmed orders waiting for pickup." },
+  { id: "deliveries", label: "Deliveries", hint: "Confirmed orders once a truck picks them up, to the buyer's signature. Problems first.", empty: "No deliveries yet." },
+  { id: "declined", label: "Declined", hint: "Orders you declined or offers the buyer turned down.", empty: "Nothing declined." },
+];
+
+/** The tab an order of this stage is listed under; on the way and delivered share Deliveries. */
+export const producerTabOf = (stage: OrderStage): ProducerOrderTab => (stage === "in_transit" || stage === "delivered" ? "deliveries" : stage);
 
 /** An order waiting on a home-page task takes that task's outcome once it is settled. */
 export function orderStage(order: ProducerOrder, outcomes: Record<string, TaskOutcome>): OrderStage {

@@ -17,11 +17,15 @@ import NewDemandPage from './components/screens/Buyer/NewDemandPage'
 import CompanyPage from './components/screens/Buyer/CompanyPage'
 import SupplyPage from './components/screens/Buyer/SupplyPage'
 import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
-import BuyerDeliveriesPage from './components/screens/Buyer/DeliveriesPage'
+import BuyerOrdersPage from './components/screens/Buyer/OrdersPage'
+import BuyerAuctionsPage from './components/screens/Buyer/AuctionsPage'
+import BuyerAuctionDetailPage from './components/screens/Buyer/AuctionDetailPage'
+import ProducerAuctionsPage from './components/screens/Producer/AuctionsPage'
 import CoordinatorLayout from './components/screens/Coordinator/CoordinatorLayout'
 import CoordinatorHome from './components/screens/Coordinator/CoordinatorHome'
 import MatchingPage from './components/screens/Coordinator/MatchingPage'
 import RequestsPage from './components/screens/Coordinator/RequestsPage'
+import RescuePage from './components/screens/Coordinator/RescuePage'
 import CoordinatorDeliveriesPage from './components/screens/Coordinator/DeliveriesPage'
 import LogisticsLayout from './components/screens/Logistics/LogisticsLayout'
 import LogisticsHome from './components/screens/Logistics/LogisticsHome'
@@ -69,11 +73,12 @@ function App() {
         >
           <Route index element={<ProducerHome />} />
           <Route path="batches" element={<BatchesPage />} />
+          <Route path="auctions" element={<ProducerAuctionsPage />} />
           <Route path="calendar" element={<LegacyCalendarRedirect />} />
           <Route path="demand" element={<MarketDemandPage />} />
           <Route path="orders" element={<ProducerOrdersPage />} />
           {/* Shipments are followed from Orders now; the old list link lands there. */}
-          <Route path="deliveries" element={<Navigate to="/producer/orders?tab=active" replace />} />
+          <Route path="deliveries" element={<Navigate to="/producer/orders?tab=deliveries" replace />} />
           <Route
             path="deliveries/:id"
             element={
@@ -98,7 +103,11 @@ function App() {
           <Route path="demands/:id" element={<DemandDetailPage />} />
           <Route path="supply" element={<SupplyPage />} />
           <Route path="supply/:code" element={<SupplyDetailPage />} />
-          <Route path="deliveries" element={<BuyerDeliveriesPage />} />
+          <Route path="orders" element={<BuyerOrdersPage />} />
+          <Route path="auctions" element={<BuyerAuctionsPage />} />
+          <Route path="auctions/:id" element={<BuyerAuctionDetailPage />} />
+          {/* The deliveries list is a tab of the cart now. */}
+          <Route path="deliveries" element={<Navigate to="/buyer/orders?tab=deliveries" replace />} />
           <Route
             path="deliveries/:id"
             element={
@@ -119,6 +128,7 @@ function App() {
           <Route index element={<CoordinatorHome />} />
           <Route path="matching" element={<MatchingPage />} />
           <Route path="requests" element={<RequestsPage />} />
+          <Route path="rescue" element={<RescuePage />} />
           <Route path="deliveries" element={<CoordinatorDeliveriesPage />} />
           <Route
             path="deliveries/:id"

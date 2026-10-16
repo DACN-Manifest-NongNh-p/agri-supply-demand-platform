@@ -153,7 +153,8 @@
   color: var(--ph-ink);
 }
 
-.ph-nav a[aria-current="page"] {
+.ph-nav a[aria-current="page"],
+.ph-nav a.is-active {
   border-bottom-color: var(--ph-green);
   color: var(--ph-ink);
   font-weight: 600;
@@ -5055,4 +5056,14 @@
   text-align: right !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.ph-nav a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ph-nav a:focus-visible {
+  outline: 2px solid var(--ph-green);
+  outline-offset: -2px;
+  border-radius: 6px;
 }

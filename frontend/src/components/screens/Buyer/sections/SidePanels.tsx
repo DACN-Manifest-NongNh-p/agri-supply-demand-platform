@@ -73,7 +73,7 @@ export function IncomingDeliveries({ deliveries, reported }: { deliveries: Buyer
           <h2 id="deliveries-title">On the way to you</h2>
           <p className="ph-section-sub">{active.length} {active.length === 1 ? "shipment" : "shipments"} in transit</p>
         </div>
-        <Link to="/buyer/deliveries" className="ph-btn">
+        <Link to="/buyer/orders?tab=deliveries" className="ph-btn">
           View all deliveries <ArrowRight size={16} />
         </Link>
       </div>

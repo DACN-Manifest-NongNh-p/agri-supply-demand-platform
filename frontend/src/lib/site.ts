@@ -6,6 +6,8 @@ import { getPublic } from "@/lib/api";
 
 export type RuleKey =
   | "autoMatchMinScore"
+  | "lockMinutes"
+  | "depositPercent"
   | "signOffKg"
   | "holdHours"
   | "holdWarningHours"
@@ -67,6 +69,8 @@ export type SiteState = {
 
 const DEFAULT_RULES: Rule[] = [
   { key: "autoMatchMinScore", label: "Auto-match score", unit: "%", value: 75, defaultValue: 75, min: 50, max: 100, description: "Matches scoring at least this are held automatically; lower ones wait for a coordinator." },
+  { key: "lockMinutes", label: "Checkout lock", unit: "min", value: 15, defaultValue: 15, min: 1, max: 120, description: "Minutes a buyer has to pay the deposit after picking a batch; then the kilograms go back on the market." },
+  { key: "depositPercent", label: "Deposit", unit: "%", value: 50, defaultValue: 50, min: 10, max: 100, description: "Share of the order value a buyer pays up front to confirm an order; the rest is paid on delivery." },
   { key: "signOffKg", label: "Sign-off quantity", unit: "kg", value: 3000, defaultValue: 3000, min: 100, max: 100000, description: "Holds of this many kilograms or more need a coordinator's approval." },
   { key: "holdHours", label: "Hold length", unit: "h", value: 24, defaultValue: 24, min: 1, max: 168, description: "Hours a producer has to confirm a hold before it lapses." },
   { key: "holdWarningHours", label: "Hold warning", unit: "h", value: 6, defaultValue: 6, min: 1, max: 48, description: "Warn the producer, buyer and coordinator when a hold has this many hours or less left." },
@@ -152,6 +156,12 @@ export async function loadSite(timeoutMs = 2500) {
 export const RULES = {
   get autoMatchMinScore() {
     return rule("autoMatchMinScore");
+  },
+  get lockMinutes() {
+    return rule("lockMinutes");
+  },
+  get depositPercent() {
+    return rule("depositPercent");
   },
   get signOffKg() {
     return rule("signOffKg");

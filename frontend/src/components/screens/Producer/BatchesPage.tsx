@@ -5,6 +5,8 @@ import { CalendarGrid, StatusLegend } from "./sections/CalendarGrid";
 import { BatchDetail } from "./sections/BatchDetail";
 import { BatchHistory } from "./sections/BatchHistory";
 import { BatchTable } from "./sections/BatchTable";
+import { PreHarvestAuction } from "./sections/PreHarvestAuction";
+import { BatchTabs } from "./sections/BatchTabs";
 import { DeclareBatchDialog } from "./sections/DeclareBatchDialog";
 import { ImportBatchesDialog } from "./sections/ImportBatchesDialog";
 import { deliveries, demands, producer } from "./data/mockProducer";
@@ -30,7 +32,7 @@ const rangeFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "s
 
 /** Batch management: long-range planning calendar, full list, declaring new batches, per-batch history. */
 export default function BatchesPage() {
-  const { batches, setStatus, issues, reportIssue, addBatch, addBatches, orders } = useProducer();
+  const { batches, setStatus, issues, reportIssue, addBatch, addBatches, orders, excursions } = useProducer();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<View>(searchParams.get("view") === "list" ? "list" : "calendar");
   const [range, setRange] = useState(RANGES[1]);
@@ -100,6 +102,8 @@ export default function BatchesPage() {
           </button>
         </div>
       </section>
+
+      <BatchTabs />
 
       <section className="ph-card" aria-label="Batches">
         <div className="ph-cal-toolbar">
@@ -173,12 +177,13 @@ export default function BatchesPage() {
             <StatusLegend />
           </>
         ) : (
-          <BatchTable batches={visible} selectedCode={selectedCode} onSelect={select} matchCounts={matchCounts} />
+          <BatchTable batches={visible} selectedCode={selectedCode} onSelect={select} matchCounts={matchCounts} excursions={excursions} />
         )}
 
         {selected && (
           <>
             <BatchDetail key={selected.code} batch={selected} issue={issues[selected.code]} onAdvance={setStatus} onReport={reportIssue} />
+            <PreHarvestAuction key={`auction-${selected.code}`} batch={selected} />
             <BatchHistory batch={selected} matches={matches} orders={orders} deliveries={deliveries} />
           </>
         )}

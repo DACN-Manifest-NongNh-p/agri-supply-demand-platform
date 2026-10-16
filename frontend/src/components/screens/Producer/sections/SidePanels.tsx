@@ -42,7 +42,7 @@ export function Deliveries({ deliveries, reported }: { deliveries: Delivery[]; r
           <h2 id="deliveries-title">On the road</h2>
           <p className="ph-section-sub">{active.length} {active.length === 1 ? "shipment" : "shipments"} on the way</p>
         </div>
-        <Link to="/producer/orders?tab=active" className="ph-btn">
+        <Link to="/producer/orders?tab=deliveries" className="ph-btn">
           All orders <ArrowRight size={16} />
         </Link>
       </div>

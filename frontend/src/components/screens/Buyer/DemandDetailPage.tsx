@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, ChevronDown, CircleCheck, Clock, PackageSearch, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, CircleCheck, PackageSearch } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { CriteriaChips, CriteriaList } from "./sections/Criteria";
 import { ReservedNotice, type Reservation } from "./sections/ReservedNotice";
 import { DemandStatusPill, DemandSteps, FulfilmentBar } from "./sections/Fulfilment";
 import { ReserveControl, SupplyPair } from "./sections/SupplyPair";
+import { OrderRow } from "./sections/OrderRow";
 import { fulfilmentOf, openOf, rankSupply } from "./data/demands";
 import { useBuyer } from "./data/buyerContext";
-import { ALLOCATION_STAGE_LABEL, type Allocation } from "./data/mockBuyer";
-import { formatDay, formatDayInText, formatKg } from "../Producer/data/format";
+import { sortOrders } from "./data/orders";
+import { formatDayInText, formatKg } from "../Producer/data/format";
 
 /** Keyed by id so notices and open panels reset when moving between demands. */
 export default function DemandDetailRoute() {
@@ -17,7 +18,7 @@ export default function DemandDetailRoute() {
 }
 
 function DemandDetailPage({ id }: { id?: string }) {
-  const { demands, allocations, supply, reserve, release } = useBuyer();
+  const { demands, allocations, supply, reserve } = useBuyer();
   const [openWhy, setOpenWhy] = useState<string | null>(null);
   const [showRejected, setShowRejected] = useState(false);
   const [helpAsked, setHelpAsked] = useState(false);
@@ -36,6 +37,7 @@ function DemandDetailPage({ id }: { id?: string }) {
 
   const fulfilment = fulfilmentOf(demand, allocations);
   const ranking = rankSupply(demand, supply, fulfilment.openKg);
+  const offers = fulfilment.parts.filter((part) => part.stage === "offered").length;
 
   return (
     <main className="ph-main">
@@ -74,22 +76,29 @@ function DemandDetailPage({ id }: { id?: string }) {
       <section className="ph-card bu-sources" id="sources" aria-labelledby="sources-title">
         <div className="ph-section-head">
           <div>
-            <h2 id="sources-title">Where your supply comes from</h2>
-            <p className="ph-section-sub">Reserved batches wait for the producer to confirm; confirmed ones are allocated to you.</p>
+            <h2 id="sources-title">Orders for this demand</h2>
+            <p className="ph-section-sub">
+              {offers > 0
+                ? `${offers === 1 ? "A producer has" : `${offers} producers have`} offered supply: accept to confirm. `
+                : ""}
+              Reservations wait for the producer; an order counts once both sides agree.
+            </p>
           </div>
+          <Link to="/buyer/orders" className="ph-link-btn">
+            All orders <ArrowRight size={14} />
+          </Link>
         </div>
         {fulfilment.parts.length === 0 ? (
-          <p className="ph-muted">Nothing reserved yet. Pick a batch from the suggestions below.</p>
+          <p className="ph-muted">No orders yet. Reserve a batch from the suggestions below, or wait for a producer's offer.</p>
         ) : (
-          <ul className="bu-source-rows">
-            {fulfilment.parts.map((part) => (
-              <SourceRow
+          <ul className="ord-list">
+            {sortOrders(fulfilment.parts).map((part) => (
+              <OrderRow
                 key={part.id}
-                part={part}
-                onRelease={() => {
-                  release(part.id);
+                order={part}
+                onReleased={(order) => {
                   setNotice(null);
-                  setReleased(`Released ${formatKg(part.kg)} of ${part.batchCode} back to the market.`);
+                  setReleased(`Released ${formatKg(order.kg)} of ${order.batchCode} back to the market.`);
                 }}
               />
             ))}
@@ -114,7 +123,7 @@ function DemandDetailPage({ id }: { id?: string }) {
 
         {fulfilment.openKg === 0 ? (
           <p className="ph-card ph-muted bu-done-note">
-            <CircleCheck size={16} /> {fulfilment.heldKg > 0 ? "Fully sourced once the producers confirm your holds." : "This demand is fully sourced."}
+            <CircleCheck size={16} /> {fulfilment.heldKg > 0 ? "Fully sourced once the producers confirm your reservations." : "This demand is fully sourced."}
           </p>
         ) : ranking.candidates.length === 0 ? (
           <div className="ph-card bu-nomatch">
@@ -192,42 +201,5 @@ function DemandDetailPage({ id }: { id?: string }) {
         )}
       </section>
     </main>
-  );
-}
-
-function SourceRow({ part, onRelease }: { part: Allocation; onRelease: () => void }) {
-  const { supply } = useBuyer();
-  const batch = supply.find((item) => item.code === part.batchCode);
-
-  return (
-    <li className={`bu-source bu-source--${part.stage}`}>
-      <span className="bu-source-main">
-        <span>
-          {batch ? <Link to={`/buyer/supply/${part.batchCode}`}><strong>{part.batchCode}</strong></Link> : <strong>{part.batchCode}</strong>} · {part.producer}
-        </span>
-        <small>
-          {formatKg(part.kg)}
-          {batch && <> · {batch.variety}, grade {batch.grade} · sell by {formatDay(batch.sellByDay)}</>}
-        </small>
-        {batch?.issue && (part.stage === "held" || part.stage === "allocated") && (
-          <span className="ph-delivery-problem"><TriangleAlert size={14} /> {batch.issue}</span>
-        )}
-      </span>
-      <span className={`bu-stage bu-stage--${part.stage}`}>{ALLOCATION_STAGE_LABEL[part.stage]}</span>
-      <span className="bu-source-action">
-        {part.stage === "held" && (
-          <>
-            <span className="bu-hold"><Clock size={14} /> {part.holdHoursLeft}h to confirm</span>
-            <button type="button" className="ph-text-btn" onClick={onRelease}>Release</button>
-          </>
-        )}
-        {part.stage === "allocated" && <span className="ph-muted">Waiting for pickup</span>}
-        {part.deliveryId && (
-          <Link to={`/buyer/deliveries/${part.deliveryId}`} className="ph-link-btn">
-            {part.stage === "delivered" ? "Proof of delivery" : `Track ${part.deliveryId}`} <ArrowRight size={14} />
-          </Link>
-        )}
-      </span>
-    </li>
   );
 }

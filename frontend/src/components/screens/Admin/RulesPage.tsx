@@ -8,6 +8,8 @@ import { SaveBar } from "./sections/SaveBar";
 /** Where each rule takes effect, so the admin knows what a change does. */
 const WHERE: Record<Rule["key"], string> = {
   autoMatchMinScore: "Coordinator matching",
+  lockMinutes: "Buyer checkout (lock countdown)",
+  depositPercent: "Buyer checkout (deposit to confirm)",
   signOffKg: "Coordinator matching",
   holdHours: "Holds (buyer, producer, coordinator)",
   holdWarningHours: "Alerts and Needs action",

@@ -23,10 +23,12 @@ export function demandStageLabel(status: DemandStatus) {
 }
 
 export type Fulfilment = {
-  /** Confirmed by producers (allocated, on the way or delivered). */
+  /** Agreed by both sides (confirmed, on the way or delivered). */
   allocatedKg: number;
   /** Reserved, waiting for the producer to confirm. */
   heldKg: number;
+  /** Offered by producers, waiting for your answer; not counted as covered. */
+  offeredKg: number;
   deliveredKg: number;
   /** Still without any source: what suggestions should cover. */
   openKg: number;
@@ -37,8 +39,10 @@ export type Fulfilment = {
 export function fulfilmentOf(demand: BuyerDemand, allocations: Allocation[]): Fulfilment {
   const parts = allocations.filter((allocation) => allocation.demandId === demand.id);
   const sum = (list: Allocation[]) => list.reduce((total, allocation) => total + allocation.kg, 0);
-  const heldKg = sum(parts.filter((part) => part.stage === "held"));
-  const allocatedKg = sum(parts.filter((part) => part.stage !== "held"));
+  // A lock already keeps the kilograms from everyone else, so it counts with the holds.
+  const heldKg = sum(parts.filter((part) => part.stage === "held" || part.stage === "locked"));
+  const offeredKg = sum(parts.filter((part) => part.stage === "offered"));
+  const allocatedKg = sum(parts.filter((part) => part.stage === "confirmed" || part.stage === "in_transit" || part.stage === "delivered"));
   const deliveredKg = sum(parts.filter((part) => part.stage === "delivered"));
   const openKg = Math.max(0, demand.quantityKg - allocatedKg - heldKg);
 
@@ -53,7 +57,7 @@ export function fulfilmentOf(demand: BuyerDemand, allocations: Allocation[]): Fu
     status = "new";
   }
 
-  return { allocatedKg, heldKg, deliveredKg, openKg, status, parts };
+  return { allocatedKg, heldKg, offeredKg, deliveredKg, openKg, status, parts };
 }
 
 export type SupplyCandidate = Candidate & { batch: SupplyBatch };

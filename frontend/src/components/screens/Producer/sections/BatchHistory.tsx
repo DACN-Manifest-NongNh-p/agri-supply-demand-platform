@@ -48,7 +48,7 @@ export function BatchHistory({ batch, matches, orders, deliveries }: Props) {
           <ul>
             {ownOrders.map((item) => (
               <li key={item.id}>
-                <Link to="/producer/orders?tab=all">{item.buyer}</Link>
+                <Link to="/producer/orders?tab=deliveries">{item.buyer}</Link>
                 <small>{formatKg(item.quantityKg)} · {item.demandId}</small>
                 <span className="ph-history-state">{ORDER_STAGE_LABEL[item.stage]}</span>
               </li>

@@ -18,7 +18,7 @@ const VIEWS: { id: View; label: string }[] = [
 const CRITERION_ICON: Record<CriterionState, typeof Check> = { pass: Check, partial: Minus, fail: X };
 
 export default function MarketDemandPage() {
-  const { batches, offers, offer } = useProducer();
+  const { batches, offers, offer, offerAnswers } = useProducer();
   // Links from the home page can pre-open a match (?open=D-551) or pre-filter (?view=unmatched).
   const [searchParams] = useSearchParams();
   const [view, setView] = useState<View>(() => VIEWS.find((option) => option.id === searchParams.get("view"))?.id ?? "all");
@@ -42,6 +42,7 @@ export default function MarketDemandPage() {
     <MatchDetails
       match={match}
       offered={offers[match.demand.id]}
+      accepted={offerAnswers[match.demand.id] === "confirmed"}
       chosen={chosen[match.demand.id] ?? match.best?.batch.code}
       onChoose={(code) => setChosen((current) => ({ ...current, [match.demand.id]: code }))}
       onOffer={(code) => offer(match.demand.id, code)}
@@ -165,7 +166,10 @@ export default function MarketDemandPage() {
                       {isOpen ? "Hide details" : "See why"} <ChevronDown size={14} className={isOpen ? "ph-flip" : undefined} />
                     </button>
                     {offered ? (
-                      <span className="ph-offered"><CircleCheck size={16} /> Offered {offered}</span>
+                      <span className="ph-offered">
+                        <CircleCheck size={16} /> {offerAnswers[demand.id] === "confirmed" ? "Accepted" : `Offered ${offered}`} ·{" "}
+                        <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+                      </span>
                     ) : (
                       <button type="button" className="ph-btn ph-btn--primary" onClick={() => offer(demand.id, batch.code)}>
                         Offer {batch.code}
@@ -222,6 +226,7 @@ export default function MarketDemandPage() {
 type DetailsProps = {
   match: MatchResult;
   offered?: string;
+  accepted: boolean;
   chosen?: string;
   onChoose: (code: string) => void;
   onOffer: (code: string) => void;
@@ -229,7 +234,7 @@ type DetailsProps = {
   onAskHelp: () => void;
 };
 
-function MatchDetails({ match, offered, chosen, onChoose, onOffer, helpAsked, onAskHelp }: DetailsProps) {
+function MatchDetails({ match, offered, accepted, chosen, onChoose, onOffer, helpAsked, onAskHelp }: DetailsProps) {
   const { demand, considered, reason } = match;
   const focus = considered.find((candidate) => candidate.batch.code === chosen) ?? considered[0];
 
@@ -290,7 +295,10 @@ function MatchDetails({ match, offered, chosen, onChoose, onOffer, helpAsked, on
 
         <div className="ph-details-actions">
           {offered ? (
-            <span className="ph-offered"><CircleCheck size={16} /> Offered {offered} · waiting for the buyer</span>
+            <span className="ph-offered">
+              <CircleCheck size={16} /> {accepted ? `Accepted by ${demand.buyer}` : `Offered ${offered} · waiting for the buyer`} ·{" "}
+              <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+            </span>
           ) : focus?.eligible ? (
             <button type="button" className="ph-btn ph-btn--primary" onClick={() => onOffer(focus.batch.code)}>
               Offer {focus.batch.code}

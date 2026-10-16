@@ -42,3 +42,10 @@ export function greeting() {
   if (hour < 18) return "Good afternoon";
   return "Good evening";
 }
+
+const VND = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 });
+
+/** 13000000 → "13.000.000 ₫". */
+export function formatVnd(amount: number) {
+  return VND.format(Math.round(amount));
+}

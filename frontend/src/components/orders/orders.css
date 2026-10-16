@@ -1,0 +1,686 @@
+/* Order lifecycle pieces shared by the buyer and producer areas: tabs, order cards with a four-step
+   lifecycle, and the confirmation popup after reserving or offering. Colours come from each area's
+   --ph-* tokens. Area-specific status pills stay in the area's own stylesheet. */
+
+.ord-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  margin: 0 0 12px;
+  border-bottom: 1px solid var(--ph-line);
+}
+
+.ord-tabs :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: -1px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--ph-muted);
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ord-tabs :is(button, a):hover {
+  color: var(--ph-ink);
+}
+
+.ord-tabs :is(button, a)[aria-current="page"] {
+  border-bottom-color: var(--ph-green);
+  color: var(--ph-ink);
+  font-weight: 600;
+}
+
+.ph-count-badge.is-alert {
+  color: #fff;
+  background: var(--ph-red);
+}
+
+.ord-tab-hint {
+  margin: 0 0 14px;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.ord-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ord-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--ph-line);
+  border-left: 3px solid var(--ph-line-strong);
+  border-radius: 12px;
+  background: var(--ph-card);
+  scroll-margin-top: 90px;
+}
+
+.ord-card:target {
+  box-shadow: 0 0 0 3px var(--ph-green-soft);
+}
+
+.ord-card--attention {
+  border-left-color: var(--ph-amber, #6c7f1d);
+}
+
+.ord-card--waiting {
+  border-left-color: #d8c98f;
+}
+
+.ord-card--active {
+  border-left-color: var(--ph-green);
+}
+
+.ord-card--done {
+  border-left-color: var(--g-300, #a9c9ab);
+}
+
+.ord-card--closed {
+  opacity: 0.7;
+}
+
+.ord-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ord-what {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.ord-what strong {
+  color: var(--ph-ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ord-what > span,
+.ord-what small {
+  color: var(--ph-muted);
+}
+
+.ord-note {
+  margin: 0;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.ord-card .ph-delivery-problem {
+  margin: 0;
+}
+
+.ord-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.ord-steps {
+  display: grid;
+  min-width: min(100%, 420px);
+  flex: 1 1 420px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ord-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  color: var(--ph-muted);
+  font-size: 11.5px;
+  text-align: center;
+}
+
+.ord-steps li + li::before {
+  position: absolute;
+  top: 8px;
+  right: calc(50% + 11px);
+  left: calc(-50% + 11px);
+  height: 2px;
+  border-radius: 999px;
+  background: var(--ph-line-strong);
+  content: "";
+}
+
+.ord-steps li.is-done::before {
+  background: var(--ph-green);
+}
+
+.ord-steps li.is-now::before {
+  background: repeating-linear-gradient(90deg, var(--g-300, #a9c9ab) 0 5px, transparent 5px 9px);
+}
+
+.ord-dot {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid var(--ph-line-strong);
+  border-radius: 50%;
+  color: #fff;
+  background: var(--ph-card);
+}
+
+.ord-steps li.is-done {
+  color: var(--ph-ink);
+}
+
+.ord-steps li.is-done .ord-dot {
+  border-color: var(--ph-green);
+  background: var(--ph-green);
+}
+
+.ord-steps li.is-now {
+  color: var(--ph-ink);
+  font-weight: 600;
+}
+
+.ord-steps li.is-now .ord-dot {
+  border-color: var(--ph-green);
+  box-shadow: 0 0 0 4px var(--ph-green-soft);
+}
+
+.ord-steps.is-closed li:nth-child(2) {
+  color: var(--ph-red);
+  font-weight: 600;
+}
+
+.ord-steps.is-closed li:nth-child(2) .ord-dot {
+  border-color: var(--ph-red);
+  background: var(--ph-red);
+}
+
+.ord-action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.ord-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ph-muted);
+}
+
+.ord-next.is-waiting {
+  color: var(--cream-ink, #6b5a1e);
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .ord-action {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------- Popup after reserving or offering ---------- */
+.ph-form-dialog.ord-notice {
+  width: min(440px, calc(100% - 32px));
+  padding: 32px 28px 22px;
+  text-align: center;
+}
+
+.ord-notice[open] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: ord-notice-in 200ms ease-out;
+}
+
+@keyframes ord-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.ord-notice-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ph-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.ord-notice-close:hover {
+  color: var(--ph-ink);
+  background: var(--ph-subtle, #f3f4f1);
+}
+
+.ord-notice-icon {
+  display: grid;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--ph-green);
+  box-shadow: 0 0 0 8px var(--ph-green-soft);
+}
+
+.producer-home .ord-notice h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.ord-notice-sub {
+  margin: 8px 0 0;
+  color: var(--ph-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ord-notice-steps {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0 22px;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--ph-muted);
+  background: var(--ph-subtle, #f6f7f4);
+  font-size: 12px;
+  list-style: none;
+}
+
+.ord-notice-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ord-notice-steps li + li::before {
+  content: "";
+  width: 14px;
+  height: 1px;
+  margin-right: 2px;
+  background: var(--ph-line-strong);
+}
+
+.ord-notice-steps li span {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 50%;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ord-notice-steps .is-done {
+  color: var(--ph-green-dark);
+}
+
+.ord-notice-steps .is-done span {
+  border-color: var(--ph-green);
+  color: #fff;
+  background: var(--ph-green);
+}
+
+.ord-notice-steps .is-now {
+  color: var(--ph-ink);
+  font-weight: 600;
+}
+
+.ord-notice-steps .is-now span {
+  border-color: #c58a1c;
+  color: #7a520c;
+  background: #fbe8c2;
+}
+
+.ord-notice-actions {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+}
+
+.ord-notice-actions .ph-btn {
+  flex: 1;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.ord-notice-undo {
+  margin-top: 14px;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  .ord-notice-actions {
+    flex-direction: column;
+  }
+
+  .ord-notice-steps {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------- Checkout lock: live countdown ---------- */
+.ord-timer {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.ord-timer.is-urgent {
+  color: var(--ph-red);
+}
+
+.ord-timer--large {
+  display: block;
+  color: var(--ph-ink);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.ord-timer--large.is-urgent {
+  color: var(--ph-red);
+}
+
+.ord-notice-timer {
+  width: 100%;
+  margin: 18px 0 0;
+  padding: 12px;
+  border: 1px solid var(--ph-line);
+  border-radius: 12px;
+  background: var(--ph-card);
+}
+
+.ord-notice-timer small {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.ord-notice-icon.is-lock {
+  color: var(--ph-ink);
+  background: var(--ph-lime, #b9dd72);
+  box-shadow: 0 0 0 8px var(--ph-green-soft);
+}
+
+.ord-notice-icon.is-off {
+  color: var(--ph-muted);
+  background: var(--ph-subtle);
+  box-shadow: 0 0 0 8px var(--ph-line);
+}
+
+/* ---------- Deposit payment ---------- */
+.ord-money {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ph-ink);
+  font-size: 13px;
+}
+
+.ord-money svg {
+  color: var(--ph-muted);
+}
+
+/* Checkout popup: left-aligned, compact, one primary action. */
+.ph-form-dialog.ord-checkout {
+  width: min(500px, calc(100% - 32px));
+  padding: 22px 24px 18px;
+  text-align: left;
+}
+
+.ord-checkout-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-right: 36px;
+}
+
+.ord-checkout-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--ph-ink);
+  background: var(--ph-green-soft);
+}
+
+.producer-home .ord-checkout-head h2 {
+  margin: 2px 0 4px;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.ord-checkout-head p {
+  margin: 0;
+  color: var(--ph-muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.ord-checkout-head .ord-checkout-timer {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+  font-size: 12.5px;
+}
+
+.ord-pay {
+  margin-top: 18px;
+}
+
+.ord-pay-sum {
+  margin: 0;
+  padding: 2px 14px;
+  border-radius: 12px;
+  background: var(--ph-subtle);
+}
+
+.ord-pay-sum div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  font-size: 13.5px;
+}
+
+.ord-pay-sum div + div {
+  border-top: 1px solid var(--ph-line);
+}
+
+.ord-pay-sum dt {
+  color: var(--ph-muted);
+}
+
+.ord-pay-sum dd {
+  margin: 0;
+  color: var(--ph-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ord-pay-sum .is-due dt,
+.ord-pay-sum .is-due dd {
+  color: var(--ph-ink);
+  font-weight: 650;
+}
+
+.ord-pay-sum .is-due dd {
+  font-size: 16px;
+}
+
+.ord-pay-methods {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.ord-pay-methods legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.ord-pay-methods > div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ord-pay-methods label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 10px;
+  color: var(--ph-ink);
+  font-size: 12.5px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.ord-pay-methods label:hover {
+  border-color: var(--ph-muted);
+}
+
+/* The tile is the control; the radio stays for keyboards and screen readers. */
+.ord-pay-methods input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ord-pay-methods label:has(input:focus-visible) {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+}
+
+.ord-pay-methods label svg {
+  color: var(--ph-muted);
+}
+
+.ord-pay-methods label.is-chosen {
+  border-color: var(--ph-green);
+  box-shadow: inset 0 0 0 1px var(--ph-green);
+}
+
+.ord-pay-methods label.is-chosen svg {
+  color: var(--ph-green);
+}
+
+.ord-pay-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.ord-pay-actions .ph-text-btn {
+  margin-right: auto;
+}
+
+.ord-pay-actions .ph-btn--primary {
+  min-width: 190px;
+  min-height: 42px;
+  justify-content: center;
+}
+
+.ord-pay-note {
+  margin: 10px 0 0;
+  color: var(--ph-muted);
+  font-size: 12px;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .ord-pay-methods > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ord-pay-actions .ph-btn--primary {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.ord-spin {
+  animation: ord-spin 0.9s linear infinite;
+}
+
+@keyframes ord-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ord-spin {
+    animation: none;
+  }
+}
+
+.ord-tabs a {
+  gap: 6px;
+  text-decoration: none;
+}
+
+.ord-tabs :is(button, a):focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ord-tabs :is(button, a):focus-visible {
+  outline: 2px solid var(--ph-green);
+  outline-offset: -2px;
+  border-radius: 6px;
+}

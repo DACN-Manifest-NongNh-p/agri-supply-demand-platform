@@ -1,5 +1,6 @@
 import type { Batch } from "../data/mockProducer";
 import { formatDay, formatKg, stageLabel } from "../data/format";
+import { RiskBadge, ShelfLifeBar } from "@/components/freshness/ShelfLifeBar";
 
 type Props = {
   batches: Batch[];
@@ -7,9 +8,11 @@ type Props = {
   onSelect: (code: string) => void;
   /** Open demands each batch is eligible for, by batch code. */
   matchCounts: Record<string, number>;
+  /** Temperature excursions reported per batch code. */
+  excursions?: Record<string, string>;
 };
 
-export function BatchTable({ batches, selectedCode, onSelect, matchCounts }: Props) {
+export function BatchTable({ batches, selectedCode, onSelect, matchCounts, excursions = {} }: Props) {
   if (batches.length === 0) return <p className="ph-empty">No batches match this filter.</p>;
 
   return (
@@ -22,7 +25,8 @@ export function BatchTable({ batches, selectedCode, onSelect, matchCounts }: Pro
             <th scope="col" className="ph-num">Declared</th>
             <th scope="col" className="ph-num">Open</th>
             <th scope="col">Harvest</th>
-            <th scope="col">Sell by</th>
+            <th scope="col">Shelf life</th>
+            <th scope="col">Spoilage risk</th>
             <th scope="col">Status</th>
             <th scope="col" className="ph-num">Matches</th>
           </tr>
@@ -47,7 +51,23 @@ export function BatchTable({ batches, selectedCode, onSelect, matchCounts }: Pro
                 <td className="ph-num">{formatKg(batch.quantityKg)}</td>
                 <td className="ph-num">{open > 0 ? formatKg(open) : <span className="ph-muted">—</span>}</td>
                 <td>{formatDay(batch.harvestDay)}</td>
-                <td>{formatDay(batch.sellByDay)}</td>
+                <td>
+                  {batch.status === "delivered" ? (
+                    <span className="ph-muted">{formatDay(batch.sellByDay)}</span>
+                  ) : (
+                    <>
+                      <ShelfLifeBar batch={batch} compact />
+                      <small>Sell by {formatDay(batch.sellByDay).toLowerCase()}</small>
+                    </>
+                  )}
+                </td>
+                <td>
+                  {open > 0 && batch.status !== "delivered" && batch.status !== "in_transit" ? (
+                    <RiskBadge batch={{ ...batch, openKg: open }} excursion={excursions[batch.code]} />
+                  ) : (
+                    <span className="ph-muted">Sold</span>
+                  )}
+                </td>
                 <td>
                   <span className={`ph-batch-status ph-status--${batch.status}`}>{stageLabel(batch.status)}</span>
                 </td>

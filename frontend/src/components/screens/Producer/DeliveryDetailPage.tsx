@@ -19,7 +19,7 @@ export default function DeliveryDetailPage() {
   if (!delivery) {
     return (
       <main className="ph-main">
-        <Link to="/producer/orders?tab=active" className="ph-back"><ArrowLeft size={16} /> Orders</Link>
+        <Link to="/producer/orders?tab=deliveries" className="ph-back"><ArrowLeft size={16} /> Orders</Link>
         <p className="ph-empty">Delivery {id} was not found.</p>
       </main>
     );
@@ -38,7 +38,7 @@ export default function DeliveryDetailPage() {
 
   return (
     <main className="ph-main">
-      <Link to="/producer/orders?tab=active" className="ph-back">
+      <Link to="/producer/orders?tab=deliveries" className="ph-back">
         <ArrowLeft size={16} /> All deliveries
       </Link>
 
@@ -114,7 +114,7 @@ export default function DeliveryDetailPage() {
         ))}
         <span className="ph-detail-links">
           {batchOnCalendar && <Link to={`/producer/batches?batch=${delivery.batch}`}>Batch {delivery.batch}</Link>}
-          <Link to="/producer/orders?tab=all">Order</Link>
+          <Link to="/producer/orders?tab=deliveries">Order</Link>
         </span>
       </div>
 

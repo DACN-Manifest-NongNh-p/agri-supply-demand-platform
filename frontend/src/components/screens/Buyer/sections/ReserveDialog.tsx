@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { CircleCheck, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MatchScore } from "../../Producer/sections/MatchScore";
 import { formatDay, formatDayInText, formatKg } from "../../Producer/data/format";
 import { fulfilmentOf, openOf, scoreSupply } from "../data/demands";
 import { useBuyer } from "../data/buyerContext";
+import { RULES } from "@/lib/site";
 import type { SupplyBatch } from "../data/mockBuyer";
+import { ReservedNotice, type Reservation } from "./ReservedNotice";
 
 /** Reserve part of a market batch for one of your open demands of the same product. */
 export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose: () => void }) {
   const { demands, allocations, reserve } = useBuyer();
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [done, setDone] = useState<{ demandId: string; kg: number } | null>(null);
+  const [done, setDone] = useState<Reservation | null>(null);
 
   // No close() in cleanup: StrictMode re-runs effects and would close the dialog right away.
   useEffect(() => {
@@ -35,6 +37,9 @@ export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose:
   const [kg, setKg] = useState(max);
   const valid = Boolean(chosen?.candidate.eligible) && kg > 0 && kg <= max;
 
+  // Once picked, the lock popup takes over (countdown, confirm, the producer's answer).
+  if (done) return <ReservedNotice reservation={done} onClose={onClose} />;
+
   return (
     <dialog
       ref={dialogRef}
@@ -55,26 +60,16 @@ export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose:
         </button>
       </header>
 
-      {done ? (
-        <div className="ph-declared">
-          <CircleCheck size={36} />
-          <h3>{formatKg(done.kg)} reserved</h3>
-          <p>
-            {batch.producer} has <strong>24 hours</strong> to confirm. Until then the quantity is held for {done.demandId} and nobody else can take it.
-          </p>
-          <div className="ph-declared-actions">
-            <Link to={`/buyer/demands/${done.demandId}#sources`} className="ph-btn ph-btn--primary">View order</Link>
-            <button type="button" className="ph-btn" onClick={onClose}>Keep browsing</button>
-          </div>
-        </div>
-      ) : (
+      {(
         <form
           className="ph-declare-form"
           onSubmit={(event) => {
             event.preventDefault();
             if (!valid || !chosen) return;
-            reserve(chosen.demand.id, batch.code, kg);
-            setDone({ demandId: chosen.demand.id, kg });
+            const allocationId = reserve(chosen.demand.id, batch.code, kg);
+            if (allocationId) {
+              setDone({ allocationId, demandId: chosen.demand.id, batchCode: batch.code, producer: batch.producer, product: batch.product, kg });
+            }
           }}
         >
           <p className="bu-dialog-batch">
@@ -128,7 +123,7 @@ export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose:
 
           <div className="ph-form-actions">
             <button type="button" className="ph-btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="ph-btn ph-btn--primary" disabled={!valid}>Reserve {valid ? formatKg(kg) : ""}</button>
+            <button type="submit" className="ph-btn ph-btn--primary" disabled={!valid}>Lock {valid ? formatKg(kg) : ""} · pay deposit within {RULES.lockMinutes} min</button>
           </div>
         </form>
       )}
