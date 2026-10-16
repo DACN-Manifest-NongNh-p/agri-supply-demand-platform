@@ -5,9 +5,12 @@ import marketImage from "@/assets/market.jpg"
 import analyzeImage from "@/assets/analyze.jpg"
 import "../styles/Intro.css";
 import "../styles/Reveal.css"
+import { useContent } from "@/lib/siteContent";
+import { TwoLine } from "./ContentText";
 const pills = ["About Us", "How It Works", "Intelligence", "Mission"];
 
 export function Intro() {
+  const c = useContent();
   return (
     <section id="about" className="intro-section">
       <div className="intro-container">
@@ -29,10 +32,7 @@ export function Intro() {
 
           <Reveal delay={80}>
             <h2 className="intro-heading">
-              The challenge isn’t just finding supply.
-              <span>
-                It&apos;s finding the right demand in time.
-              </span>
+              <TwoLine text={c("landing.intro.heading")} />
             </h2>
 
             <div className="intro-description">

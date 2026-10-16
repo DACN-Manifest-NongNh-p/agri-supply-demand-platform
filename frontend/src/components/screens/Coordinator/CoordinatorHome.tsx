@@ -6,14 +6,14 @@ import { deliveryStatus } from "../Producer/data/deliveries";
 import { openOf } from "../Buyer/data/demands";
 import { HubMap } from "./sections/HubMap";
 import { QueueList } from "./sections/QueueList";
-import { IdleSupply, OnTheRoad, SupplyBalance } from "./sections/Overview";
-import { BALANCE_WINDOWS, balanceByProduct, batchesWithoutBuyer, needsDecision } from "./data/market";
+import { OnTheRoad, SupplyBalance, UnmetDemand, UnsoldSupply } from "./sections/Overview";
+import { BALANCE_WINDOWS, balanceByProduct, needsDecision, unsoldSupply } from "./data/market";
 import { coordinator, deliveries } from "./data/mockCoordinator";
 import { PROVINCES, provinceOf } from "./data/places";
 import { useCoordinator } from "./data/coordinatorContext";
 
 export default function CoordinatorHome() {
-  const { board, market, queue, allocations } = useCoordinator();
+  const { board, market, queue, allocations, notified, notifyProducers } = useCoordinator();
   const [days, setDays] = useState<number>(BALANCE_WINDOWS[0]);
   const [params, setParams] = useSearchParams();
   const focus = PROVINCES.find((province) => province === params.get("region")) ?? undefined;
@@ -24,7 +24,7 @@ export default function CoordinatorHome() {
   const codes = new Set(batches.map((batch) => batch.code));
   const regionOf = (batchCode: string, origin: string) => market.find((batch) => batch.code === batchCode)?.region ?? origin;
   const trips = deliveries.filter((delivery) => inFocus(regionOf(delivery.batch, delivery.origin)));
-  const idle = batchesWithoutBuyer(board, market).filter((item) => codes.has(item.batch.code));
+  const unsold = unsoldSupply(board, market).filter((item) => codes.has(item.batch.code));
 
   const farms = new Set(batches.map((batch) => batch.producer)).size;
   const openKg = batches.reduce((total, batch) => total + Math.max(0, openOf(batch)), 0);
@@ -108,7 +108,8 @@ export default function CoordinatorHome() {
       <div className="co-grid">
         <SupplyBalance balance={balanceByProduct(board, market, days)} days={days} onDaysChange={setDays} />
         <OnTheRoad deliveries={trips} />
-        <IdleSupply batches={idle} />
+        <UnsoldSupply batches={unsold} />
+        <UnmetDemand rows={board} notified={notified} onAsk={notifyProducers} />
       </div>
     </main>
   );

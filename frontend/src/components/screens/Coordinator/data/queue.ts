@@ -1,6 +1,7 @@
 // The coordinator's "needs action" list, derived from current data like the buyer's alerts:
 // an item disappears once its cause is handled (decision made, hold settled, request resolved,
 // both sides told about a delivery problem). Clean matches never show up here: the system holds them.
+import { RULES } from "@/lib/site";
 import { formatDayInText, formatKg } from "../../Producer/data/format";
 import { TEMPERATURE_RANGE } from "../../Producer/data/deliveries";
 import type { BoardRow } from "./market";
@@ -20,9 +21,6 @@ export type QueueItem = {
   link: { label: string; to: string };
 };
 
-/** Demands due within this many days are flagged when not fully sourced. */
-const DUE_SOON_DAYS = 3;
-const HOLD_WARNING_HOURS = 6;
 
 type Input = {
   rows: BoardRow[];
@@ -50,7 +48,7 @@ export function buildQueue({ rows, demands, allocations, requests, resolved, del
 
   for (const row of rows) {
     const { demand, fulfilment, best } = row;
-    const dueSoon = demand.neededByDay <= DUE_SOON_DAYS;
+    const dueSoon = demand.neededByDay <= RULES.dueSoonDays;
     const due = `needed by ${formatDayInText(demand.neededByDay)}`;
     if (best) {
       // Only proposals with an exception are left on the board; every one of them needs a person.
@@ -77,7 +75,7 @@ export function buildQueue({ rows, demands, allocations, requests, resolved, del
   }
 
   for (const allocation of allocations) {
-    if (allocation.stage !== "held" || (allocation.holdHoursLeft ?? Infinity) > HOLD_WARNING_HOURS) continue;
+    if (allocation.stage !== "held" || (allocation.holdHoursLeft ?? Infinity) > RULES.holdWarningHours) continue;
     const demand = demands.find((item) => item.id === allocation.demandId);
     items.push({
       id: `hold-${allocation.id}`,

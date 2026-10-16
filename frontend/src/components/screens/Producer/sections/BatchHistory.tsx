@@ -1,31 +1,24 @@
 import { Link } from "react-router-dom";
-import type { Batch, Delivery, Offer } from "../data/mockProducer";
+import type { Batch, Delivery } from "../data/mockProducer";
+import { ORDER_STAGE_LABEL, type ProducerOrder } from "../data/orders";
 import type { MatchResult } from "../data/matching";
 import { formatDay, formatKg } from "../data/format";
 import { MatchScore } from "./MatchScore";
 
-const OFFER_STATE: Record<Offer["status"], string> = {
-  sent: "Waiting for buyer",
-  accepted: "Accepted by buyer",
-  allocated: "Allocated, confirm on home",
-  confirmed: "Confirmed",
-  declined: "Declined",
-};
-
 type Props = {
   batch: Batch;
   matches: MatchResult[];
-  offers: Offer[];
+  orders: ProducerOrder[];
   deliveries: Delivery[];
 };
 
-/** Where a batch has gone so far: system matches, offers made, shipments. */
-export function BatchHistory({ batch, matches, offers, deliveries }: Props) {
+/** Where a batch has gone so far: system matches, orders on it, shipments. */
+export function BatchHistory({ batch, matches, orders, deliveries }: Props) {
   const ownMatches = matches.flatMap((match) => {
     const candidate = match.candidates.find((item) => item.batch.code === batch.code);
     return candidate ? [{ demand: match.demand, score: candidate.score }] : [];
   });
-  const ownOffers = offers.filter((item) => item.batch === batch.code);
+  const ownOrders = orders.filter((item) => item.batch === batch.code);
   const ownDeliveries = deliveries.filter((item) => item.batch === batch.code);
 
   return (
@@ -47,17 +40,17 @@ export function BatchHistory({ batch, matches, offers, deliveries }: Props) {
         )}
       </section>
 
-      <section aria-labelledby={`hist-offers-${batch.code}`}>
-        <h4 id={`hist-offers-${batch.code}`}>Offers</h4>
-        {ownOffers.length === 0 ? (
-          <p className="ph-muted">No offers made from this batch yet.</p>
+      <section aria-labelledby={`hist-orders-${batch.code}`}>
+        <h4 id={`hist-orders-${batch.code}`}>Orders</h4>
+        {ownOrders.length === 0 ? (
+          <p className="ph-muted">No orders on this batch yet.</p>
         ) : (
           <ul>
-            {ownOffers.map((item) => (
-              <li key={item.demandId}>
-                <span>{item.buyer}</span>
-                <small>{formatKg(item.quantityKg)} · sent {formatDay(item.sentDay)}</small>
-                <span className="ph-history-state">{OFFER_STATE[item.status]}</span>
+            {ownOrders.map((item) => (
+              <li key={item.id}>
+                <Link to="/producer/orders?tab=all">{item.buyer}</Link>
+                <small>{formatKg(item.quantityKg)} · {item.demandId}</small>
+                <span className="ph-history-state">{ORDER_STAGE_LABEL[item.stage]}</span>
               </li>
             ))}
           </ul>

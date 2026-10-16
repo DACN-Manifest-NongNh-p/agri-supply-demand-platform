@@ -9,6 +9,8 @@ import type { Delivery } from "../data/mockProducer";
 import type { DeliveryStatus } from "../data/deliveries";
 import { ROUTES } from "../data/routes";
 import { splitRoute, supportsWebGL, type Coordinate } from "../data/mapGeometry";
+import { ColdChainPanel } from "./LiveTemperature";
+import { useLiveReadings } from "../data/liveTemperature";
 
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -35,7 +37,12 @@ function markerElement(className: string, text?: string) {
   return element;
 }
 
-type Props = { delivery: Delivery; status: DeliveryStatus; children?: ReactNode };
+type Props = {
+  delivery: Delivery;
+  status: DeliveryStatus;
+  /** Overlays (alert, shipment panel). As a function it gets the live "Cold chain" block to place in the panel. */
+  children?: ReactNode | ((coldChain: ReactNode) => ReactNode);
+};
 
 export function RouteMap({ delivery, status, children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +50,8 @@ export function RouteMap({ delivery, status, children }: Props) {
   // Without WebGL the map cannot render at all; show the fallback note from the start.
   const [failed, setFailed] = useState(() => !supportsWebGL());
   const route = ROUTES[delivery.routeKey].coordinates;
+  const moving = delivery.step < 3;
+  const readings = useLiveReadings(delivery.id, delivery.temperatures, moving);
 
   // Build the map once per delivery.
   useEffect(() => {
@@ -128,7 +137,7 @@ export function RouteMap({ delivery, status, children }: Props) {
     };
     // The map is rebuilt per delivery; status colour is updated by the effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [delivery.id]);
+  }, [delivery.id, delivery.step === 3]);
 
   // Recolour the travelled route when the status changes (for example after reporting a problem).
   useEffect(() => {
@@ -150,7 +159,7 @@ export function RouteMap({ delivery, status, children }: Props) {
           The map could not load. Check your internet connection; the shipment details below are still up to date.
         </p>
       )}
-      {children}
+      {typeof children === "function" ? children(<ColdChainPanel readings={readings} live={moving} />) : children}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { Reveal, Eyebrow } from "./Reveal";
 import "../styles/HowItWorks.css";
+import { useContent } from "@/lib/siteContent";
+import { TwoLine } from "./ContentText";
 const steps = [
   {
     n: "01",
@@ -62,6 +64,7 @@ const steps = [
 ];
 
 export function HowItWorks() {
+  const c = useContent();
   return (
     <section id="how-it-works" className="how-it-works-section">
       <div className="how-it-works-container">
@@ -72,8 +75,7 @@ export function HowItWorks() {
           </Eyebrow>
 
           <h2 className="editorial how-it-works-title">
-            From harvest to destination,
-            <span>every decision is connected.</span>
+            <TwoLine text={c("landing.howItWorks.title")} />
           </h2>
         </Reveal>
 

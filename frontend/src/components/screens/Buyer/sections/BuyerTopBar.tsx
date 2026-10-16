@@ -1,7 +1,9 @@
-import { Bell, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from "@/lib/keycloak";
+import type { BuyerAlert } from "../data/alerts";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const pages = [
   { label: "Home", to: "/buyer", end: true },
@@ -10,7 +12,7 @@ const pages = [
   { label: "Deliveries", to: "/buyer/deliveries", end: false },
 ];
 
-export function BuyerTopBar({ alertCount }: { alertCount: number }) {
+export function BuyerTopBar({ alerts, onDismiss }: { alerts: BuyerAlert[]; onDismiss: (id: string) => void }) {
   const authenticated = isKeycloakAuthenticated();
   const username = authenticated ? getKeycloakUsername() : "Demo buyer";
 
@@ -31,10 +33,7 @@ export function BuyerTopBar({ alertCount }: { alertCount: number }) {
       </nav>
 
       <div className="ph-account">
-        <Link to="/buyer#alerts" className="ph-bell" aria-label={`${alertCount} alerts`}>
-          <Bell size={18} />
-          {alertCount > 0 && <span>{alertCount}</span>}
-        </Link>
+        <NotificationBell items={alerts} onDismiss={onDismiss} />
         <span className="ph-user">{username}</span>
         {authenticated && (
           <button type="button" className="ph-logout" onClick={() => void logoutFromKeycloak()} aria-label="Log out">

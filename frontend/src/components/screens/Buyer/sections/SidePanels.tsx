@@ -1,4 +1,5 @@
 import { ArrowRight, MapPin, Pencil } from "lucide-react";
+import { useBuyer } from "../data/buyerContext";
 import { Link } from "react-router-dom";
 import { DeliveryCard } from "../../Producer/sections/DeliveryCard";
 import { deliveryStatus, sortDeliveries, type DeliveryIssue } from "../../Producer/data/deliveries";
@@ -7,12 +8,15 @@ import type { BuyerDelivery } from "../data/mockBuyer";
 import { buyer } from "../data/mockBuyer";
 
 export function CompanyCard() {
+  const { addresses } = useBuyer();
+  const main = addresses[0];
   return (
     <section className="ph-farm" aria-labelledby="company-title">
       <p className="ph-eyebrow">Your company</p>
       <h2 id="company-title">{buyer.name}</h2>
       <p className="ph-farm-meta">
-        <MapPin size={14} /> {buyer.destination}
+        <MapPin size={14} /> {main ? `${main.label}, ${main.district}, ${main.province}` : buyer.destination}
+        {addresses.length > 1 && ` +${addresses.length - 1} more`}
       </p>
       <ul className="ph-tags">
         {buyer.products.map((product) => (
@@ -22,9 +26,9 @@ export function CompanyCard() {
       <p className="ph-farm-contact">
         {buyer.contact}, {buyer.role.toLowerCase()}
       </p>
-      <button type="button" className="ph-link-btn">
+      <Link to="/buyer/company" className="ph-link-btn">
         <Pencil size={14} /> Edit company and delivery points
-      </button>
+      </Link>
     </section>
   );
 }

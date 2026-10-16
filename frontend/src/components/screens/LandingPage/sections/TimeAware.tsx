@@ -1,6 +1,8 @@
 import { Reveal, Eyebrow } from "./Reveal";
 import { cn } from "@/lib/utils";
 import "../styles/TimeAware.css";
+import { useContent } from "@/lib/siteContent";
+import { Lines } from "./ContentText";
 
 const batches = [
   {
@@ -36,6 +38,7 @@ const priorityStyle: Record<string, string> = {
 };
 
 export function TimeAware() {
+  const c = useContent();
   return (
     <section id="time-aware" className="time-aware-section">
       <div className="time-aware-container">
@@ -45,17 +48,10 @@ export function TimeAware() {
             <Eyebrow>Time-aware intelligence</Eyebrow>
 
             <h2 className="time-aware-title">
-              Freshness changes
-              <br />
-              the priority.
+              <Lines text={c("landing.timeAware.title")} />
             </h2>
 
-            <p className="time-aware-intro">
-              The same product and quantity can have very different urgency.
-              Farmora considers harvest date, remaining shelf life and
-              transportation time to determine which batches need attention
-              first.
-            </p>
+            <p className="time-aware-intro">{c("landing.timeAware.intro")}</p>
 
             <div className="time-aware-note">
               <span className="note-marker" />

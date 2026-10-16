@@ -4,6 +4,7 @@ import { Logo } from "./Nav";
 import { registerWithKeycloak } from "@/lib/keycloak";
 import rescueImage from "@/assets/rescue-produce.jpg";
 import "../styles/Rescue.css";
+import { useContent } from "@/lib/siteContent";
 
 function Flow({ steps, tone }: { steps: string[]; tone: "normal" | "risk" }) {
   return (
@@ -21,17 +22,15 @@ function Flow({ steps, tone }: { steps: string[]; tone: "normal" | "risk" }) {
 }
 
 export function Rescue() {
+  const c = useContent();
   return (
     <section className="rescue-section">
       <div className="rescue-container">
         <div className="rescue-grid">
           <Reveal>
             <Eyebrow className="rescue-eyebrow">Rescue</Eyebrow>
-            <h2 className="editorial rescue-title">Rescue before it becomes waste.</h2>
-            <p className="rescue-intro">
-              When a batch is predicted to have a high risk of remaining unsold or spoiling, the
-              system can prioritize it for alternative demand, redistribution, or rescue.
-            </p>
+            <h2 className="editorial rescue-title">{c("landing.rescue.title")}</h2>
+            <p className="rescue-intro">{c("landing.rescue.intro")}</p>
             <img
               src={rescueImage}
               alt="Crates of watermelons and dragon fruit at a distribution yard"
@@ -62,22 +61,19 @@ export function Rescue() {
 }
 
 export function FinalCTA() {
+  const c = useContent();
   return (
     <section id="cta" className="cta-section">
       <div className="cta-container">
         <Reveal>
-          <h2 className="editorial cta-title">Turn agricultural data into timely action.</h2>
-          <p className="cta-intro">
-            Connect supply, demand, time, and transportation in one coordination platform.
-          </p>
+          <h2 className="editorial cta-title">{c("landing.cta.title")}</h2>
+          <p className="cta-intro">{c("landing.cta.intro")}</p>
           <div className="cta-actions">
             <button type="button" onClick={() => void registerWithKeycloak().catch(console.error)} className="cta-primary">
-              Get Started
+              {c("landing.cta.primary")}
               <ArrowRight className="cta-primary-icon" />
             </button>
-            <a href="#coordination" className="cta-secondary">
-              Explore the Platform
-            </a>
+            <a href="#coordination" className="cta-secondary">{c("landing.cta.secondary")}</a>
           </div>
         </Reveal>
       </div>

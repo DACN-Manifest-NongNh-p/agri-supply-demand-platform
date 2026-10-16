@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, ChevronRight, Plus, X } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { CreateDemandDialog } from "./sections/CreateDemandDialog";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { DemandStatusPill, FulfilmentBar } from "./sections/Fulfilment";
 import { DEMAND_STAGES, rankSupply, sortDemands, type DemandStatus, type Fulfilment } from "./data/demands";
 import { useBuyer } from "./data/buyerContext";
@@ -25,12 +24,10 @@ function filterFromUrl(value: string | null): Filter {
 
 export default function DemandsPage() {
   const { demands, allocations, supply } = useBuyer();
-  const navigate = useNavigate();
-  // Links can pre-filter (?status=partial) or open the new-demand form (?new=1).
-  const [searchParams, setSearchParams] = useSearchParams();
+  // Links can pre-filter (?status=partial).
+  const [searchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>(() => filterFromUrl(searchParams.get("status")));
   const stageOnly = FILTERS.some((option) => option.id === filter) ? undefined : DEMAND_STAGES.find((stage) => stage.status === filter);
-  const creating = searchParams.get("new") === "1";
 
   const rows = sortDemands(demands, allocations);
   // "Needs supply" means kilograms nobody has reserved yet, the same rule the matching hero uses.
@@ -39,11 +36,8 @@ export default function DemandsPage() {
   const countOf = (id: Filter) => rows.filter((row) => matches(id, row.fulfilment)).length;
   const visible = rows.filter((row) => matches(filter, row.fulfilment));
 
-  const closeDialog = () =>
-    setSearchParams((current) => {
-      current.delete("new");
-      return current;
-    }, { replace: true });
+  // Posting a demand used to be a dialog here (?new=1); old links go to the new page.
+  if (searchParams.get("new") === "1") return <Navigate to="/buyer/demands/new" replace />;
 
   return (
     <main className="ph-main">
@@ -59,7 +53,7 @@ export default function DemandsPage() {
             What you have asked for and how much of it is sourced. Open a demand to see where its supply comes from and reserve more.
           </p>
         </div>
-        <Link to="?new=1" className="ph-btn ph-btn--primary ph-btn--large">
+        <Link to="/buyer/demands/new" className="ph-btn ph-btn--primary ph-btn--large">
           <Plus size={18} /> Post a demand
         </Link>
       </section>
@@ -123,12 +117,6 @@ export default function DemandsPage() {
         )}
       </section>
 
-      {creating && (
-        <CreateDemandDialog
-          onClose={closeDialog}
-          onView={(id) => navigate(`/buyer/demands/${id}`)}
-        />
-      )}
     </main>
   );
 }

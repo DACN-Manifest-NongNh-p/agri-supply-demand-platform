@@ -8,11 +8,13 @@ import ProducerLayout from './components/screens/Producer/ProducerLayout'
 import ProducerHome from './components/screens/Producer/ProducerHome'
 import BatchesPage from './components/screens/Producer/BatchesPage'
 import MarketDemandPage from './components/screens/Producer/MarketDemandPage'
-import DeliveriesPage from './components/screens/Producer/DeliveriesPage'
+import ProducerOrdersPage from './components/screens/Producer/OrdersPage'
 import BuyerLayout from './components/screens/Buyer/BuyerLayout'
 import BuyerHome from './components/screens/Buyer/BuyerHome'
 import DemandsPage from './components/screens/Buyer/DemandsPage'
 import DemandDetailPage from './components/screens/Buyer/DemandDetailPage'
+import NewDemandPage from './components/screens/Buyer/NewDemandPage'
+import CompanyPage from './components/screens/Buyer/CompanyPage'
 import SupplyPage from './components/screens/Buyer/SupplyPage'
 import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
 import BuyerDeliveriesPage from './components/screens/Buyer/DeliveriesPage'
@@ -27,6 +29,12 @@ import OrdersPage from './components/screens/Logistics/OrdersPage'
 import TripsPage from './components/screens/Logistics/TripsPage'
 import FleetPage from './components/screens/Logistics/FleetPage'
 import AccountPage from './components/screens/Logistics/AccountPage'
+import AdminLayout from './components/screens/Admin/AdminLayout'
+import AdminHome from './components/screens/Admin/AdminHome'
+import ContentPage from './components/screens/Admin/ContentPage'
+import AnnouncementsPage from './components/screens/Admin/AnnouncementsPage'
+import RulesPage from './components/screens/Admin/RulesPage'
+import ProductsPage from './components/screens/Admin/ProductsPage'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
@@ -62,7 +70,9 @@ function App() {
           <Route path="batches" element={<BatchesPage />} />
           <Route path="calendar" element={<LegacyCalendarRedirect />} />
           <Route path="demand" element={<MarketDemandPage />} />
-          <Route path="deliveries" element={<DeliveriesPage />} />
+          <Route path="orders" element={<ProducerOrdersPage />} />
+          {/* Shipments are followed from Orders now; the old list link lands there. */}
+          <Route path="deliveries" element={<Navigate to="/producer/orders?tab=active" replace />} />
           <Route
             path="deliveries/:id"
             element={
@@ -82,6 +92,8 @@ function App() {
         >
           <Route index element={<BuyerHome />} />
           <Route path="demands" element={<DemandsPage />} />
+          <Route path="demands/new" element={<NewDemandPage />} />
+          <Route path="company" element={<CompanyPage />} />
           <Route path="demands/:id" element={<DemandDetailPage />} />
           <Route path="supply" element={<SupplyPage />} />
           <Route path="supply/:code" element={<SupplyDetailPage />} />
@@ -137,6 +149,20 @@ function App() {
           />
           <Route path="fleet" element={<FleetPage />} />
           <Route path="account" element={<AccountPage />} />
+        </Route>
+        <Route
+          path="/admin"
+          element={
+            <RequireRole role="ADMIN">
+              <AdminLayout />
+            </RequireRole>
+          }
+        >
+          <Route index element={<AdminHome />} />
+          <Route path="content" element={<ContentPage />} />
+          <Route path="announcements" element={<AnnouncementsPage />} />
+          <Route path="rules" element={<RulesPage />} />
+          <Route path="products" element={<ProductsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

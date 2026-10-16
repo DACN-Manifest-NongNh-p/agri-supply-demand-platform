@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Plus, Snowflake, Trash2, X } from "lucide-react";
+import { createContext, useContext, useEffect, useRef, useState, type FormEvent } from "react";
+import { Check, Plus, Snowflake, Trash2, X } from "lucide-react";
 import { formatDay, formatKg } from "../Producer/data/format";
 import { dayState } from "./data/capacity";
-import { PROVINCES, VEHICLE_TYPES, WEEKDAYS, isRefrigerated, type Vehicle, type VehicleType } from "./data/mockLogistics";
+import { PROVINCES, VEHICLE_TYPES, WEEKDAYS, isRefrigerated, type OperatingRoute, type OperatingSchedule, type Vehicle, type VehicleType } from "./data/mockLogistics";
 import { useLogistics } from "./data/logisticsContext";
 
 const WEEK = [0, 1, 2, 3, 4, 5, 6];
@@ -115,8 +115,8 @@ function AddVehicleDialog({ onClose }: { onClose: () => void }) {
 }
 
 function DayCell({ vehicle, day }: { vehicle: Vehicle; day: number }) {
-  const { toggleOffDay } = useLogistics();
-  const state = dayState(vehicle, day);
+  const { offDaysOf, toggleOffDay } = useFleetDraft();
+  const state = dayState({ ...vehicle, offDays: offDaysOf(vehicle) }, day);
   const label = `${vehicle.plate} ${formatDay(day)}: ${state === "free" ? "free" : state === "booked" ? "on a Farmora trip" : "unavailable"}`;
   return (
     <td className="lg-day-cell">
@@ -133,9 +133,34 @@ function DayCell({ vehicle, day }: { vehicle: Vehicle; day: number }) {
   );
 }
 
+/**
+ * Availability, areas, routes and the schedule are edited as a draft and saved together, since
+ * they decide which orders Farmora offers the provider. Adding or removing a vehicle is immediate.
+ */
+type Draft = { offDays: Record<string, number[]>; serviceAreas: string[]; operatingRoutes: OperatingRoute[]; schedule: OperatingSchedule };
+
+type DraftApi = {
+  offDaysOf: (vehicle: Vehicle) => number[];
+  toggleOffDay: (plate: string, day: number) => void;
+  serviceAreas: string[];
+  setServiceAreas: (areas: string[]) => void;
+  operatingRoutes: OperatingRoute[];
+  setOperatingRoutes: (routes: OperatingRoute[]) => void;
+  schedule: OperatingSchedule;
+  setSchedule: (schedule: OperatingSchedule) => void;
+};
+
+const DraftContext = createContext<DraftApi | null>(null);
+
+function useFleetDraft() {
+  return useContext(DraftContext)!;
+}
+
+const sorted = (days: number[]) => [...days].sort((a, b) => a - b);
+
 /** Provinces served and the corridors run between them. */
 function WhereSection() {
-  const { serviceAreas, setServiceAreas, operatingRoutes, setOperatingRoutes } = useLogistics();
+  const { serviceAreas, setServiceAreas, operatingRoutes, setOperatingRoutes } = useFleetDraft();
   const [area, setArea] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -244,7 +269,7 @@ function WhereSection() {
 
 /** Days of the week and hours the company takes pickups and drop-offs. */
 function WhenSection() {
-  const { schedule, setSchedule } = useLogistics();
+  const { schedule, setSchedule } = useFleetDraft();
   // Monday first, the way Vietnamese calendars read.
   const order = [1, 2, 3, 4, 5, 6, 0];
   const badHours = schedule.from >= schedule.to;
@@ -295,15 +320,79 @@ function WhenSection() {
 
 /** What the provider declares to Farmora: vehicles (type, payload, availability), where and when it operates. */
 export default function FleetPage() {
-  const { fleet, removeVehicle } = useLogistics();
+  const logistics = useLogistics();
+  const { fleet, removeVehicle } = logistics;
   const [adding, setAdding] = useState(false);
+
+  const saved = (): Draft => ({
+    offDays: Object.fromEntries(logistics.fleet.map((vehicle) => [vehicle.plate, sorted(vehicle.offDays)])),
+    serviceAreas: logistics.serviceAreas,
+    operatingRoutes: logistics.operatingRoutes,
+    schedule: logistics.schedule,
+  });
+  const [draft, setDraft] = useState<Draft>(saved);
+  const [justSaved, setJustSaved] = useState(false);
+
+  const offDaysOf = (vehicle: Vehicle) => draft.offDays[vehicle.plate] ?? vehicle.offDays;
+  const savedState = saved();
+  // Vehicles added since the draft started count as unchanged until their days are touched.
+  const dirtyPlates = fleet.filter((vehicle) => JSON.stringify(sorted(offDaysOf(vehicle))) !== JSON.stringify(savedState.offDays[vehicle.plate]));
+  const dirty =
+    dirtyPlates.length > 0 ||
+    JSON.stringify(draft.serviceAreas) !== JSON.stringify(savedState.serviceAreas) ||
+    JSON.stringify(draft.operatingRoutes) !== JSON.stringify(savedState.operatingRoutes) ||
+    JSON.stringify(draft.schedule) !== JSON.stringify(savedState.schedule);
+  const invalid = draft.schedule.from >= draft.schedule.to;
+
+  // Reloading or closing the tab with unsaved changes asks first.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  useEffect(() => {
+    if (!justSaved) return;
+    const timer = window.setTimeout(() => setJustSaved(false), 2500);
+    return () => window.clearTimeout(timer);
+  }, [justSaved]);
+
+  const api: DraftApi = {
+    offDaysOf,
+    toggleOffDay: (plate, day) =>
+      setDraft((current) => {
+        const vehicle = fleet.find((item) => item.plate === plate);
+        if (!vehicle || vehicle.bookedDays.includes(day)) return current;
+        const days = current.offDays[plate] ?? vehicle.offDays;
+        return { ...current, offDays: { ...current.offDays, [plate]: days.includes(day) ? days.filter((item) => item !== day) : sorted([...days, day]) } };
+      }),
+    serviceAreas: draft.serviceAreas,
+    setServiceAreas: (serviceAreas) => setDraft((current) => ({ ...current, serviceAreas })),
+    operatingRoutes: draft.operatingRoutes,
+    setOperatingRoutes: (operatingRoutes) => setDraft((current) => ({ ...current, operatingRoutes })),
+    schedule: draft.schedule,
+    setSchedule: (schedule) => setDraft((current) => ({ ...current, schedule })),
+  };
+
+  const save = () => {
+    if (invalid) return;
+    for (const vehicle of dirtyPlates) logistics.setOffDays(vehicle.plate, offDaysOf(vehicle));
+    logistics.setServiceAreas(draft.serviceAreas);
+    logistics.setOperatingRoutes(draft.operatingRoutes);
+    logistics.setSchedule(draft.schedule);
+    setJustSaved(true);
+  };
+
+  const discard = () => setDraft(saved());
 
   const total = fleet.reduce((sum, vehicle) => sum + vehicle.capacityKg, 0);
   const cold = fleet.filter((vehicle) => isRefrigerated(vehicle.type)).length;
   const freeToday = fleet.filter((vehicle) => dayState(vehicle, 0) === "free").length;
 
   return (
-    <main className="ph-main lg-page">
+    <DraftContext.Provider value={api}>
+    <main className="ph-main lg-page lg-fleet-page">
       <header className="lg-head lg-head--action">
         <div>
           <h1>Fleet</h1>
@@ -382,6 +471,30 @@ export default function FleetPage() {
       </div>
 
       {adding && <AddVehicleDialog onClose={() => setAdding(false)} />}
+
+      {(dirty || justSaved) && (
+        <div className={dirty ? "lg-savebar" : "lg-savebar is-saved"} role="status">
+          {dirty ? (
+            <>
+              <span>
+                You have unsaved changes
+                {invalid && <span className="lg-savebar-error"> · fix the operating hours first</span>}
+              </span>
+              <button type="button" className="ph-btn" onClick={discard}>
+                Discard
+              </button>
+              <button type="button" className="ph-btn ph-btn--primary" disabled={invalid} onClick={save}>
+                Save changes
+              </button>
+            </>
+          ) : (
+            <span className="lg-savebar-ok">
+              <Check size={16} aria-hidden="true" /> Saved. Farmora uses it for the next orders.
+            </span>
+          )}
+        </div>
+      )}
     </main>
+    </DraftContext.Provider>
   );
 }

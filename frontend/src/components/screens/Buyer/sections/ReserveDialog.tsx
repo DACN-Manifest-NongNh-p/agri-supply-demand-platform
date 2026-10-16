@@ -63,7 +63,7 @@ export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose:
             {batch.producer} has <strong>24 hours</strong> to confirm. Until then the quantity is held for {done.demandId} and nobody else can take it.
           </p>
           <div className="ph-declared-actions">
-            <Link to={`/buyer/demands/${done.demandId}`} className="ph-btn ph-btn--primary">View {done.demandId}</Link>
+            <Link to={`/buyer/demands/${done.demandId}#sources`} className="ph-btn ph-btn--primary">View order</Link>
             <button type="button" className="ph-btn" onClick={onClose}>Keep browsing</button>
           </div>
         </div>
@@ -83,7 +83,7 @@ export function ReserveDialog({ batch, onClose }: { batch: SupplyBatch; onClose:
 
           {options.length === 0 ? (
             <p className="ph-muted">
-              You have no open {batch.product.toLowerCase()} demand. <Link to="/buyer/demands?new=1">Post one</Link> first, then reserve.
+              You have no open {batch.product.toLowerCase()} demand. <Link to="/buyer/demands/new">Post one</Link> first, then reserve.
             </p>
           ) : (
             <fieldset className="ph-field">

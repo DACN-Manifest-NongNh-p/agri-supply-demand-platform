@@ -67,11 +67,11 @@ Fitting vehicles are listed smallest first, so big trucks stay free for big load
 | `/logistics` | Overview | Four figures (orders to answer and when the next lapses, trips under way and problems, delivered, free vehicles today); trips under way next to a live map of the selected trip (product, distance, due time, weight); a searchable table of every transport order with its status. The map loads lazily |
 | `/logistics/orders` | Transport orders | Tabs **To answer**, **Accepted**, **Declined** (`?tab=accepted`, `?tab=declined`) |
 | `/logistics/trips` | Trips | All trips, filterable: under way, problems (opens here when there are any), delivered, all |
-| `/logistics/trips/:id` | Trip detail | Route map, due time, vehicle and driver, Farmora coordination desk; tabs **Update status**, **Incidents**, **Timeline**, **Temperature**, **Proof of delivery** |
+| `/logistics/trips/:id` | Trip detail | Route map, due time, vehicle and driver, Farmora coordination desk; a live Cold chain block in the panel; tabs **Update status**, **Incidents**, **Timeline**, **Proof of delivery** |
 | `/logistics/fleet` | Fleet | One line of figures, vehicles with type, payload and 7-day availability, add/remove vehicles, areas and routes, operating days and hours |
 | `/logistics/account` | Account & team | Company details, own sign-in and security, team members, roles and permissions |
 
-The sidebar shows a count next to Transport orders (waiting for an answer) and Trips (trips with an open problem).
+The sidebar shows a count next to Transport orders (waiting for an answer) and Trips (trips with an open problem). A **bell** next to the brand lists what needs the provider: trips with an open problem (urgent) and orders to answer, urgent when 6 hours or less are left; each opens the trip or the order.
 
 ## Transport orders
 
@@ -109,6 +109,7 @@ What the provider declares (US-10), and where each item lives on the page:
 - **Add vehicle:** plate (checked against the `51C-482.19` format and for duplicates), type, payload (at least 100 kg), default driver (from the team's drivers), base.
 - **Where you operate:** areas are the provinces served (at least one must stay). Routes are corridors between two of those provinces, in both directions; removing an area removes its routes.
 - **When you operate:** the days of the week (at least one) and the opening hours for pickups and drop-offs.
+- **Saving:** vehicle availability, areas, routes and the schedule are edited as a draft. A bar at the bottom of the page shows *You have unsaved changes* with **Discard** and **Save changes** (disabled while the hours are invalid); saving applies everything at once and confirms *Saved*. Reloading or closing the tab with unsaved changes asks first. Adding or removing a vehicle applies immediately.
 
 ## Account & team
 

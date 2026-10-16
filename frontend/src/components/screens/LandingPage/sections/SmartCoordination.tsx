@@ -1,20 +1,18 @@
 import { Check, ArrowRight } from "lucide-react";
 import { Reveal, Eyebrow } from "./Reveal";
 import "../styles/SmartCoordination.css";
+import { useContent } from "@/lib/siteContent";
 
 export function SmartCoordination() {
+  const c = useContent();
   return (
     <section className="smart-section">
       <div className="smart-container">
         <div className="smart-grid">
           <Reveal>
             <Eyebrow>Smart coordination</Eyebrow>
-            <h2 className="editorial smart-title">Find where the produce should go next.</h2>
-            <p className="smart-intro">
-              When multiple supply batches can satisfy the same demand, the system can consider
-              remaining shelf life, distance, transportation time, quality, and demand to prioritize
-              suitable coordination options.
-            </p>
+            <h2 className="editorial smart-title">{c("landing.smart.title")}</h2>
+            <p className="smart-intro">{c("landing.smart.intro")}</p>
           </Reveal>
 
           <Reveal delay={100} className="smart-card">
@@ -78,17 +76,15 @@ export function SmartCoordination() {
 }
 
 export function Reservation() {
+  const c = useContent();
   return (
     <section className="reservation-section">
       <div className="reservation-container">
         <div className="reservation-grid">
           <Reveal>
             <Eyebrow>Reservation</Eyebrow>
-            <h2 className="editorial reservation-title">One batch. One reliable inventory.</h2>
-            <p className="reservation-intro">
-              When a buyer places an order, the requested quantity is temporarily reserved so
-              multiple buyers cannot claim the same available supply.
-            </p>
+            <h2 className="editorial reservation-title">{c("landing.reservation.title")}</h2>
+            <p className="reservation-intro">{c("landing.reservation.intro")}</p>
           </Reveal>
 
           <Reveal delay={100} className="reservation-card">

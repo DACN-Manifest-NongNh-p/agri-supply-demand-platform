@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, MapPin, Sprout } from "lucide-react";
+import { ArrowLeft, MapPin, Search, Sprout, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MatchScore } from "../Producer/sections/MatchScore";
 import { PhotoCover } from "../Producer/sections/BatchPhotos";
@@ -21,7 +21,18 @@ const GRADES: SupplyBatch["grade"][] = ["A", "B", "C"];
 
 export default function SupplyPage() {
   const { supply, demands, allocations } = useBuyer();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The search text lives in the URL (?q=) so a search can be shared or come back with Back.
+  const query = searchParams.get("q") ?? "";
+  const setQuery = (value: string) =>
+    setSearchParams(
+      (current) => {
+        if (value) current.set("q", value);
+        else current.delete("q");
+        return current;
+      },
+      { replace: true },
+    );
   const products = Array.from(new Set(supply.map((batch) => batch.product)));
   const [product, setProduct] = useState(() => (products.includes(searchParams.get("product") ?? "") ? searchParams.get("product")! : "All"));
   const [grades, setGrades] = useState<SupplyBatch["grade"][]>(GRADES);
@@ -43,8 +54,15 @@ export default function SupplyPage() {
       .sort((a, b) => b.candidate.score - a.candidate.score)[0];
 
   const window = READY_WINDOWS.find((option) => option.id === ready)!;
+  // Every word must appear somewhere in the batch: product, variety, producer, region or code.
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const matchesQuery = (batch: SupplyBatch) => {
+    const text = [batch.product, batch.variety, batch.producer, batch.region, batch.code, `grade ${batch.grade}`].join(" ").toLowerCase();
+    return words.every((word) => text.includes(word));
+  };
   const rows = supply
     .filter((batch) => openOf(batch) > 0 && batch.status !== "in_transit" && batch.status !== "delivered")
+    .filter(matchesQuery)
     .filter((batch) => product === "All" || batch.product === product)
     .filter((batch) => grades.includes(batch.grade))
     .filter((batch) => batch.readyDay <= window.days)
@@ -73,6 +91,22 @@ export default function SupplyPage() {
       </section>
 
       <section className="ph-card bu-filters" aria-label="Filters">
+        <form className="bu-search" role="search" onSubmit={(event) => event.preventDefault()}>
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            placeholder="Search product, variety, producer, region or batch code"
+            aria-label="Search supply"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {query && (
+            <button type="button" className="bu-search-clear" aria-label="Clear search" onClick={() => setQuery("")}>
+              <X size={16} />
+            </button>
+          )}
+        </form>
+
         <div className="ph-segmented" role="group" aria-label="Product">
           {["All", ...products].map((item) => (
             <button key={item} type="button" aria-pressed={product === item} onClick={() => setProduct(item)}>
@@ -119,8 +153,24 @@ export default function SupplyPage() {
         </div>
       </section>
 
+      <p className="bu-result-count" aria-live="polite">
+        {rows.length} {rows.length === 1 ? "batch" : "batches"}
+        {query && <> for “{query}”</>}
+      </p>
+
       {rows.length === 0 ? (
-        <p className="ph-empty">No batch matches these filters.</p>
+        <p className="ph-empty">
+          {query ? (
+            <>
+              Nothing matches “{query}” with these filters.{" "}
+              <button type="button" className="ph-link-btn" onClick={() => setQuery("")}>
+                Clear search
+              </button>
+            </>
+          ) : (
+            "No batch matches these filters."
+          )}
+        </p>
       ) : (
         <ul className="bu-supply-grid" aria-label="Available batches">
           {rows.map(({ batch, fit }) => (

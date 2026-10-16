@@ -130,7 +130,7 @@ export default function SupplyDetailPage() {
             {fits.length === 0 ? (
               <p className="ph-muted">
                 You have no open {batch.product.toLowerCase()} demand.{" "}
-                <Link to="/buyer/demands?new=1">Post a demand</Link> to get matched.
+                <Link to="/buyer/demands/new">Post a demand</Link> to get matched.
               </p>
             ) : (
               <ul className="bu-batch-fits">

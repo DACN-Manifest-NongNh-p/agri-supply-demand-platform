@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowLeft, Check, ChevronDown, CircleCheck, Minus, Package, PackageX, Store, X } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MatchScore, ScoreRing } from "./sections/MatchScore";
-import { OfferTracker } from "./sections/OfferTracker";
 import { demands, producer } from "./data/mockProducer";
 import { batchesWithoutBuyer, matchAll, type CriterionState, type MatchResult } from "./data/matching";
 import { formatDay, formatKg } from "./data/format";
@@ -19,7 +18,7 @@ const VIEWS: { id: View; label: string }[] = [
 const CRITERION_ICON: Record<CriterionState, typeof Check> = { pass: Check, partial: Minus, fail: X };
 
 export default function MarketDemandPage() {
-  const { batches, offers, offer, offerLog } = useProducer();
+  const { batches, offers, offer } = useProducer();
   // Links from the home page can pre-open a match (?open=D-551) or pre-filter (?view=unmatched).
   const [searchParams] = useSearchParams();
   const [view, setView] = useState<View>(() => VIEWS.find((option) => option.id === searchParams.get("view"))?.id ?? "all");
@@ -216,7 +215,6 @@ export default function MarketDemandPage() {
 
       {shownMatched.length === 0 && shownUnmatched.length === 0 && <p className="ph-empty">Nothing here for this filter.</p>}
 
-      <OfferTracker offers={offerLog} />
     </main>
   );
 }

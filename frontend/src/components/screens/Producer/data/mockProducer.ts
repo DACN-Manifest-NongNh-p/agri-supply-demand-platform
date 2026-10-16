@@ -45,27 +45,6 @@ export type Demand = {
   note?: string;
 };
 
-export type OfferStatus = "sent" | "accepted" | "allocated" | "confirmed" | "declined";
-
-export const OFFER_STAGES: { status: Exclude<OfferStatus, "declined">; label: string }[] = [
-  { status: "sent", label: "Offer sent" },
-  { status: "accepted", label: "Buyer accepted" },
-  { status: "allocated", label: "Allocated" },
-  { status: "confirmed", label: "Confirmed by you" },
-];
-
-export type Offer = {
-  demandId: string;
-  buyer: string;
-  product: string;
-  quantityKg: number;
-  batch: string;
-  sentDay: number;
-  status: OfferStatus;
-  /** Attention task that settles this offer, if any. */
-  taskId?: string;
-};
-
 export type Task =
   | { id: string; kind: "confirm_allocation"; batch: string; buyer: string; quantityKg: number; dueInHours: number }
   | { id: string; kind: "hold_expiring"; batch: string; buyer: string; dueInHours: number }
@@ -144,7 +123,7 @@ export const batches: Batch[] = [
   { code: "B-110", product: "Pomelo", variety: "Da xanh", quantityKg: 3200, allocatedKg: 0, grade: "B", plot: "Plot 7", harvestDay: 7, readyDay: 9, sellByDay: 13, status: "expected" },
   // No buyer fits this one (mango demand wants grade A–B): shows up under "Batches without a buyer".
   { code: "B-112", product: "Mango", variety: "Cat Chu", quantityKg: 1200, allocatedKg: 0, grade: "C", plot: "Plot 8", harvestDay: 1, readyDay: 2, sellByDay: 6, status: "expected" },
-  // Earlier batches, referenced by deliveries and offers; they appear in the batch list and history.
+  // Earlier batches, referenced by deliveries and orders; they appear in the batch list and history.
   { code: "B-100", product: "Dragon fruit", variety: "White flesh", quantityKg: 1500, allocatedKg: 1500, grade: "A", plot: "Plot 4", harvestDay: -2, readyDay: -1, sellByDay: 5, status: "in_transit" },
   { code: "B-095", product: "Dragon fruit", variety: "Red flesh", quantityKg: 2400, allocatedKg: 2400, grade: "A", plot: "Plot 5", harvestDay: -9, readyDay: -8, sellByDay: -2, status: "delivered" },
   { code: "B-091", product: "Mango", variety: "Cat Hoa Loc", quantityKg: 900, allocatedKg: 900, grade: "A", plot: "Plot 1", harvestDay: -12, readyDay: -10, sellByDay: -5, status: "delivered" },
@@ -157,15 +136,8 @@ export const demands: Demand[] = [
   { id: "D-562", buyer: "Binh Duong School Meals", buyerType: "Institutional", product: "Pomelo", quantityKg: 1500, gradeWanted: "Grade B", neededByDay: 10, destination: "Thu Dau Mot, Binh Duong", distanceKm: 290 },
 ];
 
-// Earlier offers. The Phu Tho one is the allocation waiting in "Needs your attention" (task T-1).
-export const offerHistory: Offer[] = [
-  { demandId: "D-540", buyer: "Phu Tho Wholesale Market", product: "Dragon fruit", quantityKg: 3000, batch: "B-102", sentDay: -3, status: "allocated", taskId: "T-1" },
-  { demandId: "D-536", buyer: "GreenBasket Supermarkets", product: "Dragon fruit", quantityKg: 2400, batch: "B-095", sentDay: -8, status: "confirmed" },
-];
-
 export const tasks: Task[] = [
   { id: "T-1", kind: "confirm_allocation", batch: "B-102", buyer: "Phu Tho Wholesale Market", quantityKg: 3000, dueInHours: 5 },
-  { id: "T-2", kind: "hold_expiring", batch: "B-102", buyer: "Phu Tho Wholesale Market", dueInHours: 5 },
   { id: "T-4", kind: "update_status", batch: "B-107", from: "expected", to: "ready" },
 ];
 

@@ -5,12 +5,12 @@ import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from
 
 const pages = [
   { label: "Home", to: "/producer", end: true },
-  { label: "Market demand", to: "/producer/demand", end: false },
+  { label: "Matches", to: "/producer/demand", end: false },
+  { label: "Orders", to: "/producer/orders", end: false },
   { label: "Batches", to: "/producer/batches", end: false },
-  { label: "Deliveries", to: "/producer/deliveries", end: false },
 ];
 
-export function TopBar({ openTasks }: { openTasks: number }) {
+export function TopBar({ openTasks, ordersToConfirm }: { openTasks: number; ordersToConfirm: number }) {
   const authenticated = isKeycloakAuthenticated();
   const username = authenticated ? getKeycloakUsername() : "Demo producer";
 
@@ -26,6 +26,11 @@ export function TopBar({ openTasks }: { openTasks: number }) {
         {pages.map((page) => (
           <NavLink key={page.to} to={page.to} end={page.end}>
             {page.label}
+            {page.to === "/producer/orders" && ordersToConfirm > 0 && (
+              <span className="ph-nav-count" aria-label={`${ordersToConfirm} to confirm`}>
+                {ordersToConfirm}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

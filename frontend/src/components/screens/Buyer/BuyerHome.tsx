@@ -1,15 +1,15 @@
 import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { AlertList } from "./sections/AlertList";
 import { DemandHero } from "./sections/DemandHero";
 import { CompanyCard, DemandPipeline, IncomingDeliveries } from "./sections/SidePanels";
+import { NewOnMarket, WeekAhead } from "./sections/HomeExtras";
 import { buyer, deliveries } from "./data/mockBuyer";
 import { fulfilmentOf, type DemandStatus } from "./data/demands";
 import { useBuyer } from "./data/buyerContext";
 import { greeting } from "../Producer/data/format";
 
 export default function BuyerHome() {
-  const { demands, allocations, alerts, dismissAlert, deliveryIssues } = useBuyer();
+  const { demands, allocations, alerts, deliveryIssues, supply } = useBuyer();
 
   const counts: Record<DemandStatus, number> = { new: 0, sourcing: 0, partial: 0, fulfilled: 0, completed: 0 };
   let needSupply = 0;
@@ -32,10 +32,10 @@ export default function BuyerHome() {
             {needSupply > 0
               ? `${needSupply} ${needSupply === 1 ? "demand still needs" : "demands still need"} supply`
               : "Every demand is fully sourced"}
-            {alerts.length > 0 ? `, and ${alerts.length} ${alerts.length === 1 ? "alert needs" : "alerts need"} a look.` : "."}
+            {alerts.length > 0 ? `. ${alerts.length} ${alerts.length === 1 ? "notification" : "notifications"} under the bell.` : "."}
           </p>
         </div>
-        <Link to="/buyer/demands?new=1" className="ph-btn ph-btn--large">
+        <Link to="/buyer/demands/new" className="ph-btn ph-btn--large">
           <Plus size={18} /> Post a demand
         </Link>
       </section>
@@ -44,8 +44,9 @@ export default function BuyerHome() {
 
       <div className="ph-columns">
         <div className="ph-col-main">
-          <AlertList alerts={alerts} onDismiss={dismissAlert} />
           <IncomingDeliveries deliveries={deliveries} reported={deliveryIssues} />
+          <WeekAhead demands={demands} allocations={allocations} deliveries={deliveries} />
+          <NewOnMarket supply={supply} demands={demands} allocations={allocations} />
         </div>
 
         <aside className="ph-col-side">
