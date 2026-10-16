@@ -11,6 +11,7 @@ import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "./styles/Coordinator.css";
 import { useStoredTheme } from "./data/theme";
+import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 /** Shell for all coordinator pages: sidebar plus the demo state shared between them. */
 export default function CoordinatorLayout() {
@@ -121,6 +122,14 @@ export default function CoordinatorLayout() {
       <CoordinatorSidebar
         theme={theme}
         onToggleTheme={toggleTheme}
+        // The Needs action list, also under the bell so it is reachable from every page.
+        notifications={queue.map((item) => ({
+          id: item.id,
+          tone: item.tone,
+          title: `${item.label}: ${item.title}`,
+          detail: item.caption,
+          link: item.link,
+        }))}
         counts={{
           matching: needsDecision(board).length,
           requests: requests.filter((request) => !resolved[request.id]).length,
@@ -128,6 +137,7 @@ export default function CoordinatorLayout() {
         }}
       />
       <div className="co-content">
+        <AnnouncementBanner audience="COORDINATOR" />
         <Outlet context={state} />
       </div>
     </div>

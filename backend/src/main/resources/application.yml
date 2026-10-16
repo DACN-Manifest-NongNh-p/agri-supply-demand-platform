@@ -1,6 +1,21 @@
 spring:
   application:
     name: agri-supply-demand-api
+  # Application database (site configuration). Separate from Keycloak's database; see compose.yml (app-db).
+  datasource:
+    url: ${APP_DB_URL:jdbc:postgresql://localhost:5433/farmora}
+    username: ${APP_DB_USER:farmora}
+    password: ${APP_DB_PASSWORD:farmora-local}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  # Errors (validation, 404, 409) come back as RFC 9457 problem details with a readable "detail".
+  mvc:
+    problemdetails:
+      enabled: true
   security:
     oauth2:
       resourceserver:

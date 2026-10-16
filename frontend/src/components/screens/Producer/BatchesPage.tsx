@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, List, Plus } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, FileSpreadsheet, List, Plus } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CalendarGrid, StatusLegend } from "./sections/CalendarGrid";
 import { BatchDetail } from "./sections/BatchDetail";
 import { BatchHistory } from "./sections/BatchHistory";
 import { BatchTable } from "./sections/BatchTable";
 import { DeclareBatchDialog } from "./sections/DeclareBatchDialog";
+import { ImportBatchesDialog } from "./sections/ImportBatchesDialog";
 import { deliveries, demands, producer } from "./data/mockProducer";
 import { matchAll } from "./data/matching";
 import { dateFromToday, formatKg } from "./data/format";
@@ -29,7 +30,7 @@ const rangeFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "s
 
 /** Batch management: long-range planning calendar, full list, declaring new batches, per-batch history. */
 export default function BatchesPage() {
-  const { batches, setStatus, issues, reportIssue, addBatch, offerLog } = useProducer();
+  const { batches, setStatus, issues, reportIssue, addBatch, addBatches, orders } = useProducer();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<View>(searchParams.get("view") === "list" ? "list" : "calendar");
   const [range, setRange] = useState(RANGES[1]);
@@ -37,6 +38,7 @@ export default function BatchesPage() {
   const [product, setProduct] = useState("All");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const declaring = searchParams.get("declare") === "1";
+  const importing = searchParams.get("import") === "1";
 
   const updateParams = (changes: Record<string, string | null>) =>
     setSearchParams(
@@ -89,9 +91,14 @@ export default function BatchesPage() {
             {active.length} active {active.length === 1 ? "batch" : "batches"} · {formatKg(declaredKg)} declared · {formatKg(openKg)} still open for buyers
           </p>
         </div>
-        <button type="button" className="ph-btn ph-btn--primary ph-btn--large" onClick={() => updateParams({ declare: "1" })}>
-          <Plus size={18} /> Declare a new batch
-        </button>
+        <div className="ph-head-actions">
+          <button type="button" className="ph-btn ph-btn--large" onClick={() => updateParams({ import: "1" })}>
+            <FileSpreadsheet size={18} /> Import from file
+          </button>
+          <button type="button" className="ph-btn ph-btn--primary ph-btn--large" onClick={() => updateParams({ declare: "1" })}>
+            <Plus size={18} /> Declare a new batch
+          </button>
+        </div>
       </section>
 
       <section className="ph-card" aria-label="Batches">
@@ -172,10 +179,21 @@ export default function BatchesPage() {
         {selected && (
           <>
             <BatchDetail key={selected.code} batch={selected} issue={issues[selected.code]} onAdvance={setStatus} onReport={reportIssue} />
-            <BatchHistory batch={selected} matches={matches} offers={offerLog} deliveries={deliveries} />
+            <BatchHistory batch={selected} matches={matches} orders={orders} deliveries={deliveries} />
           </>
         )}
       </section>
+
+      {importing && (
+        <ImportBatchesDialog
+          onClose={() => {
+            setStatusFilter("active");
+            setProduct("All");
+            updateParams({ import: null });
+          }}
+          onDeclare={addBatches}
+        />
+      )}
 
       {declaring && (
         <DeclareBatchDialog

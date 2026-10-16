@@ -2,11 +2,12 @@ import { useState } from "react";
 import { ArrowLeft, ArrowRight, ChevronDown, CircleCheck, Clock, PackageSearch, TriangleAlert } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { CriteriaChips, CriteriaList } from "./sections/Criteria";
+import { ReservedNotice, type Reservation } from "./sections/ReservedNotice";
 import { DemandStatusPill, DemandSteps, FulfilmentBar } from "./sections/Fulfilment";
 import { ReserveControl, SupplyPair } from "./sections/SupplyPair";
 import { fulfilmentOf, openOf, rankSupply } from "./data/demands";
 import { useBuyer } from "./data/buyerContext";
-import { ALLOCATION_STAGE_LABEL, buyer, type Allocation } from "./data/mockBuyer";
+import { ALLOCATION_STAGE_LABEL, type Allocation } from "./data/mockBuyer";
 import { formatDay, formatDayInText, formatKg } from "../Producer/data/format";
 
 /** Keyed by id so notices and open panels reset when moving between demands. */
@@ -20,7 +21,8 @@ function DemandDetailPage({ id }: { id?: string }) {
   const [openWhy, setOpenWhy] = useState<string | null>(null);
   const [showRejected, setShowRejected] = useState(false);
   const [helpAsked, setHelpAsked] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<Reservation | null>(null);
+  const [released, setReleased] = useState<string | null>(null);
   const demand = demands.find((item) => item.id === id);
 
   if (!demand) {
@@ -49,7 +51,7 @@ function DemandDetailPage({ id }: { id?: string }) {
               {formatKg(demand.quantityKg)} {demand.product.toLowerCase()}
             </h1>
             <p className="ph-match-hero-sub">
-              {demand.gradeWanted} · needed by {formatDayInText(demand.neededByDay)} · to {buyer.destination}
+              {demand.gradeWanted} · needed by {formatDayInText(demand.neededByDay)} · to {demand.destination}
               {demand.note && <> · “{demand.note}”</>}
             </p>
           </div>
@@ -62,13 +64,14 @@ function DemandDetailPage({ id }: { id?: string }) {
         </div>
       </section>
 
-      {notice && (
+      {notice && <ReservedNotice key={notice.allocationId} reservation={notice} onClose={() => setNotice(null)} />}
+      {released && !notice && (
         <p className="bu-notice" role="status">
-          <CircleCheck size={16} /> {notice}
+          <CircleCheck size={16} /> {released}
         </p>
       )}
 
-      <section className="ph-card bu-sources" aria-labelledby="sources-title">
+      <section className="ph-card bu-sources" id="sources" aria-labelledby="sources-title">
         <div className="ph-section-head">
           <div>
             <h2 id="sources-title">Where your supply comes from</h2>
@@ -85,7 +88,8 @@ function DemandDetailPage({ id }: { id?: string }) {
                 part={part}
                 onRelease={() => {
                   release(part.id);
-                  setNotice(`Released ${formatKg(part.kg)} of ${part.batchCode} back to the market.`);
+                  setNotice(null);
+                  setReleased(`Released ${formatKg(part.kg)} of ${part.batchCode} back to the market.`);
                 }}
               />
             ))}
@@ -145,8 +149,11 @@ function DemandDetailPage({ id }: { id?: string }) {
                         batch={candidate.batch}
                         openKg={fulfilment.openKg}
                         onReserve={(kg) => {
-                          reserve(demand.id, code, kg);
-                          setNotice(`Reserved ${formatKg(kg)} of ${code}. ${candidate.batch.producer} has 24 hours to confirm.`);
+                          const allocationId = reserve(demand.id, code, kg);
+                          if (allocationId) {
+                            setReleased(null);
+                            setNotice({ allocationId, demandId: demand.id, batchCode: code, producer: candidate.batch.producer, product: candidate.batch.product, kg });
+                          }
                         }}
                       />
                     </div>

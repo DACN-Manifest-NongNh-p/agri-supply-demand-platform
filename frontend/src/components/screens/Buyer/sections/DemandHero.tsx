@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, CircleCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDayInText, formatKg } from "../../Producer/data/format";
 import { rankSupply, sortDemands } from "../data/demands";
@@ -7,13 +7,14 @@ import { useBuyer } from "../data/buyerContext";
 import { CriteriaChips } from "./Criteria";
 import { FulfilmentBar } from "./Fulfilment";
 import { ReserveControl, SupplyPair } from "./SupplyPair";
+import { ReservedNotice, type Reservation } from "./ReservedNotice";
 
 const MORE_COUNT = 4;
 
 /** The centrepiece of the buyer home: the most urgent open demand and the supply Farmora suggests for it. */
 export function DemandHero() {
   const { demands, allocations, supply, reserve } = useBuyer();
-  const [reserved, setReserved] = useState<string | null>(null);
+  const [reserved, setReserved] = useState<Reservation | null>(null);
 
   const open = sortDemands(demands, allocations).filter(({ fulfilment }) => fulfilment.openKg > 0);
   const ranked = open.map((item) => ({ ...item, ranking: rankSupply(item.demand, supply, item.fulfilment.openKg) }));
@@ -39,11 +40,7 @@ export function DemandHero() {
         </Link>
       </div>
 
-      {reserved && (
-        <p className="bu-hero-note" role="status">
-          <CircleCheck size={16} /> {reserved}
-        </p>
-      )}
+      {reserved && <ReservedNotice key={reserved.allocationId} reservation={reserved} onClose={() => setReserved(null)} />}
 
       {featured ? (
         <div className="ph-match-hero-body">
@@ -69,8 +66,10 @@ export function DemandHero() {
                 large
                 onReserve={(kg) => {
                   const batch = featured.ranking.candidates[0].batch;
-                  reserve(featured.demand.id, batch.code, kg);
-                  setReserved(`Reserved ${formatKg(kg)} of ${batch.code} for ${featured.demand.id}. ${batch.producer} has 24 hours to confirm.`);
+                  const allocationId = reserve(featured.demand.id, batch.code, kg);
+                  if (allocationId) {
+                    setReserved({ allocationId, demandId: featured.demand.id, batchCode: batch.code, producer: batch.producer, product: batch.product, kg });
+                  }
                 }}
               />
               <Link to={`/buyer/demands/${featured.demand.id}`} className="ph-link-btn">
@@ -113,7 +112,7 @@ export function DemandHero() {
       ) : (
         <p className="ph-match-hero-empty">
           {open.length === 0 ? "Every demand is sourced. " : "Farmora keeps checking new batches against your open demands. "}
-          <Link to="/buyer/supply">Browse the market</Link> or <Link to="/buyer/demands?new=1">post a demand</Link>.
+          <Link to="/buyer/supply">Browse the market</Link> or <Link to="/buyer/demands/new">post a demand</Link>.
         </p>
       )}
     </section>

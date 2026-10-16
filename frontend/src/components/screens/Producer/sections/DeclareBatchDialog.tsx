@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { PhotoPicker } from "./BatchPhotos";
+import { ProductOptions } from "./ProductOptions";
 import { CircleCheck, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { demands, producer, type Batch } from "../data/mockProducer";
@@ -29,6 +30,15 @@ function matchesFor(draft: Draft) {
   return demands.filter((demand) => matchDemand(demand, [candidate]).best).length;
 }
 
+/** Select value for a product that is not in the farm's usual list. */
+const OTHER = "__other";
+
+/** A typed product that only differs in case from a known one becomes that one ("mango" → "Mango"). */
+function productName(typed: string, known: string[]) {
+  const clean = typed.trim().replace(/\s+/g, " ");
+  return known.find((item) => item.toLowerCase() === clean.toLowerCase()) ?? clean.charAt(0).toUpperCase() + clean.slice(1);
+}
+
 type Props = {
   onClose: () => void;
   onDeclare: (draft: Draft) => string;
@@ -41,6 +51,7 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
   const [declared, setDeclared] = useState<{ code: string; matches: number } | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [photoError, setPhotoError] = useState("");
+  const [productChoice, setProductChoice] = useState<string>(producer.products[0]);
   // Photos of a batch that was never declared are released when the dialog goes away.
   const kept = useRef({ photos: [] as string[], declared: false });
   useEffect(() => {
@@ -70,6 +81,9 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
 
     const problems: string[] = [];
     if (!Number.isFinite(quantityKg) || quantityKg <= 0) problems.push("Enter a quantity above 0 kg.");
+    const known = [...new Set([...producer.products, ...demands.map((demand) => demand.product)])];
+    const product = productChoice === OTHER ? productName(text("productOther"), known) : productChoice;
+    if (!product) problems.push("Enter the product.");
     if (!text("variety")) problems.push("Enter the variety.");
     if (readyDay < harvestDay) problems.push("The ready date cannot be before the harvest date.");
     if (sellByDay <= readyDay) problems.push("The sell-by date must be after the ready date.");
@@ -78,7 +92,7 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
     if (problems.length > 0) return;
 
     const draft: Draft = {
-      product: text("product"),
+      product,
       variety: text("variety"),
       plot: text("plot") || "Unassigned plot",
       quantityKg,
@@ -144,14 +158,14 @@ export function DeclareBatchDialog({ onClose, onDeclare, onView }: Props) {
           }}
         >
           <div className="ph-field-row">
-            <label className="ph-field">
-              <span>Product</span>
-              <select name="product" defaultValue={producer.products[0]}>
-                {producer.products.map((product) => (
-                  <option key={product}>{product}</option>
-                ))}
+            <div className="ph-field">
+              <span id="batch-product">Product</span>
+              <select aria-labelledby="batch-product" value={productChoice} onChange={(event) => setProductChoice(event.target.value)}>
+                <ProductOptions usual={producer.products} />
+                <option value={OTHER}>Other…</option>
               </select>
-            </label>
+              {productChoice === OTHER && <input name="productOther" aria-label="Product name" placeholder="Type the product, e.g. Durian" autoFocus />}
+            </div>
             <label className="ph-field">
               <span>Variety</span>
               <input name="variety" placeholder="e.g. White flesh" />

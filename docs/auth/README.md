@@ -234,7 +234,7 @@ After login or registration Keycloak redirects to `/auth/callback` (allowed by t
 | `BUYER` | `/buyer` |
 | `COORDINATOR` | `/coordinator` |
 | `LOGISTICS` | `/logistics` |
-| `ADMIN` | `/` (no dedicated area yet) |
+| `ADMIN` | `/admin` (see [admin docs](../admin/README.md)) |
 
 Protected routes are wrapped in `<RequireRole role="...">`:
 

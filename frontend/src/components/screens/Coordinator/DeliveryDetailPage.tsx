@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowLeft, Phone, TriangleAlert, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { RouteMap } from "../Producer/sections/RouteMap";
-import { TemperatureLog, Timeline } from "../Producer/sections/DeliveryPanels";
+import { Timeline } from "../Producer/sections/DeliveryPanels";
 import { DELIVERY_STEPS } from "../Producer/data/mockProducer";
 import { deliveryStatus, etaText } from "../Producer/data/deliveries";
 import { formatKg } from "../Producer/data/format";
@@ -10,7 +10,7 @@ import { CARRIER_DESKS, deliveries } from "./data/mockCoordinator";
 import { useCoordinator } from "./data/coordinatorContext";
 import { deliveryIncident } from "./data/queue";
 
-type Tab = "timeline" | "temperature" | "proof" | "updates";
+type Tab = "timeline" | "proof" | "updates";
 
 function Updates({ deliveryId, buyer, producer }: { deliveryId: string; buyer: string; producer: string }) {
   const { deliveryUpdates, postDeliveryUpdate } = useCoordinator();
@@ -70,7 +70,6 @@ export default function DeliveryDetailPage() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "timeline", label: "Timeline" },
-    { id: "temperature", label: "Temperature" },
     ...(delivery.receipt ? [{ id: "proof" as const, label: "Proof of delivery" }] : []),
     { id: "updates", label: "Updates to both sides" },
   ];
@@ -82,6 +81,8 @@ export default function DeliveryDetailPage() {
       </Link>
 
       <RouteMap delivery={delivery} status={status}>
+        {(coldChain) => (
+          <>
         {incident && (
           <p className="ph-map-alert">
             <TriangleAlert size={16} />
@@ -110,6 +111,8 @@ export default function DeliveryDetailPage() {
             ))}
           </ol>
 
+          {coldChain}
+
           {/* Only the coordinator sees the driver and the dispatch desk. */}
           <div className="ph-carrier">
             <Truck size={16} aria-hidden="true" />
@@ -127,6 +130,8 @@ export default function DeliveryDetailPage() {
             </a>
           )}
         </aside>
+          </>
+        )}
       </RouteMap>
 
       <div className="ph-detail-tabs" role="tablist" aria-label="Delivery details">
@@ -148,7 +153,6 @@ export default function DeliveryDetailPage() {
 
       <section className="ph-card ph-detail-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "timeline" && <Timeline delivery={delivery} />}
-        {tab === "temperature" && <TemperatureLog delivery={delivery} />}
         {tab === "proof" && delivery.receipt && (
           <dl className="ph-proof">
             <div><dt>Received by</dt><dd>{delivery.receipt.receivedBy}</dd></div>

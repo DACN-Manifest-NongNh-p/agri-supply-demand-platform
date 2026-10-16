@@ -1,8 +1,11 @@
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-harvest.jpg";
 import "../styles/Hero.css";
+import { useContent } from "@/lib/siteContent";
+import { Lines } from "./ContentText";
 
 export function Hero() {
+  const c = useContent();
   return (
     <section className="hero-section">
       <img
@@ -18,35 +21,23 @@ export function Hero() {
       <div className="hero-content">
         <div>
           <div className="hero-content-text">
-            <p className="hero-eyebrow">Connecting Supply, Demand & Time</p>
+            <p className="hero-eyebrow">{c("landing.hero.eyebrow")}</p>
             <h1>
-              Freshness Has a Deadline
-              <br />
-              Act in Time.
+              <Lines text={c("landing.hero.title")} />
             </h1>
-            <p className="hero-description">
-              Connect agricultural supply with real demand while tracking harvest time, shelf life,
-              location, and transportation — helping the right produce reach the right destination
-              before it becomes waste.
-            </p>
+            <p className="hero-description">{c("landing.hero.description")}</p>
             <div className="hero-buttons">
               <a href="#coordination" className="hero-button hero-button-primary">
-                Explore the Platform
+                {c("landing.hero.primaryCta")}
                 <ArrowRight size={16} />
               </a>
-              <a href="#how-it-works" className="hero-button hero-button-secondary">
-                How It Works
-              </a>
+              <a href="#how-it-works" className="hero-button hero-button-secondary">{c("landing.hero.secondaryCta")}</a>
             </div>
           </div>
 
           <aside className="hero-aside">
-            <p className="hero-aside-title">Why Timing Matters</p>
-            <p className="hero-aside-text">
-             Fresh produce has a limited window of value. Farmora considers freshness,
-            demand, distance, and transportation to help move each batch where it
-            matters most.
-            </p>
+            <p className="hero-aside-title">{c("landing.hero.asideTitle")}</p>
+            <p className="hero-aside-text">{c("landing.hero.asideText")}</p>
             <a href="#time-aware" className="hero-aside-link">
               Learn More <ArrowRight size={14} />
             </a>

@@ -1,3 +1,4 @@
+import { RULES } from "@/lib/site";
 import type { Delivery } from "./mockProducer";
 
 export type DeliveryIssue = { reason: string; note: string };
@@ -10,7 +11,14 @@ export const DELIVERY_STATUS_LABEL: Record<DeliveryStatus, string> = {
 };
 
 /** Cold-chain band for fresh fruit; readings outside it are flagged. */
-export const TEMPERATURE_RANGE = { min: 2, max: 8 };
+export const TEMPERATURE_RANGE = {
+  get min() {
+    return RULES.coldChainMin;
+  },
+  get max() {
+    return RULES.coldChainMax;
+  },
+};
 
 /** ETA text without the "Delivered" prefix (the label next to it already says so), first letter capitalised. */
 export function etaText(delivery: Delivery) {

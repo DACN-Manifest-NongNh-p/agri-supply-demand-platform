@@ -10,10 +10,86 @@ export const buyer = {
   contact: "Tran Minh Anh",
   role: "Fresh produce buyer",
   destination: "GreenBasket DC, District 7, Ho Chi Minh City",
+  /** What this buyer usually orders; any other product can be typed in when posting a demand. */
   products: ["Dragon fruit", "Mango", "Pomelo", "Avocado"],
 };
 
 export const GRADE_OPTIONS = ["Grade A", "Grade A–B", "Grade B", "Any grade"] as const;
+
+/** A place the buyer receives goods. Carriers need all of it: where, who signs, when the dock is open. */
+export type DeliveryAddress = {
+  id: string;
+  /** Short name the buyer knows the place by, e.g. "Thu Duc store". */
+  label: string;
+  street: string;
+  ward?: string;
+  district: string;
+  province: string;
+  contactName: string;
+  phone: string;
+  /** When the receiving dock takes deliveries, e.g. "05:00–10:00". */
+  receivingHours: string;
+  /** Gate, dock or parking instructions for the driver. */
+  note?: string;
+};
+
+export const PROVINCES = [
+  "Ho Chi Minh City",
+  "Dong Nai",
+  "Binh Duong",
+  "Long An",
+  "Ba Ria - Vung Tau",
+  "Binh Thuan",
+  "Lam Dong",
+  "Can Tho",
+  "Khanh Hoa",
+  "Da Nang",
+  "Ha Noi",
+] as const;
+
+/** The buyer's saved addresses; the first is the default. */
+export const addresses: DeliveryAddress[] = [
+  {
+    id: "ADR-1",
+    label: "GreenBasket DC",
+    street: "Lot C2, Tan Thuan Export Processing Zone",
+    ward: "Tan Thuan Dong",
+    district: "District 7",
+    province: "Ho Chi Minh City",
+    contactName: "Le Thi Thu",
+    phone: "0903 112 458",
+    receivingHours: "05:00–10:00",
+    note: "Dock 3. Show the Farmora delivery code at gate B.",
+  },
+  {
+    id: "ADR-2",
+    label: "Thu Duc store",
+    street: "216 Vo Van Ngan",
+    ward: "Binh Tho",
+    district: "Thu Duc",
+    province: "Ho Chi Minh City",
+    contactName: "Pham Minh Khoa",
+    phone: "0918 334 201",
+    receivingHours: "06:00–09:00",
+    note: "Unload at the back entrance on Dang Van Bi.",
+  },
+  {
+    id: "ADR-3",
+    label: "Bien Hoa store",
+    street: "89 Pham Van Thuan",
+    ward: "Tan Mai",
+    district: "Bien Hoa",
+    province: "Dong Nai",
+    contactName: "Nguyen Thi Hoa",
+    phone: "0937 556 120",
+    receivingHours: "06:00–10:00",
+  },
+];
+
+/** One line for lists and tickets: "Thu Duc store, 216 Vo Van Ngan, Thu Duc, Ho Chi Minh City". */
+export function formatAddress(address: Omit<DeliveryAddress, "id">) {
+  return [address.label, address.street, address.ward, address.district, address.province].filter(Boolean).join(", ");
+}
 
 /** A producer batch as the buyer sees it on the market: who grows it and how far away it is. */
 export type SupplyBatch = Batch & {
@@ -31,7 +107,12 @@ export type BuyerDemand = {
   quantityKg: number;
   gradeWanted: string;
   neededByDay: number;
+  /** Delivery address as one line. */
   destination: string;
+  /** Saved address it goes to, when it is one. */
+  addressId?: string;
+  /** Preferred arrival window, e.g. "05:00–10:00". */
+  deliveryWindow?: string;
   createdDay: number;
   note?: string;
 };

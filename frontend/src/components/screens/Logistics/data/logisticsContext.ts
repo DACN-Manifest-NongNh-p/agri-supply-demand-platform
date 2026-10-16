@@ -22,6 +22,8 @@ export type LogisticsState = {
   removeVehicle: (plate: string) => void;
   /** Marks a free day unavailable, or an unavailable day free again. Booked days stay booked. */
   toggleOffDay: (plate: string, day: number) => void;
+  /** Replaces the days a vehicle is marked unavailable (saving the fleet page). Booked days are kept out. */
+  setOffDays: (plate: string, days: number[]) => void;
   serviceAreas: string[];
   setServiceAreas: (areas: string[]) => void;
   operatingRoutes: OperatingRoute[];

@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { TopBar } from "./sections/TopBar";
 import type { TaskOutcome } from "./sections/AttentionList";
-import { batches as initialBatches, demands, offerHistory, tasks, type BatchStatus, type Offer, type Task } from "./data/mockProducer";
+import { batches as initialBatches, demands, tasks, type BatchStatus, type Task } from "./data/mockProducer";
 import type { ProducerState } from "./data/producerContext";
 import type { DeliveryIssue } from "./data/deliveries";
+import { orderStage, orders as placedOrders, type ProducerOrder } from "./data/orders";
 import "./styles/ProducerHome.css";
+import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 /** Shell for all producer pages: top bar plus the demo state shared between them. */
 export default function ProducerLayout() {
@@ -27,13 +29,19 @@ export default function ProducerLayout() {
     setBatches((current) => current.map((batch) => (batch.code === code ? { ...batch, status } : batch)));
 
   // Codes continue from the highest existing number (B-110 → B-111).
-  const addBatch: ProducerState["addBatch"] = (draft) => {
-    const next = Math.max(...batches.map((batch) => Number(batch.code.replace(/\D/g, "")) || 0)) + 1;
-    const code = `B-${next}`;
-    const status: BatchStatus = draft.readyDay <= 0 ? "ready" : "expected";
-    setBatches((current) => [...current, { ...draft, code, allocatedKg: 0, status }]);
-    return code;
+  const addBatches: ProducerState["addBatches"] = (drafts) => {
+    const first = Math.max(...batches.map((batch) => Number(batch.code.replace(/\D/g, "")) || 0)) + 1;
+    const declared = drafts.map((draft, index) => ({
+      ...draft,
+      code: `B-${first + index}`,
+      allocatedKg: 0,
+      status: (draft.readyDay <= 0 ? "ready" : "expected") as BatchStatus,
+    }));
+    setBatches((current) => [...current, ...declared]);
+    return declared.map((batch) => batch.code);
   };
+
+  const addBatch: ProducerState["addBatch"] = (draft) => addBatches([draft])[0];
 
   const offer = (demandId: string, batchCode: string) =>
     setOffers((current) => ({ ...current, [demandId]: batchCode }));
@@ -52,15 +60,28 @@ export default function ProducerLayout() {
 
   const openTasks = tasks.filter((task) => !outcomes[task.id]).length;
 
-  const offerLog: Offer[] = [
-    ...offerHistory.map((past) => {
-      const outcome = past.taskId ? outcomes[past.taskId] : undefined;
-      return outcome ? { ...past, status: outcome === "done" ? ("confirmed" as const) : ("declined" as const) } : past;
-    }),
+  // One list for the whole life of a sale: placed orders with their current stage, then this
+  // session's offers, which wait for the buyer.
+  const orders: ProducerOrder[] = [
+    ...placedOrders.map((order) => ({ ...order, stage: orderStage(order, outcomes) })),
     ...Object.entries(offers).flatMap(([demandId, batch]) => {
       const demand = demands.find((item) => item.id === demandId);
       return demand
-        ? [{ demandId, buyer: demand.buyer, product: demand.product, quantityKg: demand.quantityKg, batch, sentDay: 0, status: "sent" as const }]
+        ? [
+            {
+              id: `OF-${demandId}`,
+              demandId,
+              buyer: demand.buyer,
+              buyerType: demand.buyerType,
+              product: demand.product,
+              batch,
+              quantityKg: demand.quantityKg,
+              neededByDay: demand.neededByDay,
+              destination: demand.destination,
+              placedDay: 0,
+              stage: "offered" as const,
+            },
+          ]
         : [];
     }),
   ];
@@ -69,11 +90,12 @@ export default function ProducerLayout() {
     batches,
     setStatus,
     addBatch,
+    addBatches,
     outcomes,
     resolveTask,
     offers,
     offer,
-    offerLog,
+    orders,
     issues,
     reportIssue: (code, reason) => setIssues((current) => ({ ...current, [code]: reason })),
     deliveryIssues,
@@ -83,7 +105,8 @@ export default function ProducerLayout() {
 
   return (
     <div className="producer-home" id="top">
-      <TopBar openTasks={openTasks} />
+      <TopBar openTasks={openTasks} ordersToConfirm={orders.filter((order) => order.stage === "to_confirm").length} />
+      <AnnouncementBanner audience="PRODUCER" />
       <Outlet context={state} />
     </div>
   );

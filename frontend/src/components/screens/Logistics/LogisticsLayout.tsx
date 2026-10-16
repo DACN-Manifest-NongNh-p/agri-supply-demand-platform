@@ -18,11 +18,13 @@ import {
 } from "./data/mockLogistics";
 import { orderDays } from "./data/capacity";
 import type { Incident, LogisticsState } from "./data/logisticsContext";
+import type { Notice } from "@/components/notifications/NotificationBell";
 // Same shell as the coordinator area (sidebar, glass cards), then the provider's own styles.
 import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "../Coordinator/styles/Coordinator.css";
 import "./styles/Logistics.css";
+import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 const clock = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
@@ -146,6 +148,10 @@ export default function LogisticsLayout() {
           return { ...vehicle, offDays };
         }),
       ),
+    setOffDays: (plate, days) =>
+      setFleet((current) =>
+        current.map((vehicle) => (vehicle.plate === plate ? { ...vehicle, offDays: days.filter((day) => !vehicle.bookedDays.includes(day)) } : vehicle)),
+      ),
     serviceAreas,
     setServiceAreas,
     operatingRoutes,
@@ -165,6 +171,29 @@ export default function LogisticsLayout() {
   };
 
   const newOrders = orders.filter((order) => order.status === "new").length;
+
+  // Orders to answer (urgent when 6 hours or less are left) and trips with an open problem.
+  const notifications: Notice[] = [
+    ...trips
+      .filter((trip) => trip.step < 3 && trip.issue)
+      .map((trip) => ({
+        id: `trip-${trip.id}`,
+        tone: "urgent" as const,
+        title: `Problem on ${trip.id}, ${trip.fromShort} → ${trip.toShort}`,
+        detail: trip.issue!,
+        link: { label: "Open trip", to: `/logistics/trips/${trip.id}` },
+      })),
+    ...orders
+      .filter((order) => order.status === "new")
+      .sort((a, b) => a.respondWithinHours - b.respondWithinHours)
+      .map((order) => ({
+        id: `order-${order.id}`,
+        tone: order.respondWithinHours <= 6 ? ("urgent" as const) : ("warning" as const),
+        title: `${order.id} needs an answer within ${order.respondWithinHours} h`,
+        detail: `${order.pickup.short} → ${order.dropoff.short} · ${order.quantityKg.toLocaleString("en-US")} kg ${order.product.toLowerCase()}, pickup ${formatDay(order.pickup.day).toLowerCase()}`,
+        link: { label: "Answer", to: `/logistics/orders#${order.id}` },
+      })),
+  ];
   const tripIssues = trips.filter((trip) => trip.step < 3 && trip.issue).length;
 
   return (
@@ -175,6 +204,7 @@ export default function LogisticsLayout() {
         fallbackName={profile.name}
         theme={theme}
         onToggleTheme={toggleTheme}
+        notifications={notifications}
         pages={[
           { label: "Overview", to: "/logistics", end: true, icon: LayoutGrid },
           { label: "Transport orders", to: "/logistics/orders", icon: ClipboardList, count: newOrders },
@@ -184,6 +214,7 @@ export default function LogisticsLayout() {
         ]}
       />
       <div className="co-content">
+        <AnnouncementBanner audience="LOGISTICS" />
         <Outlet context={state} />
       </div>
     </div>

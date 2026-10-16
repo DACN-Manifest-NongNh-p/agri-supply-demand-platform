@@ -13,6 +13,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # Farmora's own database (site content, announcements, operating rules, product catalog).
+  # Published on 5433 so the Spring Boot API on the host can reach it.
+  app-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${APP_DB:-farmora}
+      POSTGRES_USER: ${APP_DB_USER:-farmora}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD:-farmora-local}
+    ports:
+      - "5433:5432"
+    volumes:
+      - app-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   keycloak:
     build:
       context: ./docker/keycloak
@@ -46,3 +64,4 @@ services:
 
 volumes:
   keycloak-db-data:
+  app-db-data:

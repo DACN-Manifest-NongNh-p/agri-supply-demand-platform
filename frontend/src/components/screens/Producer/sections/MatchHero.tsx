@@ -72,7 +72,7 @@ export function MatchHero({ matches, offers, onOffer }: Props) {
       ) : (
         <p className="ph-match-hero-empty">
           No buyer demand matches your batches right now. Declare a batch or check{" "}
-          <Link to="/producer/demand">all market demand</Link>.
+          <Link to="/producer/demand">all matches</Link>.
         </p>
       )}
     </section>

@@ -4600,3 +4600,459 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* ---- Inline links ----
+   Links inside text (batch codes, "post a demand") without their own class: take the text
+   colour with a thin underline that firms up on hover, never the browser's default blue.
+   Keeping the text colour makes them readable on light cards and on the dark matching band.
+   Only links inside text: whole-row links (pipeline rows, side lists) have no class either. */
+.producer-home :is(p, small, dd, td, label) a:not([class]) {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms ease;
+}
+
+.producer-home :is(p, small, dd, td, label) a:not([class]):hover {
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 2px;
+}
+
+.producer-home :is(p, small, dd, td, label) a:not([class]):focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--ph-green, #2f6340);
+  outline-offset: 2px;
+}
+
+/* ---- Orders (/producer/orders) ---- */
+.ph-nav-count {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--ph-red);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.po-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) minmax(140px, 1fr) minmax(170px, 1.2fr) minmax(130px, 0.8fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 4px;
+}
+
+.po-row + .po-row {
+  border-top: 1px solid var(--ph-line);
+}
+
+.po-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.po-cell strong {
+  color: var(--ph-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.po-cell small {
+  overflow: hidden;
+  color: var(--ph-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.po-buyer strong {
+  font-size: 15px;
+}
+
+.po-status {
+  align-items: flex-start;
+}
+
+.po-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: var(--ph-muted);
+  background: var(--ph-subtle, #f3f4f1);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.po-pill--to_confirm {
+  color: #8a5a10;
+  background: #fbf1df;
+}
+
+.po-pill--confirmed,
+.po-pill--in_transit {
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+}
+
+.po-pill--problem {
+  color: var(--ph-red);
+  background: var(--ph-red-soft);
+}
+
+.po-due {
+  margin-top: 2px;
+  color: var(--ph-red) !important;
+  font-weight: 600;
+}
+
+.po-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .po-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .po-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 560px) {
+  .po-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+
+/* ---- Live cold chain: the Cold chain block in the shipment panel ---- */
+.ph-cold {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid #d6e9da;
+  border-radius: 12px;
+  background: #f2f9f3;
+}
+
+.ph-cold--out {
+  border-color: #f0c9c3;
+  background: #fdf1ef;
+}
+
+.ph-cold p {
+  margin: 0;
+}
+
+.ph-cold-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ph-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ph-cold-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  color: #2f6340;
+}
+
+.ph-cold-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2f9a52;
+  animation: ph-cold-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ph-cold-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.ph-cold-now {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.ph-cold-now > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.ph-cold-now strong {
+  color: var(--ph-ink);
+  font-size: 26px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.ph-cold--out .ph-cold-now strong,
+.ph-cold--out .ph-cold-summary {
+  color: #c0392b;
+}
+
+.ph-cold-now small {
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.ph-cold-chart {
+  width: 120px;
+  height: 36px;
+  flex: none;
+  overflow: visible;
+}
+
+.ph-cold-band {
+  fill: rgba(47, 154, 82, 0.12);
+}
+
+.ph-cold-line {
+  fill: none;
+  stroke: #2f6340;
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.ph-cold-dot {
+  fill: #2f9a52;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+.ph-cold-dot--out {
+  fill: #c0392b;
+}
+
+.ph-cold-summary {
+  margin-top: 4px !important;
+  color: #2f6340;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ph-cold-note {
+  margin-top: 6px !important;
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.ph-cold-note span {
+  color: #c0392b;
+}
+
+[data-theme="dark"] .ph-cold {
+  border-color: rgba(140, 199, 154, 0.22);
+  background: rgba(140, 199, 154, 0.08);
+}
+
+[data-theme="dark"] .ph-cold--out {
+  border-color: rgba(255, 120, 100, 0.3);
+  background: rgba(255, 120, 100, 0.1);
+}
+
+[data-theme="dark"] .ph-cold-live,
+[data-theme="dark"] .ph-cold-summary {
+  color: #b4e0bd;
+}
+
+[data-theme="dark"] .ph-cold-line {
+  stroke: #b4e0bd;
+}
+
+/* ---- File import (shared by buyer demands and producer batches) ---- */
+.ph-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ph-filedrop-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ph-filedrop {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border: 1.5px dashed var(--ph-line-strong);
+  border-radius: 14px;
+  color: var(--ph-ink);
+  background: var(--ph-subtle, #f7f8f5);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.ph-filedrop:hover,
+.ph-filedrop.is-over {
+  border-color: var(--ph-green);
+  background: var(--ph-green-soft);
+}
+
+.ph-filedrop:focus-within {
+  outline: 2px solid var(--ph-green);
+  outline-offset: 2px;
+}
+
+.ph-filedrop-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--ph-green-dark);
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(20, 30, 22, 0.08);
+}
+
+.ph-filedrop-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.ph-filedrop-text strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-filedrop-text small {
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.ph-filedrop-template {
+  align-self: flex-start;
+  font-size: 13px;
+}
+
+.ph-import-dialog {
+  width: min(820px, calc(100% - 32px));
+}
+
+.ph-import-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 24px;
+}
+
+.ph-import-body .ph-section-sub {
+  margin: 0;
+}
+
+.ph-import-problem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #7f2418;
+  background: var(--ph-red-soft);
+  font-size: 13px;
+}
+
+.ph-import-summary {
+  margin: 0;
+  color: var(--ph-muted);
+  font-size: 13px;
+}
+
+.ph-import-summary span {
+  color: var(--ph-red);
+}
+
+.ph-import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ph-import-table th {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--ph-line);
+  color: var(--ph-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ph-import-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--ph-line);
+  vertical-align: top;
+}
+
+.ph-import-table td strong,
+.ph-import-table td small {
+  display: block;
+}
+
+.ph-import-table td small {
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.ph-import-table tr.is-error td {
+  background: #fdf3f1;
+}
+
+.ph-import-error {
+  color: #9b2c1f;
+}
+
+.ph-import-error svg {
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+.ph-import-num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

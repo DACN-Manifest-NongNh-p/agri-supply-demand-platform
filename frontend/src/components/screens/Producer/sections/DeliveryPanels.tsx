@@ -1,8 +1,7 @@
-// Tab panels of a delivery's detail page, shared by the producer and buyer areas.
-import { CircleCheck, TriangleAlert } from "lucide-react";
-import { TemperatureGauge, TemperatureTrend } from "./TemperatureCharts";
+// Tab panels of a delivery's detail page, shared by every area. Temperature lives on the map (LiveTemperature).
+import { CircleCheck } from "lucide-react";
 import { DELIVERY_STEPS, type Delivery } from "../data/mockProducer";
-import { TEMPERATURE_RANGE, type DeliveryIssue } from "../data/deliveries";
+import type { DeliveryIssue } from "../data/deliveries";
 
 const ISSUE_REASONS = ["Delivery delayed", "Goods damaged", "Quantity mismatch", "Temperature problem", "Other"];
 
@@ -30,72 +29,6 @@ export function Timeline({ delivery }: { delivery: Delivery }) {
         );
       })}
     </ol>
-  );
-}
-
-const minutesOf = (time: string) => {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
-};
-
-function formatDuration(minutes: number) {
-  if (minutes < 60) return `about ${minutes} minutes`;
-  const hours = Math.round(minutes / 60);
-  return `about ${hours} ${hours === 1 ? "hour" : "hours"}`;
-}
-
-/** Plain-language verdict first, then the chart; written for a farmer, not a logistics engineer. */
-export function TemperatureLog({ delivery }: { delivery: Delivery }) {
-  const readings = delivery.temperatures;
-  const { min, max } = TEMPERATURE_RANGE;
-  const isOut = (celsius: number) => celsius < min || celsius > max;
-  const delivered = delivery.step === 3;
-
-  const latest = readings.at(-1)!;
-  const peak = readings.reduce((top, reading) => (reading.celsius > top.celsius ? reading : top), readings[0]);
-  const lowest = readings.reduce((low, reading) => (reading.celsius < low.celsius ? reading : low), readings[0]);
-  const outside = readings.filter((reading) => isOut(reading.celsius));
-  // Each reading stands for the interval until the next one (the sensor logs about hourly).
-  const interval = readings.length > 1 ? (minutesOf(latest.time) - minutesOf(readings[0].time)) / (readings.length - 1) : 60;
-  const outsideMinutes = Math.round(outside.length * interval);
-  const tooWarm = outside.some((reading) => reading.celsius > max);
-
-  const verdict =
-    outside.length === 0
-      ? { ok: true, title: "Kept cold the whole way", text: `Every reading stayed inside the safe range.` }
-      : tooWarm
-        ? {
-            ok: false,
-            title: `Got slightly too warm ${outside.length === 1 ? `once, at ${peak.time}` : `${outside.length} times`}`,
-            text: "Short spikes rarely damage fruit, but the buyer may check it on arrival.",
-          }
-        : {
-            ok: false,
-            title: `Got too cold ${outside.length === 1 ? `once, at ${lowest.time}` : `${outside.length} times`}`,
-            text: "Cold damage can show as dark spots; the buyer may check it on arrival.",
-          };
-
-  return (
-    <div className="ph-temp">
-      <div className="ph-gauge-wrap">
-        <TemperatureGauge value={latest.celsius} range={TEMPERATURE_RANGE} caption={delivered ? "last reading" : "now"} />
-        <p className="ph-gauge-note">Safe {min}–{max} °C</p>
-      </div>
-
-      <div className="ph-temp-side">
-        <p className={verdict.ok ? "ph-temp-title" : "ph-temp-title ph-temp-title--warn"}>
-          {verdict.ok ? <CircleCheck size={18} /> : <TriangleAlert size={18} />} {verdict.title}
-        </p>
-        <p className="ph-temp-text">{verdict.text}</p>
-
-        <TemperatureTrend readings={readings} range={TEMPERATURE_RANGE} />
-
-        <p className="ph-temp-facts">
-          Highest {peak.celsius.toFixed(1)} °C at {peak.time}
-          {outside.length > 0 && <> · {formatDuration(outsideMinutes)} outside the safe range</>}
-        </p>
-      </div>
-    </div>
   );
 }
 

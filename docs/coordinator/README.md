@@ -72,7 +72,7 @@ flowchart TD
 
 1. **Open the overview.** It shows the market map, key figures and the **Needs action** list. Clean matches never appear there.
 2. **Work the list from the top.** Urgent items come first. Each row opens the page where it is handled.
-3. **Glance at the rest.** The supply and demand balance shows where shortages are coming. *On the road* shows trucks, problems first. *Supply without a buyer* shows batches nobody wants.
+3. **Glance at the rest.** The supply and demand balance shows where shortages are coming. *On the road* shows trucks, problems first. *Unsold supply* lists open kilograms nobody has bought: first every batch that must sell within 3 days (`SELL_SOON_DAYS`), whatever the reason (*No demand accepts it*, *Fits D-xxx, needs your decision*, *Fits D-xxx, not held yet*), with the sell-by date in red when it is today or tomorrow; then up to four batches no demand accepts, with a link to all of them in Gaps. Each row opens the place to act on it. *Unmet demand* is the other side: open demands no declared batch can cover, soonest first, with the kilograms still open, the needed-by date (red within 3 days), why nothing fits and **Ask producers** on the row.
 4. **Check the Holds tab now and then.** It lists what the system held. Release anything that looks wrong.
 
 ### Incident flows
@@ -90,13 +90,13 @@ flowchart TD
 
 | Route | Screen | What the coordinator does |
 | --- | --- | --- |
-| `/coordinator` | Overview | A satellite map of the whole market (farm areas with open supply, buyer cities with open demand, trucks on the road), key figures (open supply, matched by system, needs your decision, on the road), the **Needs action** list, supply vs demand for the next 7 or 14 days, deliveries on the road, supply without a buyer. A region picker focuses the map and figures on one province. |
+| `/coordinator` | Overview | A satellite map of the whole market (farm areas with open supply, buyer cities with open demand, trucks on the road), key figures (open supply, matched by system, needs your decision, on the road), the **Needs action** list, supply vs demand for the next 7 or 14 days, deliveries on the road, unsold supply (selling within 3 days first), unmet demand (demand no batch can cover, with *Ask producers*). A region picker focuses the map and figures on one province. |
 | `/coordinator/matching` | Matching | Tabs **Needs your decision**, **Gaps**, **Holds** (`?tab=gaps`, `?tab=holds`; `?demand=D-xxx` highlights one demand) |
 | `/coordinator/requests` | Requests | Open and resolved requests from producers, buyers and carriers |
 | `/coordinator/deliveries` | Deliveries | All shipments on the platform, filterable by status; opens on **Issues** when there are any |
-| `/coordinator/deliveries/:id` | Delivery detail | Route map, ETA, carrier, driver and dispatch desk, timeline, temperature, proof, updates to both sides |
+| `/coordinator/deliveries/:id` | Delivery detail | Route map, live Cold chain block in the panel, ETA, carrier, driver and dispatch desk, timeline, proof, updates to both sides |
 
-The sidebar shows a count next to Matching (exceptions to decide), Requests (unresolved) and Deliveries (stuck shipments). It has a light and dark theme, remembered per browser.
+The sidebar shows a count next to Matching (exceptions to decide), Requests (unresolved) and Deliveries (stuck shipments). A **bell** next to the brand holds the same Needs action items as notifications, so they are one click away from every page (`components/notifications/NotificationBell.tsx`, shared with the buyer and logistics areas). It has a light and dark theme, remembered per browser.
 
 ## Needs action list
 
@@ -124,7 +124,7 @@ It also warns when the producer reported a problem with the batch, and when the 
 
 **Approve X kg** holds the smaller of the demand's open quantity and the batch's open quantity; anything left stays open. **Other batches** lists the alternatives with their score and lets the coordinator use one instead.
 
-**Gaps** lists demands with no supply (with the reason and an **Ask producers for supply** action) and open batches no demand accepts.
+**Gaps** lists demands with no supply (with the reason and an **Ask producers for supply** action) and **unsold supply**: first every batch that must sell within 3 days, whatever the reason (no demand accepts it, or it fits a demand that needs a decision or is not held yet, with a link to that demand), then batches no demand accepts that have more time. Each shows the kilograms left, the sell-by date with the days left (red for today or tomorrow), and why nobody has bought it.
 
 **Holds** lists every hold waiting on a producer: who made it (the system with its score, or the coordinator) and the time left. **Extend 12 h** gives the producer more time. **Release** gives the quantity back and overrides the match: that demand and batch are not paired again, and the demand moves on to its next batch.
 
@@ -148,12 +148,12 @@ Only the coordinator sees the driver, the vehicle plate and the carrier's dispat
 | `CoordinatorLayout.tsx` | Owns coordinator state, runs auto-matching after each change, passes state to pages via `<Outlet context>` |
 | `data/coordinatorContext.ts` | `CoordinatorState` and `useCoordinator()` |
 | `data/mockCoordinator.ts` | Coordinator, combined market, demands, allocations, deliveries, requests |
-| `data/market.ts` | Exception rules, auto-matching, match board, contested batches, supply without a buyer, supply vs demand |
+| `data/market.ts` | Exception rules, auto-matching, match board, contested batches, supply without a buyer, unsold supply selling soon, supply vs demand |
 | `data/queue.ts` | Builds the Needs action list, detects delivery incidents |
 | `data/places.ts` | Approximate map positions for farm areas and buyer cities |
 | `sections/HubMap.tsx` | Overview map |
 | `sections/QueueList.tsx` | Needs action list on the overview |
-| `sections/Overview.tsx` | Supply vs demand, on the road, supply without a buyer |
+| `sections/Overview.tsx` | Supply vs demand, on the road, unsold supply |
 | `sections/CoordinatorSidebar.tsx` | Coordinator navigation, built on `sections/AreaSidebar.tsx` (sidebar shell shared with the logistics area) |
 | `data/theme.ts` | Light/dark theme remembered per browser, shared with the logistics area |
 | `CoordinatorHome.tsx`, `MatchingPage.tsx`, `RequestsPage.tsx`, `DeliveriesPage.tsx`, `DeliveryDetailPage.tsx` | Screens |

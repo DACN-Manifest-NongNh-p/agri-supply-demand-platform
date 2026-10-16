@@ -1004,3 +1004,67 @@
 [data-theme="dark"] .lg-day--off {
   background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0 3px, transparent 3px 6px);
 }
+
+/* ---------- Fleet: save bar for availability, areas, routes and schedule ---------- */
+.lg-fleet-page {
+  padding-bottom: 96px;
+}
+
+.lg-savebar {
+  position: fixed;
+  z-index: 40;
+  right: 24px;
+  bottom: 20px;
+  left: calc(232px + 24px);
+  display: flex;
+  max-width: 920px;
+  align-items: center;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 12px 14px 12px 18px;
+  border: 1px solid var(--lg-edge);
+  border-radius: 14px;
+  color: var(--ph-ink);
+  background: var(--lg-card);
+  box-shadow: 0 18px 40px -18px rgba(16, 24, 18, 0.45);
+  font-size: 14px;
+  animation: lg-savebar-in 160ms ease-out;
+}
+
+.lg-savebar > span:first-child {
+  margin-right: auto;
+  font-weight: 500;
+}
+
+.lg-savebar-error {
+  color: var(--ph-red);
+  font-weight: 400;
+}
+
+.lg-savebar.is-saved {
+  justify-content: center;
+}
+
+.lg-savebar-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ph-green-dark);
+  font-weight: 500;
+}
+
+@keyframes lg-savebar-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (max-width: 900px) {
+  .lg-savebar {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    flex-wrap: wrap;
+  }
+}

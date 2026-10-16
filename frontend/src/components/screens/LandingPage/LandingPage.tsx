@@ -7,6 +7,7 @@ import { SmartCoordination, Reservation } from './sections/SmartCoordination'
 import { Intelligence } from './sections/Intelligence'
 import { Rescue, FinalCTA, Footer } from './sections/Rescue'
 import { Dashboard } from './sections/Dashboard'
+import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 export default function LandingPage() {
   return (
@@ -23,6 +24,7 @@ export default function LandingPage() {
       <Rescue />
       <FinalCTA />
       <Footer />
+      <AnnouncementBanner audience="PUBLIC" placement="floating" />
     </div>
   )
 }

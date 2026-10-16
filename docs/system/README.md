@@ -2,7 +2,7 @@
 
 This document is the entry point for understanding Farmora as a whole: who uses it, how a sale moves from a farm to a buyer's dock, where each role steps in, and how to demo the system role by role. Each role's own document has the detail: [producer](../producer/README.md), [buyer](../buyer/README.md), [coordinator](../coordinator/README.md), [logistics provider](../logistics/README.md), [authentication](../auth/README.md), [local setup](../setup/README.md).
 
-> **Status.** Sign-up, login and role-based routing are real (Keycloak). The four role areas are UI prototypes on demo data: matching, holds, orders and deliveries run in the browser, nothing is saved, and **the areas do not share state** (an action in one area does not appear in another). The demo data is written so the same codes mean the same thing everywhere (D-551, B-104, S-307…), which is what lets the demo below tell one story across roles.
+> **Status.** Sign-up, login and role-based routing are real (Keycloak), and so is the admin's site configuration (API + PostgreSQL: page text, announcements, operating rules, products). The four role areas are UI prototypes on demo data: matching, holds, orders and deliveries run in the browser, nothing is saved, and **the areas do not share state** (an action in one area does not appear in another). The demo data is written so the same codes mean the same thing everywhere (D-551, B-104, S-307…), which is what lets the demo below tell one story across roles.
 
 ## 1. Roles
 
@@ -12,7 +12,7 @@ This document is the entry point for understanding Farmora as a whole: who uses 
 | Buyer | Supermarket, wholesaler, restaurant, exporter | `/buyer` | Post demands, reserve suggested batches, receive goods | Self-registration (*Buyer*) |
 | Coordinator | Farmora operations staff | `/coordinator` | Decide matching exceptions, close gaps, handle incidents | Granted by an admin only |
 | Logistics provider | Carrier (trucking company) | `/logistics` | Declare capacity, accept transport orders, run trips, report incidents | Self-registration (*Logistics*) |
-| Admin | Farmora IT | — (Keycloak console) | Manage users and roles | Pre-provisioned (`farmora.admin`) |
+| Admin | Farmora operations / IT | `/admin` | Change page text, announcements, operating rules and the product catalog without a release; users and roles in Keycloak | Pre-provisioned (`farmora.admin`) |
 
 After login every user lands on their own area (`/auth/callback` routes by role). Opening another role's area shows a no-access page.
 
@@ -130,7 +130,7 @@ About 25 minutes. The demo follows one shipment's life: supply, demand, matching
 | 2 | Buyer | 5 min | Post demand, suggested supply, reserve, producer trust |
 | 3 | Coordinator | 6 min | Automatic matching, exceptions, incidents |
 | 4 | Logistics provider | 5 min | Transport orders, trip updates, incident, capacity |
-| 5 | Close the loop | 2 min | Delivery as the buyer sees it: map, temperature, proof |
+| 5 | Close the loop | 2 min | Delivery as the buyer sees it: map, live Cold chain block, proof |
 
 **Why this order:** it follows the goods. Supply and demand come first because matching needs both; the coordinator comes after so the audience has already seen what the system matched on its own and can appreciate what is left for a person; logistics comes last because transport starts only after an allocation is confirmed.
 
@@ -163,10 +163,10 @@ About 25 minutes. The demo follows one shipment's life: supply, demand, matching
 | --- | --- |
 | Home: the matching band | The system found buyers for this farm's batches; the producer never searches |
 | Click **See why it matches** | Five criteria, each with a reason: matching is explainable |
-| **Needs your attention**: confirm B-102 for Phu Tho Wholesale Market (3,000 kg, 5 h left) | A hold waits for the producer; confirming turns it into an allocation |
+| **Orders** (red count in the menu): confirm B-102 for Phu Tho Wholesale Market (3,000 kg, 5 h left) | One list for every sale, offered to delivered; confirming turns the hold into an allocation |
 | **Declare a new batch** (product, kg, grade, dates, a photo) | Right after saving, the dialog says how many demands it already matches |
-| Market demand: **Batches without a buyer** (B-112, grade C mango) | When nothing fits, the producer asks a coordinator to find a buyer |
-| Deliveries: open S-303 | Truck broke down: route in red, revised arrival, temperature chart. The producer sees it but does not call the driver |
+| Matches: **Batches without a buyer** (B-112, grade C mango) | When nothing fits, the producer asks a coordinator to find a buyer |
+| Orders → *In progress* → **Track S-303** | Truck broke down: route in red, revised arrival; the Cold chain block shows the live temperature, red when out of 2–8 °C. The producer sees it but does not call the driver |
 
 ### 2. Buyer: GreenBasket Supermarkets (5 min)
 
@@ -177,8 +177,9 @@ About 25 minutes. The demo follows one shipment's life: supply, demand, matching
 | Open D-551: **Suggested supply** → B-104 from Hoa Phat, **See why** | Same score and criteria the producer saw |
 | Open batch B-104: photos, producer card | Rating, on-time rate, verified: the score says it fits, the track record says it will arrive |
 | **Reserve** 2,000 kg | A 24 h hold; the kilograms leave the market at once |
-| **Post a demand** for 500 kg mango, any grade | Matching runs immediately and says how many batches already fit |
-| **Post a demand** for 300 kg avocado, Grade A, needed tomorrow, then open it | No batch fits (the nearest avocado is ready too late), with the reason; *Ask a coordinator* |
+| Company card → **Edit company and delivery points** | Delivery points set up once: address, who signs, receiving hours, driver instructions |
+| **Post a demand**: 500 kg mango, any grade, to the Thu Duc store | Pick a saved delivery point; the summary counts matching batches while you type |
+| **Post a demand**: 300 kg avocado, Grade A, needed tomorrow | No batch fits (the nearest avocado is ready too late), with the reason; *Ask a coordinator* |
 
 ### 3. Coordinator (6 min)
 
@@ -209,7 +210,7 @@ About 25 minutes. The demo follows one shipment's life: supply, demand, matching
 | Do | Say / point at |
 | --- | --- |
 | Buyer → Deliveries → S-307 (Ham Kiem → GreenBasket DC, carried by Delta Cold Chain) | The same trip the carrier updates and the coordinator watches |
-| Map, temperature, proof of delivery on a delivered shipment | The buyer checks the goods against the signed receipt |
+| A shipment on the way, then a delivered one: Cold chain block and proof of delivery | Temperature is live in the shipment panel, nothing to click; the buyer checks the goods against the signed receipt |
 | Wrap up | One sale, five roles: the system matched and picked the carrier; people confirmed, decided exceptions and handled incidents |
 
 ### If something goes wrong

@@ -1,6 +1,7 @@
 // Market-wide matching for the coordinator. Same rules and scores as the producer and buyer
 // areas (Producer/data/matching.ts). The system matches on its own: a clean proposal becomes a
 // hold straight away (autoMatch). Only proposals with an exception wait for the coordinator.
+import { RULES } from "@/lib/site";
 import { evaluate } from "../../Producer/data/matching";
 import { formatKg } from "../../Producer/data/format";
 import { fulfilmentOf, openOf, type Fulfilment, type SupplyCandidate } from "../../Buyer/data/demands";
@@ -10,12 +11,9 @@ import type { MarketAllocation, MarketDemand } from "./mockCoordinator";
 
 const UNAVAILABLE: SupplyBatch["status"][] = ["in_transit", "delivered"];
 
-/** Hours a producer has to confirm a hold. */
-export const HOLD_HOURS = 24;
-/** Below this score the system does not commit a batch on its own. */
-export const AUTO_MATCH_MIN_SCORE = 75;
-/** Holds this large need a coordinator's sign-off. */
-export const SIGN_OFF_KG = 3000;
+// Thresholds come from the operating rules an admin sets (RULES, src/lib/site.ts):
+// autoMatchMinScore (below it the system does not commit on its own), signOffKg (holds this large
+// need sign-off), holdHours (time a producer has to confirm), sellSoonDays (unsold, selling soon).
 
 export type ExceptionCode = "low_score" | "producer_issue" | "unverified" | "large_order" | "export";
 
@@ -43,12 +41,12 @@ export function exceptionsFor(demand: MarketDemand, candidate: SupplyCandidate, 
   const { batch } = candidate;
   const kg = holdKg(openKg, batch);
   const list: MatchException[] = [];
-  if (candidate.score < AUTO_MATCH_MIN_SCORE) {
-    list.push({ code: "low_score", text: `${candidate.score}% match, below the ${AUTO_MATCH_MIN_SCORE}% the system confirms on its own.` });
+  if (candidate.score < RULES.autoMatchMinScore) {
+    list.push({ code: "low_score", text: `${candidate.score}% match, below the ${RULES.autoMatchMinScore}% the system confirms on its own.` });
   }
   if (batch.issue) list.push({ code: "producer_issue", text: `The producer reported a problem with ${batch.code}.` });
   if (!isVerified(batch.producer, options)) list.push({ code: "unverified", text: `${batch.producer} is not verified yet.` });
-  if (kg >= SIGN_OFF_KG) list.push({ code: "large_order", text: `${formatKg(kg)} is at or above the ${formatKg(SIGN_OFF_KG)} that needs sign-off.` });
+  if (kg >= RULES.signOffKg) list.push({ code: "large_order", text: `${formatKg(kg)} is at or above the ${formatKg(RULES.signOffKg)} that needs sign-off.` });
   if (demand.buyerType === "Exporter") list.push({ code: "export", text: "Export order: packing and paperwork need a coordinator's check." });
   return list;
 }
@@ -132,7 +130,7 @@ let holdSeq = 0;
 export function addHold(book: Book, hold: Omit<MarketAllocation, "id" | "stage" | "holdHoursLeft">): Book {
   holdSeq += 1;
   return {
-    allocations: [...book.allocations, { ...hold, id: `A-${Date.now()}-${holdSeq}`, stage: "held", holdHoursLeft: HOLD_HOURS }],
+    allocations: [...book.allocations, { ...hold, id: `A-${Date.now()}-${holdSeq}`, stage: "held", holdHoursLeft: RULES.holdHours }],
     market: book.market.map((batch) => (batch.code === hold.batchCode ? { ...batch, allocatedKg: batch.allocatedKg + hold.kg } : batch)),
   };
 }
@@ -216,4 +214,44 @@ export function balanceByProduct(rows: BoardRow[], market: SupplyBatch[], days =
     entry(batch.product).supplyKg += openOf(batch);
   }
   return [...products.values()].sort((a, b) => a.supplyKg - a.demandKg - (b.supplyKg - b.demandKg));
+}
+
+
+export type UnsoldReason =
+  /** No open demand accepts the batch; the text says why. */
+  | { kind: "no_demand"; text: string }
+  /** It is the proposal for a demand, but the match has an exception the coordinator must decide. */
+  | { kind: "decision"; demandId: string }
+  /** It fits a demand, but nothing holds it yet. */
+  | { kind: "not_held"; demandId: string };
+
+export type UnsoldBatch = { batch: SupplyBatch; openKg: number; soon: boolean; reason: UnsoldReason; to: string };
+
+/**
+ * Open kilograms nobody has bought: batches selling within RULES.sellSoonDays first (whatever the
+ * reason), then batches no demand accepts. Batches that fit a demand and have time left are
+ * not listed: matching is still working on them.
+ */
+export function unsoldSupply(rows: BoardRow[], market: SupplyBatch[]): UnsoldBatch[] {
+  const noDemand = new Map(batchesWithoutBuyer(rows, market).map((item) => [item.batch.code, item]));
+  const toDemand = (demandId: string) => `/coordinator/matching?demand=${demandId}#demand-${demandId}`;
+
+  return market
+    .filter((batch) => !UNAVAILABLE.includes(batch.status) && openOf(batch) > 0 && batch.sellByDay >= 0)
+    .flatMap((batch): UnsoldBatch[] => {
+      const openKg = openOf(batch);
+      const soon = batch.sellByDay <= RULES.sellSoonDays;
+      const idle = noDemand.get(batch.code);
+      if (idle) return [{ batch, openKg, soon, reason: { kind: "no_demand", text: idle.reason }, to: "/coordinator/matching?tab=gaps" }];
+      if (!soon) return [];
+
+      const proposal = rows.find((row) => row.best?.batch.code === batch.code);
+      if (proposal) {
+        const id = proposal.demand.id;
+        return [{ batch, openKg, soon, reason: proposal.exceptions.length > 0 ? { kind: "decision", demandId: id } : { kind: "not_held", demandId: id }, to: toDemand(id) }];
+      }
+      const fits = rows.find((row) => scoreFor(row.demand, batch, row.fulfilment.openKg).eligible);
+      return fits ? [{ batch, openKg, soon, reason: { kind: "not_held", demandId: fits.demand.id }, to: toDemand(fits.demand.id) }] : [];
+    })
+    .sort((a, b) => Number(b.soon) - Number(a.soon) || a.batch.sellByDay - b.batch.sellByDay);
 }

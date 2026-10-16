@@ -2,13 +2,13 @@ import { useState } from "react";
 import { ArrowLeft, TriangleAlert, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { RouteMap } from "./sections/RouteMap";
-import { ReportProblem, TemperatureLog, Timeline } from "./sections/DeliveryPanels";
+import { ReportProblem, Timeline } from "./sections/DeliveryPanels";
 import { DELIVERY_STEPS, deliveries } from "./data/mockProducer";
 import { deliveryStatus, etaText } from "./data/deliveries";
 import { formatKg } from "./data/format";
 import { useProducer } from "./data/producerContext";
 
-type Tab = "timeline" | "temperature" | "proof" | "report";
+type Tab = "timeline" | "proof" | "report";
 
 export default function DeliveryDetailPage() {
   const { id } = useParams();
@@ -19,7 +19,7 @@ export default function DeliveryDetailPage() {
   if (!delivery) {
     return (
       <main className="ph-main">
-        <Link to="/producer/deliveries" className="ph-back"><ArrowLeft size={16} /> All deliveries</Link>
+        <Link to="/producer/orders?tab=active" className="ph-back"><ArrowLeft size={16} /> Orders</Link>
         <p className="ph-empty">Delivery {id} was not found.</p>
       </main>
     );
@@ -32,18 +32,19 @@ export default function DeliveryDetailPage() {
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "timeline", label: "Timeline" },
-    { id: "temperature", label: "Temperature" },
     ...(delivery.receipt ? [{ id: "proof" as const, label: "Proof of delivery" }] : []),
     { id: "report", label: reported ? "Reported problem" : "Report a problem" },
   ];
 
   return (
     <main className="ph-main">
-      <Link to="/producer/deliveries" className="ph-back">
+      <Link to="/producer/orders?tab=active" className="ph-back">
         <ArrowLeft size={16} /> All deliveries
       </Link>
 
       <RouteMap delivery={delivery} status={status}>
+        {(coldChain) => (
+          <>
         {(delivery.issue || reported) && (
           <p className="ph-map-alert">
             <TriangleAlert size={16} />
@@ -70,6 +71,8 @@ export default function DeliveryDetailPage() {
             ))}
           </ol>
 
+          {coldChain}
+
           <ol className="ph-panel-route" aria-label="Route">
             <li>
               <span className="ph-panel-route-dot" aria-hidden="true" />
@@ -90,6 +93,8 @@ export default function DeliveryDetailPage() {
             </span>
           </div>
         </aside>
+          </>
+        )}
       </RouteMap>
 
       <div className="ph-detail-tabs" role="tablist" aria-label="Delivery details">
@@ -109,13 +114,12 @@ export default function DeliveryDetailPage() {
         ))}
         <span className="ph-detail-links">
           {batchOnCalendar && <Link to={`/producer/batches?batch=${delivery.batch}`}>Batch {delivery.batch}</Link>}
-          <Link to="/producer/demand#offers">Offer &amp; allocation</Link>
+          <Link to="/producer/orders?tab=all">Order</Link>
         </span>
       </div>
 
       <section className="ph-card ph-detail-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "timeline" && <Timeline delivery={delivery} />}
-        {tab === "temperature" && <TemperatureLog delivery={delivery} />}
         {tab === "proof" && delivery.receipt && (
           <dl className="ph-proof">
             <div><dt>Received by</dt><dd>{delivery.receipt.receivedBy}</dd></div>

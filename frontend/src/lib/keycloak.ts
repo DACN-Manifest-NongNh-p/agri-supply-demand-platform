@@ -83,6 +83,7 @@ const ROLE_HOMES: { role: AppRole; path: string }[] = [
   { role: "BUYER", path: "/buyer" },
   { role: "COORDINATOR", path: "/coordinator" },
   { role: "LOGISTICS", path: "/logistics" },
+  { role: "ADMIN", path: "/admin" },
 ];
 
 /** The signed-in user's role that has an area, with that area's path; null if none. */

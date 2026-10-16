@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ArrowLeft, Check, Phone, TriangleAlert, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { RouteMap } from "../Producer/sections/RouteMap";
-import { TemperatureLog, Timeline } from "../Producer/sections/DeliveryPanels";
+import { Timeline } from "../Producer/sections/DeliveryPanels";
 import { DELIVERY_STEPS } from "../Producer/data/mockProducer";
 import { deliveryStatus, etaText } from "../Producer/data/deliveries";
 import { formatKg } from "../Producer/data/format";
@@ -13,7 +13,7 @@ import { useLogistics } from "./data/logisticsContext";
 /** Farmora's coordination desk; carriers call it, never the producer or buyer. */
 const COORDINATION_DESK = "1900 6868";
 
-type Tab = "status" | "incidents" | "timeline" | "temperature" | "proof";
+type Tab = "status" | "incidents" | "timeline" | "proof";
 
 /** The one thing to do next on the trip, as a single form. */
 function NextStep({ trip }: { trip: MarketDelivery }) {
@@ -198,8 +198,6 @@ export default function TripDetailPage() {
     { id: "status", label: delivered ? "Status" : "Update status" },
     { id: "incidents", label: trip.issue ? "Incident (open)" : "Incidents" },
     { id: "timeline", label: "Timeline" },
-    // A trip that has not been picked up has no cold-chain readings yet.
-    ...(trip.temperatures.length > 0 ? [{ id: "temperature" as const, label: "Temperature" }] : []),
     ...(trip.receipt ? [{ id: "proof" as const, label: "Proof of delivery" }] : []),
   ];
 
@@ -210,6 +208,8 @@ export default function TripDetailPage() {
       </Link>
 
       <RouteMap delivery={trip} status={status}>
+        {(coldChain) => (
+          <>
         {trip.issue && (
           <p className="ph-map-alert">
             <TriangleAlert size={16} />
@@ -240,6 +240,8 @@ export default function TripDetailPage() {
             ))}
           </ol>
 
+          {coldChain}
+
           <div className="ph-carrier">
             <Truck size={16} aria-hidden="true" />
             <span>
@@ -254,6 +256,8 @@ export default function TripDetailPage() {
             </a>
           )}
         </aside>
+          </>
+        )}
       </RouteMap>
 
       <div className="ph-detail-tabs" role="tablist" aria-label="Trip details">
@@ -277,7 +281,6 @@ export default function TripDetailPage() {
         {tab === "status" && <NextStep trip={trip} />}
         {tab === "incidents" && <Incidents trip={trip} />}
         {tab === "timeline" && <Timeline delivery={trip} />}
-        {tab === "temperature" && trip.temperatures.length > 0 && <TemperatureLog delivery={trip} />}
         {tab === "proof" && trip.receipt && (
           <dl className="ph-proof">
             <div>

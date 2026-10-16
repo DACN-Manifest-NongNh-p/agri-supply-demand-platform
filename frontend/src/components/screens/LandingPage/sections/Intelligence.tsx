@@ -1,19 +1,16 @@
 import { Reveal, Eyebrow } from "./Reveal";
 import "../styles/Intelligence.css";
+import { useContent } from "@/lib/siteContent";
 
 export function Intelligence() {
+  const c = useContent();
   return (
     <section id="intelligence" className="intelligence-section">
       <div className="intelligence-container">
         <Reveal className="intelligence-header">
           <Eyebrow>Intelligence</Eyebrow>
-          <h2 className="editorial intelligence-title">
-            See the imbalance before it becomes waste.
-          </h2>
-          <p className="intelligence-intro">
-            Farmora uses historical supply, demand, seasonal, and transaction data to provide
-            forecasts and risk signals that support coordination decisions.
-          </p>
+          <h2 className="editorial intelligence-title">{c("landing.intelligence.title")}</h2>
+          <p className="intelligence-intro">{c("landing.intelligence.intro")}</p>
         </Reveal>
 
         <div className="intelligence-grid">

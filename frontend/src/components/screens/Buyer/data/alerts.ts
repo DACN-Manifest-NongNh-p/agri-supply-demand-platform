@@ -1,4 +1,5 @@
 // Buyer alerts are derived from current data, not stored: they disappear once the cause is fixed.
+import { RULES } from "@/lib/site";
 import { formatDayInText, formatKg } from "../../Producer/data/format";
 import type { DeliveryIssue } from "../../Producer/data/deliveries";
 import { fulfilmentOf } from "./demands";
@@ -8,17 +9,16 @@ export type AlertTone = "urgent" | "warning" | "info";
 
 export type BuyerAlert = {
   id: string;
-  kind: "at_risk" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue";
+  kind: "short" | "waiting" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue";
   tone: AlertTone;
-  /** The big number or code the card is about. */
-  figure: string;
-  caption: string;
+  /** One plain sentence: what is wrong. */
+  title: string;
+  /** One short line of facts behind it. */
+  detail: string;
   link: { label: string; to: string };
 };
 
 /** A demand is at risk when its deadline is this close and it is not fully sourced. */
-const AT_RISK_DAYS = 3;
-const HOLD_WARNING_HOURS = 6;
 /** Days of shelf life left on arrival below which an unshipped batch is flagged. */
 const FRESHNESS_MARGIN = 1;
 
@@ -34,18 +34,39 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
   const alerts: BuyerAlert[] = [];
   const demandOf = (id: string) => demands.find((demand) => demand.id === id);
 
+  // Holds about to lapse get their own alert; a demand only waiting on those is not repeated.
+  const expiringFor = new Set(
+    allocations.filter((item) => item.stage === "held" && (item.holdHoursLeft ?? Infinity) <= RULES.holdWarningHours).map((item) => item.demandId),
+  );
+
   for (const demand of demands) {
-    const { allocatedKg, heldKg, status } = fulfilmentOf(demand, allocations);
-    if (status === "fulfilled" || status === "completed" || demand.neededByDay > AT_RISK_DAYS) continue;
-    const coverage = Math.round(((allocatedKg + heldKg) / demand.quantityKg) * 100);
-    alerts.push({
-      id: `risk-${demand.id}`,
-      kind: "at_risk",
-      tone: "urgent",
-      figure: `${Math.round((allocatedKg / demand.quantityKg) * 100)}% confirmed`,
-      caption: `${demand.product} (${demand.id}) is needed by ${formatDayInText(demand.neededByDay)}; ${coverage}% sourced including holds.`,
-      link: { label: "Find supply", to: `/buyer/demands/${demand.id}` },
-    });
+    const { allocatedKg, heldKg, openKg, status } = fulfilmentOf(demand, allocations);
+    if (status === "fulfilled" || status === "completed" || demand.neededByDay > RULES.dueSoonDays) continue;
+    const due = `Needed by ${formatDayInText(demand.neededByDay)}`;
+    const product = demand.product.toLowerCase();
+
+    if (openKg > 0) {
+      // Still short: nothing covers part of it yet.
+      const covered = [allocatedKg > 0 && `${formatKg(allocatedKg)} confirmed`, heldKg > 0 && `${formatKg(heldKg)} waiting for the producer`].filter(Boolean);
+      alerts.push({
+        id: `short-${demand.id}`,
+        kind: "short",
+        tone: "urgent",
+        title: `${demand.id} still needs ${formatKg(openKg)} ${product}`,
+        detail: [due, ...covered].join(" · "),
+        link: { label: "Find supply", to: `/buyer/demands/${demand.id}` },
+      });
+    } else if (heldKg > 0 && !expiringFor.has(demand.id)) {
+      // Fully sourced, but part of it is not confirmed yet.
+      alerts.push({
+        id: `waiting-${demand.id}`,
+        kind: "waiting",
+        tone: "warning",
+        title: `${demand.id} is waiting for producers to confirm`,
+        detail: `${due} · ${formatKg(heldKg)} of ${formatKg(demand.quantityKg)} ${product} on hold`,
+        link: { label: "View", to: `/buyer/demands/${demand.id}#sources` },
+      });
+    }
   }
 
   for (const allocation of allocations) {
@@ -58,20 +79,20 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
         id: `issue-${allocation.id}`,
         kind: "supply_issue",
         tone: "urgent",
-        figure: batch.code,
-        caption: batch.issue,
-        link: { label: "Review demand", to: `/buyer/demands/${allocation.demandId}` },
+        title: `${batch.producer} reported a problem with ${batch.code}`,
+        detail: `${batch.issue} Reserved for ${allocation.demandId}.`,
+        link: { label: "Review", to: `/buyer/demands/${allocation.demandId}#sources` },
       });
     }
 
-    if (allocation.stage === "held" && (allocation.holdHoursLeft ?? Infinity) <= HOLD_WARNING_HOURS) {
+    if (allocation.stage === "held" && (allocation.holdHoursLeft ?? Infinity) <= RULES.holdWarningHours) {
       alerts.push({
         id: `hold-${allocation.id}`,
         kind: "hold_expiring",
         tone: "warning",
-        figure: `${allocation.holdHoursLeft}h left`,
-        caption: `on your ${formatKg(allocation.kg)} hold of ${allocation.batchCode}. ${allocation.producer} has not confirmed yet.`,
-        link: { label: "View hold", to: `/buyer/demands/${allocation.demandId}` },
+        title: `Your hold on ${allocation.batchCode} lapses in ${allocation.holdHoursLeft} h`,
+        detail: `${allocation.producer} has not confirmed ${formatKg(allocation.kg)} for ${allocation.demandId} yet.`,
+        link: { label: "View", to: `/buyer/demands/${allocation.demandId}#sources` },
       });
     }
 
@@ -81,9 +102,9 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
         id: `fresh-${allocation.id}`,
         kind: "freshness",
         tone: "warning",
-        figure: batch.code,
-        caption: `Sells by ${formatDayInText(batch.sellByDay)}, only ${margin} ${margin === 1 ? "day" : "days"} after you need it. Plan to sell it quickly.`,
-        link: { label: "View demand", to: `/buyer/demands/${allocation.demandId}` },
+        title: `${batch.code} must be sold ${margin <= 0 ? "the day" : `${margin} ${margin === 1 ? "day" : "days"}`} after it arrives`,
+        detail: `Sells by ${formatDayInText(batch.sellByDay)}; ${allocation.demandId} needs it ${formatDayInText(demand.neededByDay)}. Plan to sell it quickly.`,
+        link: { label: "View", to: `/buyer/demands/${allocation.demandId}#sources` },
       });
     }
   }
@@ -95,9 +116,9 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
       id: `delivery-${delivery.id}`,
       kind: "delivery_issue",
       tone: "warning",
-      figure: delivery.id,
-      caption: reported ? `You reported: ${reported.reason}.` : delivery.issue!,
-      link: { label: "Track delivery", to: `/buyer/deliveries/${delivery.id}` },
+      title: reported ? `You reported a problem on delivery ${delivery.id}` : `Delivery ${delivery.id} has a problem`,
+      detail: reported ? `${reported.reason}. A coordinator is following up.` : delivery.issue!,
+      link: { label: "Track", to: `/buyer/deliveries/${delivery.id}` },
     });
   }
 

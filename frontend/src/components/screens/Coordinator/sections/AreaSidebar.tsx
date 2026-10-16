@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from "@/lib/keycloak";
 import type { Theme } from "../data/theme";
+import { NotificationBell, type Notice } from "@/components/notifications/NotificationBell";
 
 export type SidebarPage = { label: string; to: string; end?: boolean; icon: LucideIcon; count?: number };
 
@@ -15,19 +16,24 @@ type Props = {
   fallbackName: string;
   theme: Theme;
   onToggleTheme: () => void;
+  /** What needs this user; shown under the bell next to the brand. */
+  notifications: Notice[];
 };
 
 /** Left navigation for the sidebar areas; becomes a top bar on narrow screens. */
-export function AreaSidebar({ home, pages, roleLabel, fallbackName, theme, onToggleTheme }: Props) {
+export function AreaSidebar({ home, pages, roleLabel, fallbackName, theme, onToggleTheme, notifications }: Props) {
   const authenticated = isKeycloakAuthenticated();
   const username = authenticated ? getKeycloakUsername() : fallbackName;
 
   return (
     <header className="co-sidebar">
-      <Link to={home} className="co-brand">
-        <img src={logoImage} alt="" />
-        <span>Farmora</span>
-      </Link>
+      <div className="co-sidebar-top">
+        <Link to={home} className="co-brand">
+          <img src={logoImage} alt="" />
+          <span>Farmora</span>
+        </Link>
+        <NotificationBell items={notifications} align="left" />
+      </div>
 
       <nav className="co-nav" aria-label={`${roleLabel} pages`}>
         {pages.map(({ label, to, end, icon: Icon, count = 0 }) => (

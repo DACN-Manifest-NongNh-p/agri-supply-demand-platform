@@ -1,12 +1,20 @@
 import { useState } from "react";
-import { ArrowLeft, Check, ShieldAlert, TriangleAlert } from "lucide-react";
+import { RULES } from "@/lib/site";
+import { ArrowLeft, ArrowRight, Check, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MatchScore, ScoreRing } from "../Producer/sections/MatchScore";
 import { formatDay, formatDayInText, formatKg } from "../Producer/data/format";
 import { CriteriaChips } from "../Buyer/sections/Criteria";
 import { ProducerBadge } from "../Buyer/sections/ProducerTrust";
 import { openOf, type SupplyCandidate } from "../Buyer/data/demands";
-import { AUTO_MATCH_MIN_SCORE, SIGN_OFF_KG, batchesWithoutBuyer, contestedBatches, exceptionsFor, needsDecision, type BoardRow } from "./data/market";
+import {
+  contestedBatches,
+  exceptionsFor,
+  needsDecision,
+  unsoldSupply,
+  type BoardRow,
+  type UnsoldBatch,
+} from "./data/market";
 import { useCoordinator } from "./data/coordinatorContext";
 
 type Tab = "decide" | "gaps" | "holds";
@@ -125,9 +133,47 @@ function MatchCard({ row, rivals, focused }: { row: BoardRow; rivals: BoardRow[]
   );
 }
 
+function sellsBy(day: number) {
+  if (day === 0) return "sells by today";
+  if (day === 1) return "sells by tomorrow · 1 day left";
+  return `sells by ${formatDayInText(day)} · ${day} days left`;
+}
+
+/** One unsold batch: what it is, how long it can still be sold, and why nobody has bought it. */
+function UnsoldGapRow({ item }: { item: UnsoldBatch }) {
+  const { batch, openKg, reason } = item;
+  return (
+    <li id={`batch-${batch.code}`}>
+      <p className="co-gap-head">
+        <span>
+          {batch.code} · {batch.producer}
+        </span>
+        <span>{formatKg(openKg)}</span>
+      </p>
+      <p className="ph-muted">
+        {batch.product} {batch.variety}, grade {batch.grade} · <span className={batch.sellByDay <= 1 ? "co-low" : undefined}>{sellsBy(batch.sellByDay)}</span>
+      </p>
+      {reason.kind === "no_demand" ? (
+        <p className="co-gap-reason">{reason.text}</p>
+      ) : (
+        <p className="co-gap-reason">
+          <span className="co-unsold-tag co-unsold-tag--act">
+            {reason.kind === "decision" ? `Fits ${reason.demandId}, needs your decision` : `Fits ${reason.demandId}, not held yet`}
+          </span>{" "}
+          <Link to={item.to} className="ph-link-btn">
+            Open {reason.demandId} <ArrowRight size={14} />
+          </Link>
+        </p>
+      )}
+    </li>
+  );
+}
+
 function Gaps({ rows }: { rows: BoardRow[] }) {
   const { market, notified, notifyProducers } = useCoordinator();
-  const idle = batchesWithoutBuyer(rows, market);
+  const unsold = unsoldSupply(rows, market);
+  const soon = unsold.filter((item) => item.soon);
+  const later = unsold.filter((item) => !item.soon);
   const missing = rows.filter((row) => !row.best);
 
   return (
@@ -171,27 +217,37 @@ function Gaps({ rows }: { rows: BoardRow[] }) {
       <section className="ph-card" aria-labelledby="idle-list-title">
         <div className="ph-section-head">
           <div>
-            <h2 id="idle-list-title">Supply without a buyer</h2>
-            <p className="ph-section-sub">Open batches that no open demand accepts.</p>
+            <h2 id="idle-list-title">Unsold supply</h2>
+            <p className="ph-section-sub">
+              Open kilograms nobody has bought. Anything selling within {RULES.sellSoonDays} days comes first, whatever the reason.
+            </p>
           </div>
         </div>
-        {idle.length === 0 ? (
-          <p className="ph-muted">Every open batch fits some demand.</p>
+        {unsold.length === 0 ? (
+          <p className="ph-muted">Every open batch is held or has a buyer in sight.</p>
         ) : (
-          <ul className="co-gap-list">
-            {idle.map(({ batch, openKg, reason }) => (
-              <li key={batch.code}>
-                <p className="co-gap-head">
-                  <span>{batch.code} · {batch.producer}</span>
-                  <span>{formatKg(openKg)}</span>
-                </p>
-                <p className="ph-muted">
-                  {batch.product} {batch.variety}, grade {batch.grade} · sells by {formatDayInText(batch.sellByDay)}
-                </p>
-                <p className="co-gap-reason">{reason}</p>
-              </li>
-            ))}
-          </ul>
+          <>
+            {soon.length > 0 && (
+              <>
+                <p className="co-unsold-group co-unsold-group--soon">Selling within {RULES.sellSoonDays} days</p>
+                <ul className="co-gap-list">
+                  {soon.map((item) => (
+                    <UnsoldGapRow key={item.batch.code} item={item} />
+                  ))}
+                </ul>
+              </>
+            )}
+            {later.length > 0 && (
+              <>
+                <p className="co-unsold-group">No buyer, more time</p>
+                <ul className="co-gap-list">
+                  {later.map((item) => (
+                    <UnsoldGapRow key={item.batch.code} item={item} />
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
         )}
       </section>
     </div>
@@ -317,7 +373,7 @@ export default function MatchingPage() {
           <h1>Exceptions to decide</h1>
           <p className="ph-hello-summary">
             The system matches demand and supply on its own and holds every clean match ({systemHeld} {systemHeld === 1 ? "hold" : "holds"} right now). It only
-            stops for a person when a match scores under {AUTO_MATCH_MIN_SCORE}%, is {SIGN_OFF_KG.toLocaleString("en-US")} kg or more, is for export, or involves
+            stops for a person when a match scores under {RULES.autoMatchMinScore}%, is {RULES.signOffKg.toLocaleString("en-US")} kg or more, is for export, or involves
             a reported problem or an unverified producer.
           </p>
         </div>

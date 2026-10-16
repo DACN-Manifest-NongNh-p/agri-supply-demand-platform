@@ -31,7 +31,7 @@ docker compose ps
 
 `--build` builds the Keycloak image with the Farmora role-assigner extension (`docker/keycloak/Dockerfile`). Rebuild after changing anything under `docker/keycloak/extensions/`.
 
-Wait until `keycloak-db` is `healthy` and `keycloak` is `Up`. On first startup, Keycloak imports `docker/keycloak/realms/agri-platform-realm.json`. Open the admin console at `http://localhost:8081/admin`; default local credentials are `admin` / `admin` unless overridden in `.env`.
+Wait until `keycloak-db` and `app-db` are `healthy` and `keycloak` is `Up`. `app-db` is the API's own PostgreSQL database (site content, announcements, operating rules, product catalog), published on host port 5433; the API creates its tables with Flyway on first start. On first startup, Keycloak imports `docker/keycloak/realms/agri-platform-realm.json`. Open the admin console at `http://localhost:8081/admin`; default local credentials are `admin` / `admin` unless overridden in `.env`.
 
 ### Apply the registration account-type field
 
@@ -54,7 +54,7 @@ Open a terminal at `backend/` and run:
 mvn spring-boot:run
 ```
 
-The API listens on `http://localhost:8082`. Verify its public health endpoint from another terminal:
+The API listens on `http://localhost:8082`. It needs `app-db` running (see step 2); the connection comes from `APP_DB_URL`, `APP_DB_USER` and `APP_DB_PASSWORD`, defaulting to `jdbc:postgresql://localhost:5433/farmora` with the local credentials from `.env.example`. Verify its public health endpoint from another terminal:
 
 ```powershell
 Invoke-RestMethod http://localhost:8082/api/health
@@ -90,7 +90,8 @@ From the landing page, **Log in** and **Sign Up** go directly to Keycloak. Regis
 | `5173` | React / Vite | Keycloak redirect URI and backend CORS origin |
 | `8081` | Keycloak | Docker maps host `8081` to container `8080` |
 | `8082` | Spring Boot API | `server.port` in `backend/src/main/resources/application.yml` |
-| `5432` | PostgreSQL | Internal to Compose; not published to the host |
+| `5432` | PostgreSQL (Keycloak) | Internal to Compose; not published to the host |
+| `5433` | PostgreSQL (app, `app-db`) | The API's database; `docker compose down -v` also deletes it |
 | `8080` | Keycloak container port | Use `http://keycloak:8080` from sibling containers or `http://localhost:8081` from the host |
 
 ## Verify and stop
