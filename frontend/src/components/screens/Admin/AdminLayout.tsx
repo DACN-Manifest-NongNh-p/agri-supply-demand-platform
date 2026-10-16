@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { Boxes, FileText, LayoutGrid, Megaphone, SlidersHorizontal } from "lucide-react";
+import { Boxes, FileText, LayoutGrid, Megaphone, SlidersHorizontal, Users } from "lucide-react";
 import { AreaSidebar } from "../Coordinator/sections/AreaSidebar";
 import { useStoredTheme } from "../Coordinator/data/theme";
 import { useSite } from "@/lib/site";
@@ -51,6 +51,7 @@ export default function AdminLayout() {
           { label: "Announcements", to: "/admin/announcements", icon: Megaphone, count: site.announcements.length },
           { label: "Operating rules", to: "/admin/rules", icon: SlidersHorizontal },
           { label: "Products", to: "/admin/products", icon: Boxes },
+          { label: "Users", to: "/admin/users", icon: Users },
         ]}
       />
       <div className="co-content">

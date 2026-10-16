@@ -44,6 +44,21 @@ docker compose exec keycloak /opt/keycloak/bin/kcadm.sh update users/profile -r 
 
 If `KEYCLOAK_ADMIN` or `KEYCLOAK_ADMIN_PASSWORD` differs in `.env`, substitute those values in the credentials command. The profile JSON is mounted separately at `/opt/keycloak/user-profile.json`; it is intentionally outside the realm-import folder.
 
+### Create the user-sync client (realms imported before it existed)
+
+The admin's Users page reads every account through the Keycloak Admin API as the `farmora-api` service account, which has only `realm-management` → `view-users`.
+
+- **New Keycloak database:** the client comes with the realm import.
+- **Realm imported earlier:** create the client once:
+
+```powershell
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh create clients -r agri-platform -s clientId=farmora-api -s "name=Farmora API" -s enabled=true -s publicClient=false -s serviceAccountsEnabled=true -s standardFlowEnabled=false -s directAccessGrantsEnabled=false -s secret=farmora-api-local-secret
+docker compose exec keycloak /opt/keycloak/bin/kcadm.sh add-roles -r agri-platform --uusername service-account-farmora-api --cclientid realm-management --rolename view-users
+```
+
+The API uses `KEYCLOAK_SYNC_CLIENT_ID` / `KEYCLOAK_SYNC_CLIENT_SECRET`, defaulting to `farmora-api` / `farmora-api-local-secret`. Outside local development, give the client a new secret and set it in `backend/.env`.
+
 The login theme and realm/client are imported from files. Because the Keycloak database persists, editing the realm import JSON does not overwrite an existing realm. Use the Admin Console or `kcadm.sh` for live realm changes. The theme directory is mounted with caching disabled for local development, so CSS/JS edits can be checked by refreshing the browser.
 
 ## 3. Start the Spring Boot API
@@ -54,7 +69,18 @@ Open a terminal at `backend/` and run:
 mvn spring-boot:run
 ```
 
-The API listens on `http://localhost:8082`. It needs `app-db` running (see step 2); the connection comes from `APP_DB_URL`, `APP_DB_USER` and `APP_DB_PASSWORD`, defaulting to `jdbc:postgresql://localhost:5433/farmora` with the local credentials from `.env.example`. Verify its public health endpoint from another terminal:
+The API listens on `http://localhost:8082`.
+
+The API connects to its database using `APP_DB_URL`, `APP_DB_USER` and `APP_DB_PASSWORD`, read from `backend/.env` or from real environment variables (environment variables take precedence).
+
+- **Local database (default):** leave the three variables unset. The API then uses `app-db` from step 2 at `jdbc:postgresql://localhost:5433/farmora`.
+- **Shared Neon database:** copy `backend/.env.example` to `backend/.env` and fill in the three lines. Get the host, user and password from Neon → Connect, with pooling turned off.
+  - Use the JDBC form: `jdbc:postgresql://<host>/neondb?sslmode=require&channelBinding=require`, with the user and password on their own lines. Do not paste Neon's `postgresql://user:pass@…` string as the URL.
+  - With Neon, `app-db` is not needed: run `docker compose up -d keycloak-db keycloak`.
+  - Flyway creates the tables on the first start.
+  - Share the password privately. `backend/.env` is ignored by git.
+
+Verify the API's public health endpoint from another terminal:
 
 ```powershell
 Invoke-RestMethod http://localhost:8082/api/health

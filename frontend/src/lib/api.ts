@@ -41,6 +41,18 @@ export async function getPublic<T>(path: string, signal?: AbortSignal): Promise<
   return readJson<T>(await fetch(new URL(path, `${apiBaseUrl}/`), { signal }));
 }
 
+/**
+ * Records the signed-in user in the app database (app_user), copied from their Keycloak token.
+ * Called once per page load after sign-in; a failure only means the user list is a visit behind.
+ */
+export async function recordSignIn() {
+  try {
+    await apiJson("api/me");
+  } catch (error) {
+    console.warn("Could not record the sign-in.", error);
+  }
+}
+
 /** Signed-in JSON call: sends `body` as JSON, returns the parsed response. */
 export async function apiJson<T>(path: string, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", body?: unknown): Promise<T> {
   const response = await apiFetch(path, {

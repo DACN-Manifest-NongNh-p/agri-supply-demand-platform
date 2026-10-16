@@ -35,6 +35,7 @@ import ContentPage from './components/screens/Admin/ContentPage'
 import AnnouncementsPage from './components/screens/Admin/AnnouncementsPage'
 import RulesPage from './components/screens/Admin/RulesPage'
 import ProductsPage from './components/screens/Admin/ProductsPage'
+import UsersPage from './components/screens/Admin/UsersPage'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
@@ -163,6 +164,7 @@ function App() {
           <Route path="announcements" element={<AnnouncementsPage />} />
           <Route path="rules" element={<RulesPage />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="users" element={<UsersPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

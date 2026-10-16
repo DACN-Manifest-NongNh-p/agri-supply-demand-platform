@@ -46,6 +46,12 @@
       ],
       "requiredActions": ["UPDATE_PASSWORD"],
       "realmRoles": ["default-roles-agri-platform", "ADMIN"]
+    },
+    {
+      "username": "service-account-farmora-api",
+      "enabled": true,
+      "serviceAccountClientId": "farmora-api",
+      "clientRoles": { "realm-management": ["view-users"] }
     }
   ],
   "clients": [
@@ -84,6 +90,18 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "farmora-api",
+      "name": "Farmora API",
+      "description": "Service account the API uses to read the user list for the admin Users page (view-users only).",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "farmora-api-local-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true
     }
   ]
 }

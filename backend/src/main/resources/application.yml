@@ -1,6 +1,10 @@
 spring:
   application:
     name: agri-supply-demand-api
+  # Local settings such as APP_DB_URL (backend/.env, not committed). Works when started from backend/ or the repo root;
+  # real environment variables still take precedence.
+  config:
+    import: "optional:file:.env[.properties],optional:file:backend/.env[.properties]"
   # Application database (site configuration). Separate from Keycloak's database; see compose.yml (app-db).
   datasource:
     url: ${APP_DB_URL:jdbc:postgresql://localhost:5433/farmora}
@@ -26,5 +30,10 @@ server:
   port: 8082
 
 app:
+  # Service account the admin's user sync uses to read Keycloak's user list (realm-management: view-users only).
+  keycloak:
+    sync:
+      client-id: ${KEYCLOAK_SYNC_CLIENT_ID:farmora-api}
+      client-secret: ${KEYCLOAK_SYNC_CLIENT_SECRET:farmora-api-local-secret}
   cors:
     allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}

@@ -58,6 +58,41 @@ export async function saveProduct(product: CatalogProduct) {
   return listProducts();
 }
 
+/** A Farmora account as stored in app_user (copied from Keycloak). Sign-in times are null until the person opens the app. */
+export type AppUser = {
+  id: string;
+  username: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  emailVerified: boolean;
+  enabled: boolean;
+  accountType: string | null;
+  roles: string[];
+  registeredAt: string | null;
+  firstSeenAt: string | null;
+  lastSeenAt: string | null;
+  syncedAt: string | null;
+};
+
+export function listUsers() {
+  return apiJson<AppUser[]>("api/admin/users");
+}
+
+/** Copies every account from Keycloak into app_user and returns the updated list. */
+export function syncUsers() {
+  return apiJson<{ fromKeycloak: number; syncedAt: string; users: AppUser[] }>("api/admin/users/sync", "POST");
+}
+
+const KEYCLOAK_URL = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8081";
+const KEYCLOAK_REALM = import.meta.env.VITE_KEYCLOAK_REALM ?? "agri-platform";
+
+/** Keycloak's admin console for the Farmora realm (users, passwords, roles). */
+export const KEYCLOAK_CONSOLE = `${KEYCLOAK_URL}/admin/${KEYCLOAK_REALM}/console/`;
+
+/** One user's page in the Keycloak console. */
+export const keycloakUserUrl = (id: string) => `${KEYCLOAK_CONSOLE}#/${KEYCLOAK_REALM}/users/${id}/settings`;
+
 export const AUDIENCE_LABEL: Record<Audience, string> = {
   PUBLIC: "Public website",
   PRODUCER: "Producers",

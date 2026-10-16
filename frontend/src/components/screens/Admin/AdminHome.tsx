@@ -6,8 +6,7 @@ import { useSite } from "@/lib/site";
 import { CONTENT_FIELDS } from "@/lib/siteContent";
 import { deliveries, demands, market, requests } from "../Coordinator/data/mockCoordinator";
 import { openOf } from "../Buyer/data/demands";
-
-const KEYCLOAK_CONSOLE = `${import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8081"}/admin/${import.meta.env.VITE_KEYCLOAK_REALM ?? "agri-platform"}/console/`;
+import { KEYCLOAK_CONSOLE } from "./data/adminApi";
 
 type Tile = { icon: LucideIcon; label: string; value: string; note: string; to: string };
 
