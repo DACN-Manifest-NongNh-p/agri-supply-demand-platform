@@ -24,7 +24,6 @@ import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "../Coordinator/styles/Coordinator.css";
 import "./styles/Logistics.css";
-import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 const clock = () => new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
@@ -205,6 +204,7 @@ export default function LogisticsLayout() {
         theme={theme}
         onToggleTheme={toggleTheme}
         notifications={notifications}
+        audience="LOGISTICS"
         pages={[
           { label: "Overview", to: "/logistics", end: true, icon: LayoutGrid },
           { label: "Transport orders", to: "/logistics/orders", icon: ClipboardList, count: newOrders },
@@ -214,7 +214,6 @@ export default function LogisticsLayout() {
         ]}
       />
       <div className="co-content">
-        <AnnouncementBanner audience="LOGISTICS" />
         <Outlet context={state} />
       </div>
     </div>

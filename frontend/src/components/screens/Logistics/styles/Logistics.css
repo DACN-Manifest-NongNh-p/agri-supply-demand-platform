@@ -12,10 +12,10 @@
 }
 
 .producer-home.logistics-area[data-theme="dark"] {
-  --lg-card: #172019;
-  --lg-edge: rgba(255, 255, 255, 0.08);
-  --lg-soft: rgba(255, 255, 255, 0.04);
-  background: #0f1511;
+  --lg-card: var(--dk-card);
+  --lg-edge: var(--dk-edge);
+  --lg-soft: rgba(255, 255, 255, 0.055);
+  background: var(--dk-page);
 }
 
 .producer-home.logistics-area .ph-card,

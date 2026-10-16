@@ -17,6 +17,7 @@ export function CoordinatorSidebar({ counts, theme, onToggleTheme, notifications
       theme={theme}
       onToggleTheme={onToggleTheme}
       notifications={notifications}
+      audience="COORDINATOR"
       pages={[
         { label: "Overview", to: "/coordinator", end: true, icon: LayoutGrid },
         { label: "Matching", to: "/coordinator/matching", icon: GitCompareArrows, count: counts.matching },

@@ -3,18 +3,18 @@ import { Bell, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./notifications.css";
 
-/** One notification: what is wrong, one line of facts, and where to fix it. */
+/** One notification: what is wrong, one line of facts, and where to fix it (none for a plain message). */
 export type Notice = {
   id: string;
   tone: "urgent" | "warning" | "info";
   title: string;
   detail: string;
-  link: { label: string; to: string };
+  link?: { label: string; to: string };
 };
 
 type Props = {
   items: Notice[];
-  /** Persist dismissals in the caller; without it the bell remembers them itself. */
+  /** Also tell the caller, so it can remember the dismissal; the bell hides it either way. */
   onDismiss?: (id: string) => void;
   /** Which side the panel lines up with: "right" under a top bar, "left" from a sidebar. */
   align?: "left" | "right";
@@ -26,12 +26,12 @@ export function NotificationBell({ items, onDismiss, align = "right" }: Props) {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const rootRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const shown = onDismiss ? items : items.filter((item) => !hidden.has(item.id));
+  const shown = items.filter((item) => !hidden.has(item.id));
   const urgent = shown.filter((item) => item.tone === "urgent").length;
 
   const dismiss = (id: string) => {
-    if (onDismiss) onDismiss(id);
-    else setHidden((current) => new Set(current).add(id));
+    setHidden((current) => new Set(current).add(id));
+    onDismiss?.(id);
   };
 
   // Close on a click outside or Escape.
@@ -77,21 +77,31 @@ export function NotificationBell({ items, onDismiss, align = "right" }: Props) {
             <ul className="nb-list">
               {shown.map((item) => (
                 <li key={item.id} className={`nb-item nb-item--${item.tone}`}>
-                  <button
-                    type="button"
-                    className="nb-main"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate(item.link.to);
-                    }}
-                  >
-                    <span className="nb-dot" aria-hidden="true" />
-                    <span className="nb-text">
-                      <strong>{item.title}</strong>
-                      <small>{item.detail}</small>
-                      <em>{item.link.label} →</em>
-                    </span>
-                  </button>
+                  {item.link ? (
+                    <button
+                      type="button"
+                      className="nb-main"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate(item.link!.to);
+                      }}
+                    >
+                      <span className="nb-dot" aria-hidden="true" />
+                      <span className="nb-text">
+                        <strong>{item.title}</strong>
+                        <small>{item.detail}</small>
+                        <em>{item.link.label} →</em>
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="nb-main nb-main--static">
+                      <span className="nb-dot" aria-hidden="true" />
+                      <span className="nb-text">
+                        <strong>{item.title}</strong>
+                        <small>{item.detail}</small>
+                      </span>
+                    </div>
+                  )}
                   <button type="button" className="nb-dismiss" aria-label={`Dismiss: ${item.title}`} title="Dismiss" onClick={() => dismiss(item.id)}>
                     <X size={14} />
                   </button>

@@ -277,10 +277,10 @@
   gap: 10px;
   margin: 0;
   padding: 10px 10px 10px 14px;
-  border: 1px solid #cfe0f0;
+  border: 1px solid #d5e3cf;
   border-radius: 12px;
-  color: #1f3b57;
-  background: #eef5fc;
+  color: #22432d;
+  background: #eff5ec;
   font-family: var(--sans, system-ui, sans-serif);
   font-size: 14px;
   line-height: 1.4;
@@ -297,6 +297,7 @@
 
 .ab-item svg {
   flex: none;
+  color: #3f7d52;
 }
 
 .ab-item button {
@@ -318,32 +319,62 @@
   opacity: 1;
 }
 
+/* Warning: warm honey. */
 .ab-item--warning {
-  border-color: #f0dcb5;
-  color: #6b4508;
-  background: #fbf1df;
+  border-color: #efdcae;
+  color: #65450c;
+  background: #fcf5e4;
 }
 
+.ab-item--warning svg {
+  color: #b7801d;
+}
+
+/* Urgent: soft terracotta. */
 .ab-item--urgent {
-  border-color: #f2c4bd;
-  color: #7f2418;
-  background: #fdeeeb;
+  border-color: #f1cbc3;
+  color: #772a1e;
+  background: #fdf1ee;
+}
+
+.ab-item--urgent svg {
+  color: #c4442f;
 }
 
 [data-theme="dark"] .ab-item {
-  border-color: rgba(120, 170, 220, 0.3);
-  color: #cfe2f5;
-  background: rgba(120, 170, 220, 0.12);
+  border-color: rgba(127, 207, 152, 0.24);
+  color: #d4ecdb;
+  background: rgba(127, 207, 152, 0.09);
+}
+
+[data-theme="dark"] .ab-item svg {
+  color: #7fcf98;
 }
 
 [data-theme="dark"] .ab-item--warning {
-  border-color: rgba(211, 160, 80, 0.35);
-  color: #f0d29c;
-  background: rgba(211, 160, 80, 0.14);
+  border-color: rgba(232, 184, 92, 0.3);
+  color: #f3dcab;
+  background: rgba(232, 184, 92, 0.1);
+}
+
+[data-theme="dark"] .ab-item--warning svg {
+  color: #e8b85c;
 }
 
 [data-theme="dark"] .ab-item--urgent {
-  border-color: rgba(255, 120, 100, 0.35);
-  color: #ffc4ba;
-  background: rgba(255, 120, 100, 0.14);
+  border-color: rgba(255, 138, 118, 0.3);
+  color: #ffd0c7;
+  background: rgba(255, 138, 118, 0.1);
+}
+
+[data-theme="dark"] .ab-item--urgent svg {
+  color: #ff8a76;
+}
+
+/* Admin announcements: a message to read, nothing to open. */
+.nb-main--static,
+.nb-main--static:hover,
+[data-theme="dark"] .nb-main--static:hover {
+  background: transparent;
+  cursor: default;
 }

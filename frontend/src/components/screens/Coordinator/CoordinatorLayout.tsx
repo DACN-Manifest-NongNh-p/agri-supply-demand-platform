@@ -11,7 +11,6 @@ import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "./styles/Coordinator.css";
 import { useStoredTheme } from "./data/theme";
-import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 /** Shell for all coordinator pages: sidebar plus the demo state shared between them. */
 export default function CoordinatorLayout() {
@@ -137,7 +136,6 @@ export default function CoordinatorLayout() {
         }}
       />
       <div className="co-content">
-        <AnnouncementBanner audience="COORDINATOR" />
         <Outlet context={state} />
       </div>
     </div>

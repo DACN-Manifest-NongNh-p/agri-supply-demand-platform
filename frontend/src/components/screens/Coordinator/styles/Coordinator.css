@@ -1396,18 +1396,26 @@
 }
 
 /* ---------- Dark mode ----------
-   Same single-tone idea at night: deep moss behind, smoked glass on top, light text. */
+   Shared by the coordinator, logistics and admin areas. Neutral graphite in three clear steps
+   (page, sidebar, card) with hairline borders and one green accent, instead of murky moss and glass. */
 .producer-home.coordinator-area[data-theme="dark"] {
-  --ph-bg: #0e1511;
-  --ph-card: #17201a;
-  --ph-line: rgba(255, 255, 255, 0.09);
-  --ph-line-strong: rgba(255, 255, 255, 0.16);
-  --ph-ink: #e7ede5;
-  --ph-muted: #98a69a;
-  --ph-subtle: rgba(255, 255, 255, 0.04);
-  --ph-green: #8cc79a;
-  --ph-green-dark: #b4e0bd;
-  --ph-green-soft: rgba(140, 199, 154, 0.14);
+  --dk-page: #0c0e0d;
+  --dk-sidebar: #111412;
+  --dk-card: #202523;
+  --dk-raised: #2a302d;
+  --dk-hover: rgba(255, 255, 255, 0.05);
+  --dk-edge: #333b36;
+  --dk-edge-strong: #414a44;
+  --ph-bg: var(--dk-page);
+  --ph-card: var(--dk-card);
+  --ph-line: var(--dk-edge);
+  --ph-line-strong: var(--dk-edge-strong);
+  --ph-ink: #e6e9e7;
+  --ph-muted: #939b96;
+  --ph-subtle: rgba(255, 255, 255, 0.035);
+  --ph-green: #7fcf98;
+  --ph-green-dark: #a6dfb6;
+  --ph-green-soft: rgba(127, 207, 152, 0.12);
   --ph-amber: #d3e07a;
   --ph-amber-soft: rgba(211, 224, 122, 0.12);
   --ph-red: #ff8e7e;
@@ -1421,25 +1429,33 @@
   --g-200: #2c3d31;
   --g-100: rgba(140, 199, 154, 0.12);
   --g-50: rgba(255, 255, 255, 0.04);
-  --co-surface: #17201a;
-  --co-sidebar: #111a14;
+  --co-surface: var(--dk-card);
+  --co-sidebar: var(--dk-sidebar);
+  /* Logistics and admin read these for their flat cards. */
+  --lg-card: var(--dk-card);
+  --lg-edge: var(--dk-edge);
+  --lg-soft: rgba(255, 255, 255, 0.035);
   color-scheme: dark;
   color: var(--ph-ink);
-  background:
-    radial-gradient(70vw 55vw at 20% 0%, #1d2c22 0%, transparent 70%),
-    linear-gradient(165deg, #121b15 0%, #0a100c 100%);
-  background-attachment: fixed;
+  background: var(--dk-page);
 }
 
-[data-theme="dark"] .ph-card,
-[data-theme="dark"] .co-sidebar,
+/* Beats the flat-card rules of the logistics and admin areas (.producer-home.<area> .ph-card). */
+.producer-home.coordinator-area[data-theme="dark"] .ph-card {
+  border: 1px solid var(--dk-edge);
+  background: var(--dk-card);
+  /* A faint top highlight and a soft drop lift cards off the page. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.6), 0 10px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 [data-theme="dark"] .co-hub-panel,
 [data-theme="dark"] .co-hub-chips,
 [data-theme="dark"] .co-hub-legend,
 [data-theme="dark"] .co-pin-label {
-  border-color: rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 14px 34px rgba(0, 0, 0, 0.35);
+  border-color: var(--dk-edge);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
 }
 
 /* Over the map the smoked glass is darker so light text holds on bright imagery. */
@@ -1447,33 +1463,45 @@
 [data-theme="dark"] .co-hub-chips,
 [data-theme="dark"] .co-hub-legend,
 [data-theme="dark"] .co-pin-label {
-  background: rgba(14, 21, 17, 0.72);
+  background: rgba(16, 19, 17, 0.86);
 }
 
 [data-theme="dark"] .co-sidebar {
-  background: rgba(255, 255, 255, 0.025);
+  border: 0;
+  border-right: 1px solid var(--dk-edge);
+  border-radius: 0;
+  background: var(--dk-sidebar);
   box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 [data-theme="dark"] .co-nav a:hover,
 [data-theme="dark"] .co-queue-row:hover,
 [data-theme="dark"] .co-hub-chips a:hover,
 [data-theme="dark"] .co-logout:hover {
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--ph-ink);
+  background: var(--dk-hover);
 }
 
 [data-theme="dark"] .co-nav a.active {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .co-nav a.active svg,
+[data-theme="dark"] .co-nav a.active em {
+  color: var(--ph-green);
 }
 
 [data-theme="dark"] .co-account {
-  border-top-color: rgba(255, 255, 255, 0.08);
+  border-top-color: var(--dk-edge);
 }
 
 [data-theme="dark"] .co-hub-chips li + li,
 [data-theme="dark"] .co-queue li + li {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--dk-edge);
 }
 
 [data-theme="dark"] .co-queue {
@@ -1481,8 +1509,8 @@
 }
 
 [data-theme="dark"] .co-pills {
-  border-color: rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--dk-edge);
+  background: var(--dk-card);
 }
 
 /* Pins and keys keep their daytime look: they sit on imagery, not on the page. */
@@ -1501,9 +1529,13 @@
 }
 
 [data-theme="dark"] :is(input, select, textarea):not(.co-region select) {
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: var(--dk-edge-strong);
   color: var(--ph-ink);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--dk-sidebar);
+}
+
+[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: #6f7772;
 }
 
 [data-theme="dark"] .co-match-warn--soft,
@@ -1522,8 +1554,14 @@
 
 /* Shared producer and buyer components with light colours set directly. */
 [data-theme="dark"] .ph-btn {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--dk-edge-strong);
+  color: var(--ph-ink);
+  background: var(--dk-raised);
+}
+
+[data-theme="dark"] .ph-btn:not(.ph-btn--primary):hover {
+  border-color: #424a44;
+  background: #242926;
 }
 
 [data-theme="dark"] .ph-btn--primary,
@@ -1535,12 +1573,22 @@
 
 [data-theme="dark"] .ph-segmented button[aria-pressed="true"] {
   color: var(--ph-ink);
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--dk-raised);
 }
 
 [data-theme="dark"] .ph-count-badge {
   color: var(--ph-ink);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Inline links in tables and text: accent colour, underline only on hover. */
+[data-theme="dark"] :is(p, small, dd, td, label) a:not([class]) {
+  color: var(--ph-green);
+  text-decoration: none;
+}
+
+[data-theme="dark"] :is(p, small, dd, td, label) a:not([class]):hover {
+  text-decoration: underline;
 }
 
 [data-theme="dark"] .ph-chip-criterion--pass {

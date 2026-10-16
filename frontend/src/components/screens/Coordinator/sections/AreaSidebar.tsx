@@ -4,6 +4,8 @@ import logoImage from "@/assets/logo.png";
 import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from "@/lib/keycloak";
 import type { Theme } from "../data/theme";
 import { NotificationBell, type Notice } from "@/components/notifications/NotificationBell";
+import { useAnnouncementNotices } from "@/components/notifications/announcements";
+import type { Audience } from "@/lib/site";
 
 export type SidebarPage = { label: string; to: string; end?: boolean; icon: LucideIcon; count?: number };
 
@@ -18,10 +20,14 @@ type Props = {
   onToggleTheme: () => void;
   /** What needs this user; shown under the bell next to the brand. */
   notifications: Notice[];
+  /** Whose admin announcements to add to the bell; none for the admin area itself. */
+  audience?: Audience;
 };
 
 /** Left navigation for the sidebar areas; becomes a top bar on narrow screens. */
-export function AreaSidebar({ home, pages, roleLabel, fallbackName, theme, onToggleTheme, notifications }: Props) {
+export function AreaSidebar({ home, pages, roleLabel, fallbackName, theme, onToggleTheme, notifications, audience }: Props) {
+  const announcements = useAnnouncementNotices(audience ?? "PUBLIC");
+  const announced = audience ? announcements.notices : [];
   const authenticated = isKeycloakAuthenticated();
   const username = authenticated ? getKeycloakUsername() : fallbackName;
 
@@ -32,7 +38,7 @@ export function AreaSidebar({ home, pages, roleLabel, fallbackName, theme, onTog
           <img src={logoImage} alt="" />
           <span>Farmora</span>
         </Link>
-        <NotificationBell items={notifications} align="left" />
+        <NotificationBell items={[...announced, ...notifications]} align="left" onDismiss={(id) => void announcements.dismiss(id)} />
       </div>
 
       <nav className="co-nav" aria-label={`${roleLabel} pages`}>

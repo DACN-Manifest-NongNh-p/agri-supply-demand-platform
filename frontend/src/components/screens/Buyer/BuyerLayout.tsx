@@ -15,7 +15,6 @@ import type { DeliveryIssue } from "../Producer/data/deliveries";
 // The buyer area reuses the producer styles (same layout, cards and moss palette) and adds its own.
 import "../Producer/styles/ProducerHome.css";
 import "./styles/Buyer.css";
-import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
 
 /** Shell for all buyer pages: top bar plus the demo state shared between them. */
@@ -99,7 +98,6 @@ export default function BuyerLayout() {
   return (
     <div className="producer-home buyer-area" id="top">
       <BuyerTopBar alerts={alerts} onDismiss={(id) => setDismissed((current) => ({ ...current, [id]: true }))} />
-      <AnnouncementBanner audience="BUYER" />
       <Outlet context={state} />
     </div>
   );
