@@ -13,6 +13,7 @@ import { RiskToasts } from "@/components/freshness/RiskToasts";
 import { useSpoilageAlerts, type SpoilageItem } from "@/components/freshness/useSpoilageAlerts";
 import "./styles/ProducerHome.css";
 import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
+import { ProfileNudge } from "@/components/profile/ProfileNudge";
 
 /**
  * Demo only: the areas do not share state, so a buyer cannot really answer an offer sent from here.
@@ -162,6 +163,7 @@ export default function ProducerLayout() {
     <div className="producer-home" id="top">
       <TopBar openTasks={openTasks} ordersToConfirm={orders.filter((order) => order.stage === "to_confirm").length} />
       <AnnouncementBanner audience="PRODUCER" />
+      <ProfileNudge area="producer" />
       <Outlet context={state} />
       <RiskToasts
         alerts={spoilage.alerts.filter((alert) => !hiddenToasts[alert.id])}

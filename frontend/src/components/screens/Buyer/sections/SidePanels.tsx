@@ -5,29 +5,48 @@ import { DeliveryCard } from "../../Producer/sections/DeliveryCard";
 import { deliveryStatus, sortDeliveries, type DeliveryIssue } from "../../Producer/data/deliveries";
 import { DEMAND_STAGES, type DemandStatus } from "../data/demands";
 import type { BuyerDelivery } from "../data/mockBuyer";
-import { buyer } from "../data/mockBuyer";
+import { isIncomplete, useProfile } from "@/components/profile/profileStore";
 
 export function CompanyCard() {
   const { addresses } = useBuyer();
+  const profile = useProfile("buyer");
+  const company = profile.org;
   const main = addresses[0];
+  if (isIncomplete(profile)) {
+    return (
+      <section className="ph-farm" aria-labelledby="company-title">
+        <p className="ph-eyebrow">Your company</p>
+        <h2 id="company-title">Add your company</h2>
+        <p className="ph-farm-contact">Producers see who they are selling to.</p>
+        <Link to="/buyer/profile" className="ph-link-btn">
+          <Pencil size={14} /> Complete your profile
+        </Link>
+      </section>
+    );
+  }
+  const place = main ? `${main.label}, ${main.district}, ${main.province}` : company.region;
   return (
     <section className="ph-farm" aria-labelledby="company-title">
       <p className="ph-eyebrow">Your company</p>
-      <h2 id="company-title">{buyer.name}</h2>
-      <p className="ph-farm-meta">
-        <MapPin size={14} /> {main ? `${main.label}, ${main.district}, ${main.province}` : buyer.destination}
-        {addresses.length > 1 && ` +${addresses.length - 1} more`}
-      </p>
-      <ul className="ph-tags">
-        {buyer.products.map((product) => (
-          <li key={product}>{product}</li>
-        ))}
-      </ul>
+      <h2 id="company-title">{company.name}</h2>
+      {place && (
+        <p className="ph-farm-meta">
+          <MapPin size={14} /> {place}
+          {addresses.length > 1 && ` +${addresses.length - 1} more`}
+        </p>
+      )}
+      {company.products.length > 0 && (
+        <ul className="ph-tags">
+          {company.products.map((product) => (
+            <li key={product}>{product}</li>
+          ))}
+        </ul>
+      )}
       <p className="ph-farm-contact">
-        {buyer.contact}, {buyer.role.toLowerCase()}
+        {[profile.name, profile.title.toLowerCase()].filter(Boolean).join(", ")}
       </p>
-      <Link to="/buyer/company" className="ph-link-btn">
-        <Pencil size={14} /> Edit company and delivery points
+      <Link to="/buyer/profile" className="ph-link-btn">
+        <Pencil size={14} /> Edit profile and company
       </Link>
     </section>
   );

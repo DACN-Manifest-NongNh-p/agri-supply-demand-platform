@@ -1,28 +1,45 @@
 import { ArrowRight, MapPin, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Delivery } from "../data/mockProducer";
+import { isIncomplete, useProfile } from "@/components/profile/profileStore";
 import { deliveryStatus, sortDeliveries, type DeliveryIssue } from "../data/deliveries";
 import { DeliveryCard } from "./DeliveryCard";
 
-type Farm = { name: string; contact: string; region: string; hectares: number; products: string[] };
-
-export function FarmCard({ farm }: { farm: Farm }) {
+export function FarmCard() {
+  const profile = useProfile("producer");
+  const farm = profile.org;
+  if (isIncomplete(profile)) {
+    return (
+      <section className="ph-farm" aria-labelledby="farm-title">
+        <p className="ph-eyebrow">Your farm</p>
+        <h2 id="farm-title">Add your farm</h2>
+        <p className="ph-farm-contact">Buyers see your farm name, region and crops.</p>
+        <Link to="/producer/profile" className="ph-link-btn">
+          <Pencil size={14} /> Complete your profile
+        </Link>
+      </section>
+    );
+  }
   return (
     <section className="ph-farm" aria-labelledby="farm-title">
       <p className="ph-eyebrow">Your farm</p>
       <h2 id="farm-title">{farm.name}</h2>
-      <p className="ph-farm-meta">
-        <MapPin size={14} /> {farm.region} · {farm.hectares} ha
-      </p>
-      <ul className="ph-tags">
-        {farm.products.map((product) => (
-          <li key={product}>{product}</li>
-        ))}
-      </ul>
-      <p className="ph-farm-contact">Contact: {farm.contact}</p>
-      <button type="button" className="ph-link-btn">
+      {(farm.region || farm.hectares !== null) && (
+        <p className="ph-farm-meta">
+          <MapPin size={14} /> {[farm.region, farm.hectares !== null && `${farm.hectares} ha`].filter(Boolean).join(" · ")}
+        </p>
+      )}
+      {farm.products.length > 0 && (
+        <ul className="ph-tags">
+          {farm.products.map((product) => (
+            <li key={product}>{product}</li>
+          ))}
+        </ul>
+      )}
+      <p className="ph-farm-contact">Contact: {[profile.name, profile.phone].filter(Boolean).join(" · ")}</p>
+      <Link to="/producer/profile" className="ph-link-btn">
         <Pencil size={14} /> Edit profile and growing areas
-      </button>
+      </Link>
     </section>
   );
 }

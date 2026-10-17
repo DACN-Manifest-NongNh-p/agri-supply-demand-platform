@@ -77,6 +77,12 @@ export function getKeycloakUsername() {
   return keycloak.tokenParsed?.preferred_username ?? keycloak.tokenParsed?.email ?? "";
 }
 
+/** Full name and email from the token, empty when not signed in or not set in Keycloak. */
+export function getKeycloakIdentity() {
+  const token = keycloak.tokenParsed as { name?: string; email?: string } | undefined;
+  return { name: token?.name ?? "", email: token?.email ?? "" };
+}
+
 /** Roles that have their own area in the app, in priority order, with the area's home path. */
 const ROLE_HOMES: { role: AppRole; path: string }[] = [
   { role: "PRODUCER", path: "/producer" },

@@ -3,13 +3,15 @@ import { Link } from "react-router-dom";
 import { DemandHero } from "./sections/DemandHero";
 import { CompanyCard, DemandPipeline, IncomingDeliveries } from "./sections/SidePanels";
 import { NewOnMarket, WeekAhead } from "./sections/HomeExtras";
-import { buyer, deliveries } from "./data/mockBuyer";
+import { deliveries } from "./data/mockBuyer";
+import { useProfile } from "@/components/profile/profileStore";
 import { fulfilmentOf, type DemandStatus } from "./data/demands";
 import { useBuyer } from "./data/buyerContext";
 import { greeting } from "../Producer/data/format";
 
 export default function BuyerHome() {
   const { demands, allocations, alerts, deliveryIssues, supply } = useBuyer();
+  const profile = useProfile("buyer");
 
   const counts: Record<DemandStatus, number> = { new: 0, sourcing: 0, partial: 0, fulfilled: 0, completed: 0 };
   let needSupply = 0;
@@ -26,7 +28,7 @@ export default function BuyerHome() {
         <div>
           <p className="ph-eyebrow">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>
           <h1>
-            {greeting()}, {buyer.contact.split(" ").at(-1)}.
+            {greeting()}, {profile.name.split(" ").at(-1)}.
           </h1>
           <p className="ph-hello-summary">
             {needSupply > 0

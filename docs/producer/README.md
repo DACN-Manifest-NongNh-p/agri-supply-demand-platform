@@ -102,7 +102,7 @@ stateDiagram-v2
 
 Statuses in code: `expected`, `ready`, `on_hold`, `allocated`, `in_transit`, `delivered`. A producer can advance a batch one step at a time from the batch detail, or report an issue (lower yield, quality problem, no longer available, harvest delayed), which goes to a coordinator.
 
-**Declaring a batch** (`DeclareBatchDialog`): product (the farm's usual products, or **Other…** to type one in; a case-only difference from a known product is saved as that product), variety, plot, quantity, grade A/B/C, expected harvest, ready-to-sell and sell-by dates, and 1–4 photos of the batch (image files up to 10 MB; the first is the cover buyers see). Validation: quantity > 0, ready ≥ harvest, sell-by > ready, at least one photo. After saving, the dialog reports how many open demands the new batch already matches.
+**Declaring a batch** (`NewBatchPage`, route `/producer/batches/new`): product (the farm's usual products, or **Other…** to type one in; a case-only difference from a known product is saved as that product), variety, plot, quantity, grade A/B/C, expected harvest, ready-to-sell and sell-by dates, and 1–4 photos of the batch (image files up to 10 MB; the first is the cover buyers see). Validation: quantity > 0, ready ≥ harvest, sell-by > ready, at least one photo. While typing, a side column shows which open demands the batch would match (top three with their score) and the selling window; after saving, the page reports the match count with links to the batch and to Matches.
 
 **Importing batches** (*Import from file* on the Batches page, `sections/ImportBatchesDialog.tsx`): drop an Excel (.xlsx) or CSV file, one batch per row, with Product, Variety, Quantity (kg), Harvest and Sell by, and optionally Grade (A, B, C), Plot and Ready to sell (headers in English or Vietnamese; a sample file can be downloaded). Each row is checked with the same rules as declaring one batch and shows how many demands it matches; *Declare N batches* declares the good rows. Photos are added to each batch afterwards.
 
@@ -282,10 +282,11 @@ Shared with the buyer area (`components/auction/`). How a batch is handled chang
 
 **Flow**
 
-1. The producer opens an auction from a batch that is not harvested yet (Batches → batch → *Open a pre-harvest auction*). They set:
+1. The producer opens an auction on the **New auction** page (`/producer/auctions/new`, `NewAuctionPage`), reached from the *New auction* button on the Pre-harvest auctions tab or from *Open a pre-harvest auction* on a not-yet-harvested batch (which preselects it). They pick a batch that is not harvested yet and has no auction, then set:
    - the estimated yield range;
    - the opening price;
-   - how long it runs (10 minutes for the demo, 1 hour or 24 hours).
+   - how long it runs (10 minutes for the demo, 1 hour or 24 hours);
+   - optionally, how it is grown (VietGAP, GlobalGAP, organic, drip irrigation, bagged fruit) and last season's yield from the plot. A side column shows the yield confidence and the opening value live.
 2. Farmora shows a **yield confidence** score (`yieldConfidence`). It is built from how tight the estimate is, how far off the harvest is, the plot's yield history and certified practices, and it drops by 30 when the producer reports a risk. It is labelled as a decision aid, not a promise.
 3. Buyers bid at `/buyer/auctions/:id`:
    - The current bid, who leads (other buyers stay anonymous) and a live countdown are shown.
@@ -312,7 +313,7 @@ Where: the **Pre-harvest auctions** tab of Batches (`/producer/auctions`, `Aucti
 | `../../orders/` (`LifecycleSteps.tsx`, `orders.css`) | Lifecycle dots, order cards, tabs and popup styles shared with the buyer area |
 | `BatchesPage.tsx` | Batches page |
 | `DeliveryDetailPage.tsx` | Delivery detail, opened from an order |
-| `sections/` | Building blocks (MatchHero, AttentionList, CalendarGrid, BatchDetail, DeclareBatchDialog, RouteMap, LiveTemperature, MarketInsights…) |
+| `sections/` | Building blocks (MatchHero, AttentionList, CalendarGrid, BatchDetail, RouteMap, LiveTemperature, MarketInsights…) |
 | `data/matching.ts` | Matching rules, scores and criteria |
 | `data/mockProducer.ts` | Demo batches, demands, tasks, deliveries, insights |
 | `data/routes.ts` | Stored road geometry for the delivery map |

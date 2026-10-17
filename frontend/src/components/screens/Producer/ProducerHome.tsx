@@ -5,7 +5,8 @@ import { HarvestPreview } from "./sections/HarvestPreview";
 import { MatchHero } from "./sections/MatchHero";
 import { MarketInsights } from "./sections/MarketInsights";
 import { Deliveries, FarmCard } from "./sections/SidePanels";
-import { deliveries, demands, insights, producer, tasks } from "./data/mockProducer";
+import { deliveries, demands, insights, tasks } from "./data/mockProducer";
+import { useProfile } from "@/components/profile/profileStore";
 import { matchAll } from "./data/matching";
 import { greeting } from "./data/format";
 import { useProducer } from "./data/producerContext";
@@ -13,6 +14,7 @@ import { SpoilageWatch } from "@/components/freshness/SpoilageWatch";
 
 export default function ProducerHome() {
   const { batches, outcomes, resolveTask, offers, offer, offerAnswers, openTasks, deliveryIssues, spoilageItems, excursions } = useProducer();
+  const profile = useProfile("producer");
 
   const matches = matchAll(demands, batches);
   const openMatches = matches.filter((match) => match.best && !offers[match.demand.id]).length;
@@ -23,7 +25,7 @@ export default function ProducerHome() {
         <div>
           <p className="ph-eyebrow">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}</p>
           <h1>
-            {greeting()}, {producer.contact.split(" ").at(-1)}.
+            {greeting()}, {profile.name.split(" ").at(-1)}.
           </h1>
           <p className="ph-hello-summary">
             {openMatches > 0
@@ -32,7 +34,7 @@ export default function ProducerHome() {
             {openTasks > 0 ? `, and ${openTasks} ${openTasks === 1 ? "thing needs" : "things need"} your attention.` : "."}
           </p>
         </div>
-        <Link to="/producer/batches?declare=1" className="ph-btn ph-btn--large">
+        <Link to="/producer/batches/new" className="ph-btn ph-btn--large">
           <Plus size={18} /> Declare a new batch
         </Link>
       </section>
@@ -49,7 +51,7 @@ export default function ProducerHome() {
         </div>
 
         <aside className="ph-col-side">
-          <FarmCard farm={producer} />
+          <FarmCard />
           <MarketInsights insights={insights} />
         </aside>
       </div>

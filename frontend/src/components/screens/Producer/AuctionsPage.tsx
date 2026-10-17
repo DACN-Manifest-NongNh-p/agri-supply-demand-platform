@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gavel, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { AuctionStatus, AuctionTimer, BidHistory, ConfidencePanel, LastRaise, PriceSparkline } from "@/components/auction/AuctionParts";
 import { currentBid, recordHarvest, reportRisk, useAuctions, type Auction } from "@/components/auction/auctionStore";
@@ -145,16 +145,26 @@ export default function ProducerAuctionsPage() {
         <div>
           <p className="ph-eyebrow">Supply</p>
           <h1>Batches</h1>
-          <p className="ph-hello-summary">Sell batches before harvest: bids arrive live, the highest one when the timer ends wins. Open an auction from a batch not harvested yet.</p>
+          <p className="ph-hello-summary">Sell batches before harvest: bids arrive live, the highest one when the timer ends wins.</p>
+        </div>
+        <div className="ph-head-actions">
+          <Link to="/producer/auctions/new" className="ph-btn ph-btn--primary ph-btn--large">
+            <Gavel size={18} /> New auction
+          </Link>
         </div>
       </section>
 
       <BatchTabs />
 
       {auctions.length === 0 ? (
-        <p className="ph-card ph-empty">
-          No auctions yet. In <Link to="/producer/batches">All batches</Link>, pick a batch that is not harvested yet and open one.
-        </p>
+        <section className="ph-card na-empty">
+          <Gavel size={28} />
+          <h2>No auctions yet</h2>
+          <p>Sell a batch before it is harvested: buyers bid to secure it.</p>
+          <Link to="/producer/auctions/new" className="ph-btn ph-btn--primary">
+            <Plus size={16} /> New auction
+          </Link>
+        </section>
       ) : (
         <ul className="au-list">
           {auctions.map((auction) => (

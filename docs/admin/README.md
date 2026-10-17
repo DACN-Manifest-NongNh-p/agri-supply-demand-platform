@@ -162,7 +162,7 @@ Loading the site never blocks the app for long and never breaks it. Without the 
 | `src/lib/siteContent.ts` | `CONTENT_FIELDS` (key, group, label, default text, length limit) and `useContent()` |
 | `src/components/screens/LandingPage/sections/ContentText.tsx` | `Lines` / `TwoLine`: render a text whose line breaks start a new line |
 | `src/components/notifications/AnnouncementBanner.tsx` | The banner (`audience`, `placement="inline" \| "floating"`); dismissed ids are kept in `localStorage` |
-| `src/components/screens/Producer/sections/ProductOptions.tsx` | Product `<option>`s from the catalog (Usual / All products), used by NewDemandPage and DeclareBatchDialog |
+| `src/components/screens/Producer/sections/ProductOptions.tsx` | Product `<option>`s from the catalog (Usual / All products), used by NewDemandPage and Producer NewBatchPage |
 | `src/lib/spreadsheet.ts` | Sheet import; `productName` matches catalog names in English or Vietnamese first |
 | `src/components/screens/Admin/` | The admin area (below) |
 

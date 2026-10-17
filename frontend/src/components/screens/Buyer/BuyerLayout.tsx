@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { RULES } from "@/lib/site";
 import { Outlet, useLocation } from "react-router-dom";
 import { BuyerTopBar } from "./sections/BuyerTopBar";
+import { ProfileNudge } from "@/components/profile/ProfileNudge";
 import {
   depositFor,
   addresses as initialAddresses,
@@ -212,6 +213,7 @@ export default function BuyerLayout() {
         cartCount={allocations.filter((item) => item.stage === "locked" || item.stage === "held" || item.stage === "offered").length}
         cartNeedsYou={allocations.some((item) => item.stage === "offered" || item.stage === "locked")}
       />
+      <ProfileNudge area="buyer" />
       <Outlet context={state} />
     </div>
   );

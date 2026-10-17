@@ -6,6 +6,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Room for the scrollbar is always kept, so pages don't shift sideways when one gets long enough to scroll. */
+  scrollbar-gutter: stable;
 }
 html,
 body {

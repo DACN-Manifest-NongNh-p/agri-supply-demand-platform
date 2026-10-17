@@ -1,10 +1,10 @@
-import { LogOut, ShoppingCart } from "lucide-react";
+import { Building2, ShoppingCart } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
-import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from "@/lib/keycloak";
 import type { BuyerAlert } from "../data/alerts";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAnnouncementNotices } from "@/components/notifications/announcements";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
 
 const pages = [
   { label: "Home", to: "/buyer", end: true },
@@ -23,8 +23,6 @@ type Props = {
 };
 
 export function BuyerTopBar({ alerts, onDismiss, cartCount, cartNeedsYou }: Props) {
-  const authenticated = isKeycloakAuthenticated();
-  const username = authenticated ? getKeycloakUsername() : "Demo buyer";
   // Admin announcements come first under the bell, then the buyer's own alerts.
   const announcements = useAnnouncementNotices("BUYER");
   const { pathname } = useLocation();
@@ -61,12 +59,7 @@ export function BuyerTopBar({ alerts, onDismiss, cartCount, cartNeedsYou }: Prop
           <ShoppingCart size={18} />
           {cartCount > 0 && <span className={cartNeedsYou ? "nb-count is-urgent" : "nb-count"}>{cartCount}</span>}
         </NavLink>
-        <span className="ph-user">{username}</span>
-        {authenticated && (
-          <button type="button" className="ph-logout" onClick={() => void logoutFromKeycloak()} aria-label="Log out">
-            <LogOut size={16} />
-          </button>
-        )}
+        <ProfileMenu area="buyer" roleLabel="Buyer" links={[{ label: "Company & delivery points", to: "/buyer/company", icon: Building2 }]} />
       </div>
     </header>
   );

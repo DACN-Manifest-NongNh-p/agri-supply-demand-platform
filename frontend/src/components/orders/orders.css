@@ -6,6 +6,9 @@
   display: flex;
   gap: 4px;
   overflow-x: auto;
+  /* Scrolls sideways only; without this the tab underline's -1px overlap adds a vertical scrollbar. */
+  overflow-y: hidden;
+  scrollbar-width: none;
   margin: 0 0 12px;
   border-bottom: 1px solid var(--ph-line);
 }

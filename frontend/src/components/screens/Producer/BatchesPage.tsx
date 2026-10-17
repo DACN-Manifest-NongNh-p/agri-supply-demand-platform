@@ -7,7 +7,6 @@ import { BatchHistory } from "./sections/BatchHistory";
 import { BatchTable } from "./sections/BatchTable";
 import { PreHarvestAuction } from "./sections/PreHarvestAuction";
 import { BatchTabs } from "./sections/BatchTabs";
-import { DeclareBatchDialog } from "./sections/DeclareBatchDialog";
 import { ImportBatchesDialog } from "./sections/ImportBatchesDialog";
 import { deliveries, demands, producer } from "./data/mockProducer";
 import { matchAll } from "./data/matching";
@@ -32,14 +31,13 @@ const rangeFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "s
 
 /** Batch management: long-range planning calendar, full list, declaring new batches, per-batch history. */
 export default function BatchesPage() {
-  const { batches, setStatus, issues, reportIssue, addBatch, addBatches, orders, excursions } = useProducer();
+  const { batches, setStatus, issues, reportIssue, addBatches, orders, excursions } = useProducer();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState<View>(searchParams.get("view") === "list" ? "list" : "calendar");
   const [range, setRange] = useState(RANGES[1]);
   const [firstDay, setFirstDay] = useState(RANGES[1].start);
   const [product, setProduct] = useState("All");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
-  const declaring = searchParams.get("declare") === "1";
   const importing = searchParams.get("import") === "1";
 
   const updateParams = (changes: Record<string, string | null>) =>
@@ -97,9 +95,9 @@ export default function BatchesPage() {
           <button type="button" className="ph-btn ph-btn--large" onClick={() => updateParams({ import: "1" })}>
             <FileSpreadsheet size={18} /> Import from file
           </button>
-          <button type="button" className="ph-btn ph-btn--primary ph-btn--large" onClick={() => updateParams({ declare: "1" })}>
+          <Link to="/producer/batches/new" className="ph-btn ph-btn--primary ph-btn--large">
             <Plus size={18} /> Declare a new batch
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -200,17 +198,6 @@ export default function BatchesPage() {
         />
       )}
 
-      {declaring && (
-        <DeclareBatchDialog
-          onClose={() => updateParams({ declare: null })}
-          onDeclare={addBatch}
-          onView={(code) => {
-            setStatusFilter("active");
-            setProduct("All");
-            updateParams({ declare: null, batch: code });
-          }}
-        />
-      )}
     </main>
   );
 }

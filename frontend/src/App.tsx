@@ -15,6 +15,10 @@ import DemandsPage from './components/screens/Buyer/DemandsPage'
 import DemandDetailPage from './components/screens/Buyer/DemandDetailPage'
 import NewDemandPage from './components/screens/Buyer/NewDemandPage'
 import CompanyPage from './components/screens/Buyer/CompanyPage'
+import BuyerProfilePage from './components/screens/Buyer/ProfilePage'
+import ProducerProfilePage from './components/screens/Producer/ProfilePage'
+import NewBatchPage from './components/screens/Producer/NewBatchPage'
+import NewAuctionPage from './components/screens/Producer/NewAuctionPage'
 import SupplyPage from './components/screens/Buyer/SupplyPage'
 import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
 import BuyerOrdersPage from './components/screens/Buyer/OrdersPage'
@@ -73,10 +77,13 @@ function App() {
         >
           <Route index element={<ProducerHome />} />
           <Route path="batches" element={<BatchesPage />} />
+          <Route path="batches/new" element={<NewBatchPage />} />
           <Route path="auctions" element={<ProducerAuctionsPage />} />
+          <Route path="auctions/new" element={<NewAuctionPage />} />
           <Route path="calendar" element={<LegacyCalendarRedirect />} />
           <Route path="demand" element={<MarketDemandPage />} />
           <Route path="orders" element={<ProducerOrdersPage />} />
+          <Route path="profile" element={<ProducerProfilePage />} />
           {/* Shipments are followed from Orders now; the old list link lands there. */}
           <Route path="deliveries" element={<Navigate to="/producer/orders?tab=deliveries" replace />} />
           <Route
@@ -100,6 +107,7 @@ function App() {
           <Route path="demands" element={<DemandsPage />} />
           <Route path="demands/new" element={<NewDemandPage />} />
           <Route path="company" element={<CompanyPage />} />
+          <Route path="profile" element={<BuyerProfilePage />} />
           <Route path="demands/:id" element={<DemandDetailPage />} />
           <Route path="supply" element={<SupplyPage />} />
           <Route path="supply/:code" element={<SupplyDetailPage />} />

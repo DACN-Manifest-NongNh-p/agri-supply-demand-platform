@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ArrowLeft, Clock, MapPin, Pencil, Plus, Star, Trash2, User } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AddressForm } from "./sections/AddressForm";
-import { buyer, type DeliveryAddress } from "./data/mockBuyer";
+import type { DeliveryAddress } from "./data/mockBuyer";
+import { useProfile } from "@/components/profile/profileStore";
 import { useBuyer } from "./data/buyerContext";
 
 /** Only same-app paths are followed after saving. */
@@ -59,6 +60,7 @@ function PointCard({ address, isDefault, onEdit }: { address: DeliveryAddress; i
 /** The buyer's company and the delivery points demands can be sent to. */
 export default function CompanyPage() {
   const { addresses, addAddress, updateAddress } = useBuyer();
+  const profile = useProfile("buyer");
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const returnTo = safeReturn(params.get("returnTo"));
@@ -74,9 +76,9 @@ export default function CompanyPage() {
       <section className="ph-page-head">
         <div>
           <p className="ph-eyebrow">Your company</p>
-          <h1>{buyer.name}</h1>
+          <h1>{profile.org.name || "Your company"}</h1>
           <p className="ph-hello-summary">
-            {buyer.type} · {buyer.contact}, {buyer.role.toLowerCase()}
+            {[profile.org.type, [profile.name, profile.title.toLowerCase()].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
           </p>
         </div>
       </section>

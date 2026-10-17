@@ -1,7 +1,7 @@
-import { Bell, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
-import { getKeycloakUsername, isKeycloakAuthenticated, logoutFromKeycloak } from "@/lib/keycloak";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
 
 const pages = [
   { label: "Home", to: "/producer", end: true },
@@ -12,8 +12,6 @@ const pages = [
 ];
 
 export function TopBar({ openTasks, ordersToConfirm }: { openTasks: number; ordersToConfirm: number }) {
-  const authenticated = isKeycloakAuthenticated();
-  const username = authenticated ? getKeycloakUsername() : "Demo producer";
   const { pathname } = useLocation();
 
   return (
@@ -47,12 +45,7 @@ export function TopBar({ openTasks, ordersToConfirm }: { openTasks: number; orde
           <Bell size={18} />
           {openTasks > 0 && <span>{openTasks}</span>}
         </Link>
-        <span className="ph-user">{username}</span>
-        {authenticated && (
-          <button type="button" className="ph-logout" onClick={() => void logoutFromKeycloak()} aria-label="Log out">
-            <LogOut size={16} />
-          </button>
-        )}
+        <ProfileMenu area="producer" roleLabel="Producer" />
       </div>
     </header>
   );
