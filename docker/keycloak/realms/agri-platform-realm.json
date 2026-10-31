@@ -33,27 +33,74 @@
     {"alias": "CONFIGURE_RECOVERY_AUTHN_CODES", "name": "Recovery Authentication Codes", "providerId": "CONFIGURE_RECOVERY_AUTHN_CODES", "enabled": true, "defaultAction": false, "priority": 120},
     {"alias": "update_user_locale", "name": "Update User Locale", "providerId": "update_user_locale", "enabled": true, "defaultAction": false, "priority": 1000}
   ],
-  "users": [
+  "users":
+  [
     {
-      "username": "farmora.admin",
-      "email": "admin@farmora.local",
+      "username": "farmora.buyer",
+      "email": "buyer@farmora.local",
       "emailVerified": true,
       "firstName": "Farmora",
-      "lastName": "Admin",
+      "lastName": "Buyer",
       "enabled": true,
       "credentials": [
-        { "type": "password", "value": "Admin@123", "temporary": true }
+        {
+          "type": "password",
+          "value": "Buyer@123",
+          "temporary": false
+        }
       ],
-      "requiredActions": ["UPDATE_PASSWORD"],
-      "realmRoles": ["default-roles-agri-platform", "ADMIN"]
+      "realmRoles": ["BUYER"]
     },
     {
-      "username": "service-account-farmora-api",
+      "username": "farmora.producer",
+      "email": "producer@farmora.local",
+      "emailVerified": true,
+      "firstName": "Farmora",
+      "lastName": "Producer",
       "enabled": true,
-      "serviceAccountClientId": "farmora-api",
-      "clientRoles": { "realm-management": ["view-users"] }
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Producer@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["PRODUCER"]
+    },
+    {
+      "username": "farmora.logistics",
+      "email": "logistics@farmora.local",
+      "emailVerified": true,
+      "firstName": "Farmora",
+      "lastName": "Logistics",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Logistics@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["LOGISTICS"]
+    },
+    {
+      "username": "farmora.coordinator",
+      "email": "coordinator@farmora.local",
+      "emailVerified": true,
+      "firstName": "Farmora",
+      "lastName": "Coordinator",
+      "enabled": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Coordinator@123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["COORDINATOR"]
     }
-  ],
+  ]
+,
   "clients": [
     {
       "clientId": "farmora-web",
