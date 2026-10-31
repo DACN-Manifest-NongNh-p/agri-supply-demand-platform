@@ -44,6 +44,7 @@ import AnnouncementsPage from './components/screens/Admin/AnnouncementsPage'
 import RulesPage from './components/screens/Admin/RulesPage'
 import ProductsPage from './components/screens/Admin/ProductsPage'
 import UsersPage from './components/screens/Admin/UsersPage'
+import { ChatWidget } from './components/chatbot/ChatWidget'
 
 // Pulls in MapLibre (~1 MB), so it loads only when a delivery is opened.
 const DeliveryDetailPage = lazy(() => import('./components/screens/Producer/DeliveryDetailPage'))
@@ -185,6 +186,7 @@ function App() {
           <Route path="users" element={<UsersPage />} />
         </Route>
       </Routes>
+      <ChatWidget />
     </BrowserRouter>
   )
 }
