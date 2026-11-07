@@ -37,3 +37,7 @@ app:
       client-secret: ${KEYCLOAK_SYNC_CLIENT_SECRET:farmora-api-local-secret}
   cors:
     allowed-origin: ${APP_CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  # Python AI service (ai/): policy search and the Gemini assistant. Only this API calls it.
+  assistant:
+    url: ${AI_SERVICE_URL:http://localhost:8000}
+    messages-per-minute: ${ASSISTANT_MESSAGES_PER_MINUTE:10}

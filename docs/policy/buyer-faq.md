@@ -81,9 +81,9 @@ Mức trừ điểm cụ thể: xem *Quy chế giữ hàng, đặt cọc và h�
 ### Nghiệm thu hàng và áp dụng dung sai khi nhận hàng thế nào?
 1. Khi xe tới, tài xế báo đã đến và cửa sổ nghiệm thu bắt đầu: **2 giờ làm việc** với rau ăn lá, hàng rất dễ hỏng; **6 giờ làm việc** với trái cây thông thường.
 2. Đại diện doanh nghiệp cùng tài xế kiểm số thùng, cân lại, kiểm niêm phong và mã QR lô hàng.
-3. Áp dụng dung sai: tổng khuyết tật tối đa 10%, khuyết tật nặng tối đa 5%, thối hỏng tối đa 1%.
-   - Nằm trong dung sai: nhận hàng và thanh toán đủ, không được từ chối.
-   - Vượt dung sai: nhận hàng và được trừ tiền phần vượt, hoặc từ chối lô hàng và mở tranh chấp.
+3. Áp dụng dung sai, ba mức tính riêng: tổng khuyết tật tối đa 10%, khuyết tật nặng (dập nát, thâm đen) tối đa 5%, thối hỏng tối đa 1%.
+   - Nằm trong cả ba mức: nhận hàng và thanh toán đủ, không được từ chối.
+   - Vượt bất kỳ mức nào (ví dụ dập nát 7% vượt mức 5%): nhận hàng và được trừ tiền phần vượt, hoặc từ chối lô hàng và mở tranh chấp.
 4. Hết cửa sổ nghiệm thu mà không phản hồi, đơn tự động được coi là nghiệm thu đạt.
 
 ### Hàng giao bị hư quá mức cho phép thì người mua được bảo vệ thế nào?

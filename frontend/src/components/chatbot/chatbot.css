@@ -403,3 +403,134 @@
     transition-duration: 0ms !important;
   }
 }
+
+/* ---------- Assistant answers (RichText) and their sources ---------- */
+.cw-msg--assistant p {
+  margin: 0;
+}
+
+.cw-msg--assistant p + p,
+.cw-msg--assistant p + ul,
+.cw-msg--assistant ul + p {
+  margin-top: 6px;
+}
+
+.cw-msg--assistant ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+.cw-msg--assistant li + li {
+  margin-top: 3px;
+}
+
+.cw-sources {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cw-line);
+  color: var(--cw-muted);
+  font-size: 12px;
+}
+
+.cw-sources summary {
+  cursor: pointer;
+  color: var(--cw-green);
+  font-weight: 600;
+}
+
+.cw-sources ol {
+  margin: 6px 0 0;
+  padding-left: 22px;
+}
+
+.cw-sources li + li {
+  margin-top: 4px;
+}
+
+/* ---------- Caption shown before each action (agent/cursor.ts announce) ---------- */
+.cw-caption {
+  position: fixed;
+  z-index: 111;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px 9px;
+  border-radius: 10px;
+  color: #fff;
+  background: rgba(28, 56, 38, 0.94);
+  box-shadow: 0 10px 24px -10px rgba(16, 24, 18, 0.55);
+  font: 600 13px/1.35 var(--sans, system-ui, sans-serif);
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.cw-caption.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Runs out over the wait, so the click never comes as a surprise. */
+.cw-caption-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: #b9dd72;
+  transform-origin: left;
+}
+
+@keyframes cw-caption-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* ---------- The assistant's plan for a task (agent/runner.ts onPlan) ---------- */
+.cw-plan {
+  display: flex;
+  align-self: stretch;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--cw-line);
+  border-radius: 12px;
+  background: var(--cw-card);
+  list-style: none;
+}
+
+.cw-plan-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--cw-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cw-plan-step svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.cw-plan-step.is-done {
+  color: var(--cw-green);
+}
+
+.cw-plan-step.is-now {
+  color: var(--cw-ink);
+  font-weight: 600;
+}
+
+.cw-spin {
+  animation: cw-spin 0.9s linear infinite;
+}
+
+@keyframes cw-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

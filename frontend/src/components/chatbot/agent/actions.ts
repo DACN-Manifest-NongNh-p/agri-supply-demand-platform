@@ -2,19 +2,25 @@
 // type or pick an option the way a person would, and wait for the page to settle.
 // These are the "tools" the model will call in a later phase.
 import { elementForRef, takeSnapshot, type Snapshot } from "./snapshot";
-import { moveTo, pulse, sleep } from "./cursor";
+import { announce, hideCaption, moveTo, pulse, showCursor, sleep } from "./cursor";
 
+/** `caption` is what the bubble says before the action; without one a plain description is shown. */
 export type AgentAction =
-  | { type: "navigate"; path: string }
-  | { type: "click"; ref: number }
-  | { type: "type"; ref: number; text: string }
-  | { type: "select"; ref: number; option: string }
+  | { type: "navigate"; path: string; caption?: string }
+  | { type: "click"; ref: number; caption?: string }
+  | { type: "type"; ref: number; text: string; caption?: string }
+  | { type: "select"; ref: number; option: string; caption?: string }
   | { type: "scroll"; direction: "up" | "down" | "top" | "bottom" }
   | { type: "read_page" };
+
+/** How long the caption shows before the pointer acts. */
+export const CAPTION_MS = 1000;
 
 export type ActionContext = {
   navigate: (path: string) => void;
   signal: AbortSignal;
+  /** Overrides CAPTION_MS (e.g. a faster speed setting); 0 acts at once. */
+  captionMs?: number;
 };
 
 export type ActionResult = {
@@ -30,12 +36,35 @@ function target(ref: number) {
   return element;
 }
 
-function describe(ref: number, element: HTMLElement) {
-  const text = (element.getAttribute("aria-label") || element.innerText || element.getAttribute("placeholder") || "")
+function nameOf(element: HTMLElement) {
+  return (element.getAttribute("aria-label") || element.innerText || element.getAttribute("placeholder") || "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 40);
-  return `[${ref}] "${text}"`;
+}
+
+function describe(ref: number, element: HTMLElement) {
+  return `[${ref}] "${nameOf(element)}"`;
+}
+
+const OWN_UI = ".cw-panel, .cw-bubble, .cw-cursor, .cw-highlight, .cw-badges, .cw-caption";
+
+/**
+ * A visible link on the page that goes to `path`, so navigating looks like a person clicking the menu.
+ * Exact match (path and query) first, then the same page with another query.
+ */
+function linkTo(path: string): HTMLAnchorElement | null {
+  const wanted = new URL(path, location.origin);
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("a[href]")).filter((link) => {
+    if (link.closest(OWN_UI)) return false;
+    const rect = link.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 && link.origin === location.origin;
+  });
+  return (
+    links.find((link) => link.pathname === wanted.pathname && link.search === wanted.search) ??
+    links.find((link) => link.pathname === wanted.pathname) ??
+    null
+  );
 }
 
 async function bringIntoView(element: HTMLElement, signal: AbortSignal) {
@@ -124,57 +153,78 @@ function selectOption(element: HTMLElement, option: string) {
   return match.text;
 }
 
-export async function runAction(action: AgentAction, { navigate, signal }: ActionContext): Promise<ActionResult> {
+export async function runAction(action: AgentAction, { navigate, signal, captionMs = CAPTION_MS }: ActionContext): Promise<ActionResult> {
   let summary: string;
+  // Pointer at the target, then the caption runs down, then the action happens.
+  const approach = async (element: HTMLElement, fallback: string, caption?: string) => {
+    await bringIntoView(element, signal);
+    await moveTo(element, signal);
+    if (captionMs > 0) await announce(caption || fallback, captionMs, signal);
+    pulse();
+  };
 
-  switch (action.type) {
-    case "navigate": {
-      // Same-app paths only.
-      if (!action.path.startsWith("/") || action.path.startsWith("//")) throw new Error(`"${action.path}" is not a page of this site.`);
-      navigate(action.path);
-      summary = `Went to ${action.path}`;
-      break;
+  try {
+    switch (action.type) {
+      case "navigate": {
+        // Same-app paths only.
+        if (!action.path.startsWith("/") || action.path.startsWith("//")) throw new Error(`"${action.path}" is not a page of this site.`);
+        const link = linkTo(action.path);
+        if (link) {
+          // The pointer goes to the menu link and clicks it, like a person would.
+          await approach(link, `Mở “${nameOf(link) || action.path}”`, action.caption);
+          await sleep(120, signal);
+          clickLike(link);
+          await sleep(150, signal);
+        } else if (captionMs > 0) {
+          // No link to this page on screen: say where we are going, then go.
+          showCursor();
+          await announce(action.caption || `Chuyển tới trang ${action.path}`, captionMs, signal);
+        }
+        // The link may only lead nearby (another tab, a redirect); make sure we end up on the page asked for.
+        const wanted = new URL(action.path, location.origin);
+        if (location.pathname + location.search !== wanted.pathname + wanted.search) {
+          navigate(action.path);
+        }
+        summary = link ? `Opened “${nameOf(link)}” (${action.path})` : `Went to ${action.path}`;
+        break;
+      }
+      case "click": {
+        const element = target(action.ref);
+        if ((element as HTMLButtonElement).disabled) throw new Error(`${describe(action.ref, element)} is disabled.`);
+        await approach(element, `Nhấp vào “${nameOf(element)}”`, action.caption);
+        await sleep(120, signal);
+        clickLike(element);
+        summary = `Clicked ${describe(action.ref, element)}`;
+        break;
+      }
+      case "type": {
+        const element = target(action.ref);
+        await approach(element, `Gõ “${action.text}” vào “${nameOf(element)}”`, action.caption);
+        await typeInto(element, action.text, signal);
+        summary = `Typed "${action.text}" into ${describe(action.ref, element)}`;
+        break;
+      }
+      case "select": {
+        const element = target(action.ref);
+        await approach(element, `Chọn “${action.option}” trong “${nameOf(element)}”`, action.caption);
+        const chosen = selectOption(element, action.option);
+        summary = `Picked "${chosen}" in [${action.ref}]`;
+        break;
+      }
+      case "scroll": {
+        const step = window.innerHeight * 0.8;
+        const top = { up: window.scrollY - step, down: window.scrollY + step, top: 0, bottom: document.body.scrollHeight }[action.direction];
+        window.scrollTo({ top, behavior: "smooth" });
+        await sleep(450, signal);
+        summary = `Scrolled ${action.direction}`;
+        break;
+      }
+      case "read_page":
+        summary = "Read the page";
+        break;
     }
-    case "click": {
-      const element = target(action.ref);
-      if ((element as HTMLButtonElement).disabled) throw new Error(`${describe(action.ref, element)} is disabled.`);
-      await bringIntoView(element, signal);
-      await moveTo(element, signal);
-      pulse();
-      await sleep(120, signal);
-      clickLike(element);
-      summary = `Clicked ${describe(action.ref, element)}`;
-      break;
-    }
-    case "type": {
-      const element = target(action.ref);
-      await bringIntoView(element, signal);
-      await moveTo(element, signal);
-      pulse();
-      await typeInto(element, action.text, signal);
-      summary = `Typed "${action.text}" into ${describe(action.ref, element)}`;
-      break;
-    }
-    case "select": {
-      const element = target(action.ref);
-      await bringIntoView(element, signal);
-      await moveTo(element, signal);
-      pulse();
-      const chosen = selectOption(element, action.option);
-      summary = `Picked "${chosen}" in [${action.ref}]`;
-      break;
-    }
-    case "scroll": {
-      const step = window.innerHeight * 0.8;
-      const top = { up: window.scrollY - step, down: window.scrollY + step, top: 0, bottom: document.body.scrollHeight }[action.direction];
-      window.scrollTo({ top, behavior: "smooth" });
-      await sleep(450, signal);
-      summary = `Scrolled ${action.direction}`;
-      break;
-    }
-    case "read_page":
-      summary = "Read the page";
-      break;
+  } finally {
+    hideCaption();
   }
 
   await waitForSettle(signal);

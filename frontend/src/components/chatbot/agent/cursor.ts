@@ -6,6 +6,7 @@ const POINTER_SVG =
 
 let cursor: HTMLDivElement | null = null;
 let highlight: HTMLDivElement | null = null;
+let caption: HTMLDivElement | null = null;
 let badges: HTMLDivElement | null = null;
 let badgeTimer = 0;
 let position = { x: 0, y: 0 };
@@ -51,6 +52,11 @@ export async function moveTo(element: HTMLElement, signal?: AbortSignal) {
   position = target;
   showHighlight(element);
   await sleep(duration, signal);
+}
+
+/** Shows the pointer where it is, for steps with nothing on the page to point at. */
+export function showCursor() {
+  ensureCursor().classList.add("is-visible");
 }
 
 /** Small ring under the pointer, so a click can be seen. */
@@ -101,8 +107,40 @@ export function hideBadges() {
   badges = null;
 }
 
+/**
+ * Says what is about to happen in a bubble next to the pointer, with a bar that runs out over `ms`,
+ * then resolves so the action can go ahead. The person watching always knows the next click first.
+ */
+export async function announce(text: string, ms: number, signal?: AbortSignal) {
+  if (!caption?.isConnected) {
+    caption = document.createElement("div");
+    caption.className = "cw-caption";
+    caption.setAttribute("role", "status");
+    caption.innerHTML = '<span class="cw-caption-text"></span><span class="cw-caption-bar"></span>';
+    document.body.appendChild(caption);
+  }
+  caption.querySelector(".cw-caption-text")!.textContent = text;
+  const bar = caption.querySelector<HTMLSpanElement>(".cw-caption-bar")!;
+  bar.style.animation = "none";
+  void bar.offsetWidth; // restart the countdown
+  bar.style.animation = `cw-caption-countdown ${ms}ms linear forwards`;
+
+  // Below-right of the pointer, kept inside the viewport.
+  const width = Math.min(280, window.innerWidth - 24);
+  caption.style.maxWidth = `${width}px`;
+  caption.style.left = `${Math.max(12, Math.min(position.x + 18, window.innerWidth - width - 12))}px`;
+  caption.style.top = `${Math.max(12, Math.min(position.y + 26, window.innerHeight - 80))}px`;
+  caption.classList.add("is-visible");
+  await sleep(ms, signal);
+}
+
+export function hideCaption() {
+  caption?.classList.remove("is-visible");
+}
+
 /** Fades everything out once a run is over. */
 export function hideCursor() {
   cursor?.classList.remove("is-visible");
   highlight?.classList.remove("is-visible");
+  hideCaption();
 }

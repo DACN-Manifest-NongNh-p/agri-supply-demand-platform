@@ -58,7 +58,7 @@ Khiếu nại phải kèm biên bản và ảnh hoặc video bằng chứng.
 Hệ thống tự ghi nhận lô hàng **đã nghiệm thu đạt 100%**, đóng hồ sơ giao nhận và chuyển sang giải ngân cho người bán. Người mua không khiếu nại được nữa.
 
 ### Dung sai khi nghiệm thu
-Tổng khuyết tật tối đa 10%, khuyết tật nặng tối đa 5%, thối hỏng tối đa 1% tổng khối lượng. Nằm trong dung sai thì người mua không được từ chối lô hàng và thanh toán đủ; vượt dung sai thì được trừ tiền phần vượt hoặc từ chối và mở tranh chấp. Chi tiết: xem *Quy chuẩn chất lượng và độ tươi*.
+Có ba mức dung sai tính riêng, theo % tổng khối lượng: tổng khuyết tật tối đa 10%, khuyết tật nặng (dập nát, thâm đen, biến dạng) tối đa 5%, thối hỏng tối đa 1%. Chỉ khi nằm trong **cả ba mức**, người mua mới không được từ chối lô hàng và phải thanh toán đủ. Vượt **bất kỳ mức nào** (ví dụ dập nát 7% vượt mức 5% dù tổng khuyết tật dưới 10%) thì người mua được trừ tiền phần vượt hoặc từ chối và mở tranh chấp. Chi tiết: xem *Quy chuẩn chất lượng và độ tươi*.
 
 ## Trách nhiệm khi có thiệt hại
 
