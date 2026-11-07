@@ -16,24 +16,46 @@ import type { BuyerState } from "./data/buyerContext";
 import type { DeliveryIssue } from "../Producer/data/deliveries";
 import { formatKg } from "../Producer/data/format";
 import { useAuctionSimulation } from "@/components/auction/useAuctionSimulation";
+import { accept, acceptedKg, awaiting, decline, hoursLeft, useOfferSimulation, useOffers, type Offer } from "@/lib/offerStore";
+import { useMessageSimulation } from "@/lib/messageStore";
+import { partyId, SELF_BUYER_ID } from "@/lib/parties";
+import { PartyDrawer } from "@/components/parties/PartyDrawer";
+import { useMessageNotices, useRoutedNotices, type EventNotice } from "@/components/notifications/useRoutedNotices";
+import { useProfile } from "@/components/profile/profileStore";
+import type { NotifyEvent } from "@/lib/notificationPrefs";
+import type { Allocation } from "./data/mockBuyer";
+import { buyer } from "./data/mockBuyer";
 // The buyer area reuses the producer styles (same layout, cards and moss palette) and adds its own.
 import "../Producer/styles/ProducerHome.css";
 import "./styles/Buyer.css";
 
 
 /**
- * Demo only: the areas do not share state, so a producer cannot really answer an order confirmed here.
- * The producer "confirms" a few seconds later instead, so the order moves on and the bell says so.
- * The checkout lock is a timer in this browser; a real one would be a lock with a TTL on the server.
+ * Demo only: reservations made here are not in the producer area yet, so the producer "confirms" a few
+ * seconds after the deposit instead, and the bell says so. Offers are shared (lib/offerStore): the
+ * producer area answers those for real. The checkout lock is a timer in this browser; a real one would
+ * be a lock with a TTL on the server.
  */
 const PRODUCER_REPLY_MS = 6000;
+
+/** The current time, for ids and timers (called from event handlers only). */
+const stamp = () => Date.now();
 
 /** Shell for all buyer pages: top bar plus the demo state shared between them. */
 export default function BuyerLayout() {
   const [demands, setDemands] = useState(initialDemands);
   const [addresses, setAddresses] = useState(initialAddresses);
-  const [supply, setSupply] = useState(initialSupply);
-  const [allocations, setAllocations] = useState(initialAllocations);
+  const [baseSupply, setSupply] = useState(initialSupply);
+  // Offers from producers live in the shared store; the rest are this buyer's own reservations.
+  const [ownAllocations, setAllocations] = useState(() => initialAllocations.filter((item) => item.origin !== "offered"));
+  const offers = useOffers();
+  const offerAllocations = offers.filter((offer) => partyId(offer.buyer) === SELF_BUYER_ID).map(allocationFromOffer);
+  const allocations = [...ownAllocations, ...offerAllocations];
+  // Kilograms accepted from offers are taken off the batch on the market.
+  const supply = baseSupply.map((batch) => {
+    const taken = acceptedKg(batch.code);
+    return taken ? { ...batch, allocatedKg: Math.min(batch.quantityKg, batch.allocatedKg + taken) } : batch;
+  });
   const [dismissed, setDismissed] = useState<Record<string, boolean>>({});
   const [deliveryIssues, setDeliveryIssues] = useState<Record<string, DeliveryIssue>>({});
   /** News that is not derived from the data (a producer just confirmed), newest first. */
@@ -46,6 +68,9 @@ export default function BuyerLayout() {
   const location = useLocation();
   // Demo: other buyers bid on the open pre-harvest auctions, and auctions close on time.
   useAuctionSimulation();
+  // Demo: producers other than Hoa Phat answer proposals and messages after a few seconds.
+  useOfferSimulation();
+  useMessageSimulation();
 
   useEffect(() => {
     const pending = timers.current;
@@ -75,7 +100,7 @@ export default function BuyerLayout() {
   const addDemand: BuyerState["addDemand"] = (draft) => addDemands([draft])[0];
 
   const addAddress: BuyerState["addAddress"] = (address) => {
-    const id = `ADR-${addresses.length + 1}-${Date.now()}`;
+    const id = `ADR-${addresses.length + 1}-${stamp()}`;
     setAddresses((current) => [...current, { ...address, id }]);
     return id;
   };
@@ -88,11 +113,11 @@ export default function BuyerLayout() {
   const reserve: BuyerState["reserve"] = (demandId, batchCode, kg) => {
     const batch = supply.find((item) => item.code === batchCode);
     if (!batch || kg <= 0) return undefined;
-    const id = `A-${Date.now()}`;
+    const id = `A-${stamp()}`;
     const ttlMs = RULES.lockMinutes * 60_000;
     setAllocations((current) => [
       ...current,
-      { id, demandId, batchCode, producer: batch.producer, kg, stage: "locked", origin: "reserved", lockExpiresAt: Date.now() + ttlMs },
+      { id, demandId, batchCode, producer: batch.producer, kg, stage: "locked", origin: "reserved", lockExpiresAt: stamp() + ttlMs },
     ]);
     changeBatchAllocated(batchCode, kg);
 
@@ -124,13 +149,35 @@ export default function BuyerLayout() {
     if (!order || releasedIds.current.has(allocationId)) return;
     const pricePerKg = order.pricePerKg ?? supply.find((item) => item.code === order.batchCode)?.pricePerKg ?? 0;
     const percent = RULES.depositPercent;
-    const deposit = { amount: depositFor(order.kg, pricePerKg, percent).deposit, percent, method, ref: `FM-${String(Date.now()).slice(-5)}` };
+    const deposit = { amount: depositFor(order.kg, pricePerKg, percent).deposit, percent, method, ref: `FM-${String(stamp()).slice(-5)}` };
 
-    if (order.stage === "offered") {
-      setAllocations((current) =>
-        current.map((item) => (item.id === allocationId ? { ...item, stage: "confirmed", offerHoursLeft: undefined, pricePerKg, deposit } : item)),
-      );
-      changeBatchAllocated(order.batchCode, order.kg);
+    if (order.offerId) {
+      // The offer's terms are what was agreed; the store refuses it if another buyer took the kilograms first.
+      // The buyer pays for the terms on screen; if they changed meanwhile, nothing is charged.
+      const result = accept(order.offerId, deposit, { kg: order.kg, pricePerKg: order.pricePerKg ?? pricePerKg });
+      if (!result.ok) {
+        setUpdates((current) => [
+          {
+            id: `offer-failed-${allocationId}-${stamp()}`,
+            kind: "lock_expired",
+            tone: "warning",
+            title:
+              result.reason === "sold_out"
+                ? `${order.batchCode} was taken by another buyer`
+                : result.reason === "changed"
+                  ? `The offer on ${order.batchCode} changed before you paid`
+                  : `The offer on ${order.batchCode} is no longer open`,
+            detail:
+              result.reason === "sold_out"
+                ? `Only ${formatKg(result.remainingKg)} left. No deposit was taken. Ask ${order.producer} for the rest in Messages.`
+                : result.reason === "changed"
+                  ? "Another buyer took part of the batch or the terms were updated. No deposit was taken: check the new terms and accept again."
+                  : "No deposit was taken. The producer may send a new offer.",
+            link: { label: "View offers", to: "/buyer/orders?tab=offered" },
+          },
+          ...current,
+        ]);
+      }
       return;
     }
     if (order.stage !== "locked") return;
@@ -165,14 +212,10 @@ export default function BuyerLayout() {
     );
   };
 
-  const declineOffer: BuyerState["declineOffer"] = (allocationId) =>
-    setAllocations((current) =>
-      current.map((item) =>
-        item.id === allocationId && item.stage === "offered"
-          ? { ...item, stage: "declined", offerHoursLeft: undefined, closedNote: "You declined this offer" }
-          : item,
-      ),
-    );
+  const declineOffer: BuyerState["declineOffer"] = (allocationId) => {
+    const order = allocations.find((item) => item.id === allocationId);
+    if (order?.offerId) decline(order.offerId, "buyer");
+  };
 
   const release: BuyerState["release"] = (allocationId) => {
     const allocation = allocations.find((item) => item.id === allocationId);
@@ -182,7 +225,17 @@ export default function BuyerLayout() {
     changeBatchAllocated(allocation.batchCode, -allocation.kg);
   };
 
-  const alerts = [...updates, ...buildAlerts({ demands, allocations, supply, deliveries, deliveryIssues })].filter((alert) => !dismissed[alert.id]);
+  const profile = useProfile("buyer");
+  const messageNotices = useMessageNotices("buyer", buyer.name);
+  const routed = useRoutedNotices(
+    "buyer",
+    [
+      ...[...updates, ...buildAlerts({ demands, allocations, supply, deliveries, deliveryIssues })].map((alert) => ({ ...alert, event: ALERT_EVENT[alert.kind] })),
+      ...messageNotices.map((notice) => ({ ...notice, link: notice.link!, kind: "message" as const })),
+    ] satisfies (EventNotice & BuyerAlert)[],
+    { email: profile.email, phone: profile.phone },
+  ) as BuyerAlert[];
+  const alerts = routed.filter((alert) => !dismissed[alert.id]);
 
   const state: BuyerState = {
     demands,
@@ -215,6 +268,55 @@ export default function BuyerLayout() {
       />
       <ProfileNudge area="buyer" />
       <Outlet context={state} />
+      <PartyDrawer viewer={{ area: "buyer", self: buyer.name }} />
     </div>
   );
 }
+
+/** A producer's offer from the shared store, as an order in this buyer's cart. */
+function allocationFromOffer(offer: Offer): Allocation {
+  const stage: Allocation["stage"] = offer.status === "accepted" ? "confirmed" : offer.status === "sent" || offer.status === "countered" ? "offered" : "declined";
+  const last = [...offer.events].reverse().find((item) => item.kind === "decline" || item.kind === "withdraw" || item.kind === "expire");
+  const closedNote =
+    offer.status === "declined"
+      ? last?.by === "buyer"
+        ? "You declined this offer"
+        : `${offer.producer} declined your proposal`
+      : offer.status === "withdrawn"
+        ? last?.text ?? `${offer.producer} withdrew the offer`
+        : offer.status === "expired"
+          ? "The offer expired"
+          : awaiting(offer) === "producer"
+            ? `Waiting for ${offer.producer} to answer your proposal`
+            : undefined;
+  return {
+    id: offer.id,
+    offerId: offer.id,
+    demandId: offer.demandId ?? "",
+    batchCode: offer.batchCode,
+    producer: offer.producer,
+    kg: offer.kg,
+    stage,
+    origin: "offered",
+    offerHoursLeft: hoursLeft(offer),
+    note: offer.note,
+    closedNote,
+    pricePerKg: offer.pricePerKg,
+    deposit: offer.deposit,
+  };
+}
+
+
+/** Which notification setting each kind of buyer alert follows. */
+const ALERT_EVENT: Record<BuyerAlert["kind"], NotifyEvent> = {
+  short: "order",
+  waiting: "order",
+  supply_issue: "order",
+  hold_expiring: "hold",
+  freshness: "order",
+  delivery_issue: "order",
+  offer: "offer",
+  confirmed: "offer_reply",
+  lock_expired: "hold",
+  message: "message",
+};

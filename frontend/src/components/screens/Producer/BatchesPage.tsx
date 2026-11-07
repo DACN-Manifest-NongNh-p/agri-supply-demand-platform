@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, FileSpreadsheet, List, Plus } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, CalendarDays, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileSpreadsheet, List, Plus, Search } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CalendarGrid, StatusLegend } from "./sections/CalendarGrid";
 import { BatchDetail } from "./sections/BatchDetail";
@@ -10,8 +10,10 @@ import { BatchTabs } from "./sections/BatchTabs";
 import { ImportBatchesDialog } from "./sections/ImportBatchesDialog";
 import { deliveries, demands, producer } from "./data/mockProducer";
 import { matchAll } from "./data/matching";
-import { dateFromToday, formatKg } from "./data/format";
+import { dateFromToday, formatKg, formatMonth, formatRange, isoOf, offsetOf } from "./data/format";
+import { matchesQuery, riskOf, SORT_LABEL, sortBatches, type BatchSort, type SortDir } from "./data/batchSort";
 import { useProducer } from "./data/producerContext";
+import { useNow } from "@/components/orders/useNow";
 
 type View = "calendar" | "list";
 type StatusFilter = "active" | "all" | "delivered";
@@ -27,7 +29,12 @@ const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: "all", label: "All" },
 ];
 
-const rangeFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+/** Day offset of the 1st of the month `months` away from the month that contains `offset`. */
+function monthStart(offset: number, months: number) {
+  const date = dateFromToday(offset);
+  const target = new Date(date.getFullYear(), date.getMonth() + months, 1);
+  return Math.round((target.getTime() - dateFromToday(0).getTime()) / 86_400_000);
+}
 
 /** Batch management: long-range planning calendar, full list, declaring new batches, per-batch history. */
 export default function BatchesPage() {
@@ -39,6 +46,11 @@ export default function BatchesPage() {
   const [product, setProduct] = useState("All");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const importing = searchParams.get("import") === "1";
+  const now = useNow(60_000);
+  // Search and sort are in the URL and shared by the list and the calendar.
+  const query = searchParams.get("q") ?? "";
+  const sort = (Object.keys(SORT_LABEL) as BatchSort[]).find((key) => key === searchParams.get("sort")) ?? "harvest";
+  const dir: SortDir = searchParams.get("dir") === "desc" ? "desc" : "asc";
 
   const updateParams = (changes: Record<string, string | null>) =>
     setSearchParams(
@@ -65,12 +77,17 @@ export default function BatchesPage() {
   const declaredKg = active.reduce((sum, batch) => sum + batch.quantityKg, 0);
   const openKg = active.reduce((sum, batch) => sum + Math.max(0, batch.quantityKg - batch.allocatedKg), 0);
 
-  const visible = batches
+  const risks = Object.fromEntries(batches.map((batch) => [batch.code, riskOf(batch, excursions, now)]));
+  const filtered = batches
     .filter((batch) => product === "All" || batch.product === product)
     .filter((batch) =>
       statusFilter === "all" ? true : statusFilter === "delivered" ? batch.status === "delivered" : batch.status !== "delivered",
     )
-    .sort((a, b) => a.harvestDay - b.harvestDay);
+    .filter((batch) => matchesQuery(batch, query));
+  const visible = sortBatches(filtered, sort, dir, risks);
+  const atRisk = visible.filter((batch) => risks[batch.code] && risks[batch.code]!.level !== "low").length;
+  const sortBy = (next: BatchSort) =>
+    updateParams({ sort: next, dir: next === sort ? (dir === "asc" ? "desc" : "asc") : next === "risk" || next === "open" || next === "declared" ? "desc" : "asc" });
 
   const selectedCode = searchParams.get("batch") ?? visible[0]?.code;
   const selected = batches.find((batch) => batch.code === selectedCode);
@@ -138,18 +155,64 @@ export default function BatchesPage() {
           </div>
         </div>
 
+        <div className="ph-cal-toolbar ph-batch-find">
+          <label className="ph-search">
+            <Search size={15} aria-hidden="true" />
+            <input
+              type="search"
+              value={query}
+              placeholder="Search code, product, variety, plot…"
+              aria-label="Search batches"
+              onChange={(event) => updateParams({ q: event.target.value || null })}
+            />
+          </label>
+          <label className="ph-sort">
+            <span>Sort by</span>
+            <select value={sort} onChange={(event) => updateParams({ sort: event.target.value })}>
+              {(Object.keys(SORT_LABEL) as BatchSort[]).map((key) => (
+                <option key={key} value={key}>
+                  {SORT_LABEL[key]}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="ph-btn ph-btn--icon"
+              aria-label={dir === "asc" ? "Ascending, click for descending" : "Descending, click for ascending"}
+              title={dir === "asc" ? "Ascending" : "Descending"}
+              onClick={() => updateParams({ dir: dir === "asc" ? "desc" : "asc" })}
+            >
+              {dir === "asc" ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+            </button>
+          </label>
+          <span className="ph-muted ph-batch-count">
+            {visible.length} {visible.length === 1 ? "batch" : "batches"}
+            {atRisk > 0 && ` · ${atRisk} at risk`}
+          </span>
+        </div>
+
         {view === "calendar" ? (
           <>
             <div className="ph-cal-nav ph-cal-nav--sub">
-              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => day - 7)} aria-label="Previous week">
+              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => monthStart(day, -1))} aria-label="Previous month" title="Previous month">
+                <ChevronsLeft size={18} />
+              </button>
+              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => day - 7)} aria-label="Previous week" title="Previous week">
                 <ChevronLeft size={18} />
               </button>
               <button type="button" className="ph-btn" onClick={() => setFirstDay(range.start)}>Today</button>
-              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => day + 7)} aria-label="Next week">
+              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => day + 7)} aria-label="Next week" title="Next week">
                 <ChevronRight size={18} />
               </button>
+              <button type="button" className="ph-btn ph-btn--icon" onClick={() => setFirstDay((day) => monthStart(day, 1))} aria-label="Next month" title="Next month">
+                <ChevronsRight size={18} />
+              </button>
+              <label className="ph-cal-goto">
+                <span className="ph-visually-hidden">Go to date</span>
+                <input type="date" value={isoOf(firstDay)} onChange={(event) => event.target.value && setFirstDay(offsetOf(event.target.value))} title="Start the calendar on this date" />
+              </label>
               <span className="ph-cal-range">
-                {rangeFormat.format(dateFromToday(firstDay))} – {rangeFormat.format(dateFromToday(lastDay))}
+                <strong>{formatMonth(firstDay)}</strong> · {formatRange(firstDay, lastDay)}
               </span>
               <div className="ph-segmented ph-push-right" role="group" aria-label="Visible range">
                 {RANGES.map((option) => (
@@ -170,12 +233,12 @@ export default function BatchesPage() {
             {visible.length === 0 ? (
               <p className="ph-empty">No batches match this filter.</p>
             ) : (
-              <CalendarGrid batches={visible} firstDay={firstDay} dayCount={range.days} selectedCode={selectedCode} onSelect={select} />
+              <CalendarGrid batches={visible} firstDay={firstDay} dayCount={range.days} selectedCode={selectedCode} onSelect={select} risks={risks} />
             )}
-            <StatusLegend />
+            <StatusLegend withRisk />
           </>
         ) : (
-          <BatchTable batches={visible} selectedCode={selectedCode} onSelect={select} matchCounts={matchCounts} excursions={excursions} />
+          <BatchTable batches={visible} selectedCode={selectedCode} onSelect={select} matchCounts={matchCounts} excursions={excursions} sort={sort} dir={dir} onSort={sortBy} />
         )}
 
         {selected && (

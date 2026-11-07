@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RULES } from "@/lib/site";
-import { ArrowLeft, ArrowRight, Check, ShieldAlert, TriangleAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, LayoutGrid, List, Search, ShieldAlert, TriangleAlert } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { MatchScore, ScoreRing } from "../Producer/sections/MatchScore";
 import { formatDay, formatDayInText, formatKg } from "../Producer/data/format";
@@ -18,6 +18,10 @@ import {
 import { useCoordinator } from "./data/coordinatorContext";
 import { DetailLink } from "./sections/DetailDrawer";
 import { RiskBadge, ShelfLifeBar } from "@/components/freshness/ShelfLifeBar";
+import { DemandGapResolver, SupplyGapResolver } from "./sections/GapResolver";
+import { ACTION_LABEL } from "./data/coordinatorContext";
+import { PartyLink } from "@/components/parties/PartyLink";
+import { buyerCity, provinceOf } from "./data/places";
 
 type Tab = "decide" | "gaps" | "holds";
 
@@ -147,19 +151,21 @@ function sellsBy(day: number) {
 }
 
 /** One unsold batch: what it is, how long it can still be sold, and why nobody has bought it. */
-function UnsoldGapRow({ item }: { item: UnsoldBatch }) {
+function UnsoldGapRow({ item, open, onToggle, status }: { item: UnsoldBatch; open: boolean; onToggle: () => void; status?: string }) {
   const { batch, openKg, reason } = item;
-  const { excursions } = useCoordinator();
+  const { excursions, demands } = useCoordinator();
   return (
-    <li id={`batch-${batch.code}`}>
+    <li id={`batch-${batch.code}`} className={open ? "co-gap-open" : undefined}>
       <p className="co-gap-head">
         <span>
-          <DetailLink kind="batch" id={batch.code}>{batch.code}</DetailLink> · {batch.producer}
+          <DetailLink kind="batch" id={batch.code}>{batch.code}</DetailLink> · <PartyLink name={batch.producer} role="producer" />
+          {item.soon && <span className="co-unsold-tag co-unsold-tag--soon">Sells soon</span>}
+          {status && <span className="co-gap-status">{status}</span>}
         </span>
         <span>{formatKg(openKg)}</span>
       </p>
       <p className="ph-muted">
-        {batch.product} {batch.variety}, grade {batch.grade} · <span className={batch.sellByDay <= 1 ? "co-low" : undefined}>{sellsBy(batch.sellByDay)}</span>
+        {batch.product} {batch.variety}, grade {batch.grade} · {batch.region} · <span className={batch.sellByDay <= 1 ? "co-low" : undefined}>{sellsBy(batch.sellByDay)}</span>
       </p>
       <p className="co-unsold-fresh">
         <ShelfLifeBar batch={batch} compact />
@@ -177,94 +183,274 @@ function UnsoldGapRow({ item }: { item: UnsoldBatch }) {
           </Link>
         </p>
       )}
+      <button type="button" className={open ? "ph-btn" : "ph-btn ph-btn--primary"} aria-expanded={open} onClick={onToggle}>
+        {open ? "Close" : "Find a buyer"}
+      </button>
+      {open && <SupplyGapResolver batch={batch} openKg={openKg} demands={demands} />}
     </li>
   );
 }
 
+function DemandGapRow({ row, open, onToggle, status }: { row: BoardRow; open: boolean; onToggle: () => void; status?: string }) {
+  const { notified, notifyProducers } = useCoordinator();
+  const { demand, fulfilment, reason } = row;
+  return (
+    <li id={`demand-${demand.id}`} className={open ? "co-gap-open" : undefined}>
+      <p className="co-gap-head">
+        <span>
+          <DetailLink kind="demand" id={demand.id}>{demand.id}</DetailLink> · <PartyLink name={demand.buyer} role="buyer" />
+          {status && <span className="co-gap-status">{status}</span>}
+        </span>
+        <span>{formatKg(fulfilment.openKg)} {demand.product.toLowerCase()}</span>
+      </p>
+      <p className="ph-muted">
+        {demand.gradeWanted} · needed by {formatDayInText(demand.neededByDay)} · {demand.destination}
+      </p>
+      <p className="co-gap-reason">{reason}</p>
+      <div className="co-gap-buttons">
+        <button type="button" className={open ? "ph-btn" : "ph-btn ph-btn--primary"} aria-expanded={open} onClick={onToggle}>
+          {open ? "Close" : "Find supply"}
+        </button>
+        {notified[demand.id] ? (
+          <span className="co-done">
+            <Check size={14} aria-hidden="true" /> Producers asked to declare {demand.product.toLowerCase()}
+          </span>
+        ) : (
+          <button type="button" className="ph-btn" onClick={() => notifyProducers(demand.id)}>
+            Ask all producers
+          </button>
+        )}
+      </div>
+      {open && <DemandGapResolver row={row} />}
+    </li>
+  );
+}
+
+type GapItem =
+  | { kind: "demand"; key: string; id: string; product: string; party: string; area: string; kg: number; day: number; row: BoardRow }
+  | { kind: "supply"; key: string; id: string; product: string; party: string; area: string; kg: number; day: number; item: UnsoldBatch };
+
+type GapSort = "deadline" | "kg" | "product";
+const GAP_SORT: Record<GapSort, string> = { deadline: "Most urgent first", kg: "Largest first", product: "Product" };
+
 function Gaps({ rows }: { rows: BoardRow[] }) {
-  const { market, notified, notifyProducers } = useCoordinator();
+  const { market, gapLog } = useCoordinator();
+  const [params, setParams] = useSearchParams();
+  const [openKey, setOpenKey] = useState<string | null>(() => {
+    const focus = params.get("demand");
+    return focus ? `demand:${focus}` : null;
+  });
   const unsold = unsoldSupply(rows, market);
-  const soon = unsold.filter((item) => item.soon);
-  const later = unsold.filter((item) => !item.soon);
   const missing = rows.filter((row) => !row.best);
 
-  return (
-    <div className="co-gaps">
-      <section className="ph-card" aria-labelledby="missing-title">
-        <div className="ph-section-head">
-          <div>
-            <h2 id="missing-title">Demands with no supply</h2>
-            <p className="ph-section-sub">No batch on the market passes every rule.</p>
-          </div>
-        </div>
-        {missing.length === 0 ? (
-          <p className="ph-muted">Every open demand has a proposal.</p>
-        ) : (
-          <ul className="co-gap-list">
-            {missing.map(({ demand, fulfilment, reason }) => (
-              <li key={demand.id} id={`demand-${demand.id}`}>
-                <p className="co-gap-head">
-                  <span>
-                    <DetailLink kind="demand" id={demand.id}>{demand.id}</DetailLink> · {demand.buyer}
-                  </span>
-                  <span>{formatKg(fulfilment.openKg)} {demand.product.toLowerCase()}</span>
-                </p>
-                <p className="ph-muted">
-                  {demand.gradeWanted} · needed by {formatDayInText(demand.neededByDay)}
-                </p>
-                <p className="co-gap-reason">{reason}</p>
-                {notified[demand.id] ? (
-                  <p className="co-done">
-                    <Check size={14} aria-hidden="true" /> Producers asked to declare {demand.product.toLowerCase()}
-                  </p>
-                ) : (
-                  <button type="button" className="ph-btn" onClick={() => notifyProducers(demand.id)}>
-                    Ask producers for supply
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+  const items: GapItem[] = [
+    ...missing.map((row): GapItem => ({
+      kind: "demand",
+      key: `demand:${row.demand.id}`,
+      id: row.demand.id,
+      product: row.demand.product,
+      party: row.demand.buyer,
+      area: buyerCity(row.demand.destination).name,
+      kg: row.fulfilment.openKg,
+      day: row.demand.neededByDay,
+      row,
+    })),
+    ...unsold.map((item): GapItem => ({
+      kind: "supply",
+      key: `batch:${item.batch.code}`,
+      id: item.batch.code,
+      product: item.batch.product,
+      party: item.batch.producer,
+      area: provinceOf(item.batch.region) ?? item.batch.region,
+      kg: item.openKg,
+      day: item.batch.sellByDay,
+      item,
+    })),
+  ];
 
-      <section className="ph-card" aria-labelledby="idle-list-title">
-        <div className="ph-section-head">
-          <div>
-            <h2 id="idle-list-title">Unsold supply</h2>
-            <p className="ph-section-sub">
-              Open kilograms nobody has bought. Anything selling within {RULES.sellSoonDays} days comes first, whatever the reason.
-            </p>
-          </div>
+  // Filters live in the URL so a link can open the same view.
+  const query = params.get("q") ?? "";
+  const product = params.get("product") ?? "";
+  const area = params.get("area") ?? "";
+  const sort: GapSort = (Object.keys(GAP_SORT) as GapSort[]).find((key) => key === params.get("sort")) ?? "deadline";
+  const view = params.get("view") === "list" ? "list" : "cards";
+  const set = (changes: Record<string, string>) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        for (const [key, value] of Object.entries(changes)) {
+          if (value) next.set(key, value);
+          else next.delete(key);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+
+  const products = [...new Set(items.map((item) => item.product))].sort();
+  const areas = [...new Set(items.map((item) => item.area))].sort();
+  const q = query.trim().toLowerCase();
+  const shown = items
+    .filter((item) => !product || item.product === product)
+    .filter((item) => !area || item.area === area)
+    .filter((item) => !q || [item.id, item.product, item.party, item.area].some((text) => text.toLowerCase().includes(q)))
+    .sort((a, b) => (sort === "kg" ? b.kg - a.kg : sort === "product" ? a.product.localeCompare(b.product) || a.day - b.day : a.day - b.day));
+  const demandsShown = shown.filter((item) => item.kind === "demand");
+  const supplyShown = shown.filter((item) => item.kind === "supply");
+
+  const statusOf = (key: string) => {
+    const last = gapLog[key]?.at(-1);
+    return last ? ACTION_LABEL[last.action] : undefined;
+  };
+  const toggle = (key: string) => setOpenKey((current) => (current === key ? null : key));
+
+  return (
+    <div className="co-gaps-wrap">
+      <div className="ph-cal-toolbar co-toolbar co-gap-toolbar">
+        <label className="ph-search">
+          <Search size={15} aria-hidden="true" />
+          <input type="search" value={query} placeholder="Search code, product, buyer or producer…" aria-label="Search gaps" onChange={(event) => set({ q: event.target.value })} />
+        </label>
+        <select value={product} onChange={(event) => set({ product: event.target.value })} aria-label="Product">
+          <option value="">All products</option>
+          {products.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+        <select value={area} onChange={(event) => set({ area: event.target.value })} aria-label="Area">
+          <option value="">All areas</option>
+          {areas.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </select>
+        <select value={sort} onChange={(event) => set({ sort: event.target.value })} aria-label="Sort">
+          {(Object.keys(GAP_SORT) as GapSort[]).map((key) => (
+            <option key={key} value={key}>
+              {GAP_SORT[key]}
+            </option>
+          ))}
+        </select>
+        <div className="ph-segmented" role="group" aria-label="View">
+          <button type="button" aria-pressed={view === "cards"} onClick={() => set({ view: "" })}>
+            <LayoutGrid size={14} /> Cards
+          </button>
+          <button type="button" aria-pressed={view === "list"} onClick={() => set({ view: "list" })}>
+            <List size={14} /> List
+          </button>
         </div>
-        {unsold.length === 0 ? (
-          <p className="ph-muted">Every open batch is held or has a buyer in sight.</p>
-        ) : (
-          <>
-            {soon.length > 0 && (
-              <>
-                <p className="co-unsold-group co-unsold-group--soon">Selling within {RULES.sellSoonDays} days</p>
-                <ul className="co-gap-list">
-                  {soon.map((item) => (
-                    <UnsoldGapRow key={item.batch.code} item={item} />
+      </div>
+
+      {view === "list" ? (
+        <section className="ph-card" aria-label="All gaps">
+          {shown.length === 0 ? (
+            <p className="ph-muted">Nothing matches these filters.</p>
+          ) : (
+            <div className="ph-table-scroll">
+              <table className="co-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Gap</th>
+                    <th scope="col">Item</th>
+                    <th scope="col">Buyer / producer</th>
+                    <th scope="col">Area</th>
+                    <th scope="col" className="co-num">Kilograms</th>
+                    <th scope="col">Deadline</th>
+                    <th scope="col">Why</th>
+                    <th scope="col">Status</th>
+                    <th scope="col" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((item) => (
+                    <GapTableRow key={item.key} item={item} status={statusOf(item.key)} open={openKey === item.key} onToggle={() => toggle(item.key)} />
                   ))}
-                </ul>
-              </>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : (
+        <div className="co-gaps">
+          <section className="ph-card" aria-labelledby="missing-title">
+            <div className="ph-section-head">
+              <div>
+                <h2 id="missing-title">Demands with no supply</h2>
+                <p className="ph-section-sub">No batch on the market passes every rule. Ask past suppliers first, then producers new to the buyer.</p>
+              </div>
+            </div>
+            {demandsShown.length === 0 ? (
+              <p className="ph-muted">{missing.length === 0 ? "Every open demand has a proposal." : "Nothing matches these filters."}</p>
+            ) : (
+              <ul className="co-gap-list">
+                {demandsShown.map((item) =>
+                  item.kind === "demand" ? <DemandGapRow key={item.key} row={item.row} open={openKey === item.key} onToggle={() => toggle(item.key)} status={statusOf(item.key)} /> : null,
+                )}
+              </ul>
             )}
-            {later.length > 0 && (
-              <>
-                <p className="co-unsold-group">No buyer, more time</p>
-                <ul className="co-gap-list">
-                  {later.map((item) => (
-                    <UnsoldGapRow key={item.batch.code} item={item} />
-                  ))}
-                </ul>
-              </>
+          </section>
+
+          <section className="ph-card" aria-labelledby="idle-list-title">
+            <div className="ph-section-head">
+              <div>
+                <h2 id="idle-list-title">Unsold supply</h2>
+                <p className="ph-section-sub">
+                  Open kilograms nobody has bought. Anything selling within {RULES.sellSoonDays} days is marked. Offer to past buyers first, or send it to rescue.
+                </p>
+              </div>
+            </div>
+            {supplyShown.length === 0 ? (
+              <p className="ph-muted">{unsold.length === 0 ? "Every open batch is held or has a buyer in sight." : "Nothing matches these filters."}</p>
+            ) : (
+              <ul className="co-gap-list">
+                {supplyShown.map((item) =>
+                  item.kind === "supply" ? <UnsoldGapRow key={item.key} item={item.item} open={openKey === item.key} onToggle={() => toggle(item.key)} status={statusOf(item.key)} /> : null,
+                )}
+              </ul>
             )}
-          </>
-        )}
-      </section>
+          </section>
+        </div>
+      )}
     </div>
+  );
+}
+
+function GapTableRow({ item, status, open, onToggle }: { item: GapItem; status?: string; open: boolean; onToggle: () => void }) {
+  const { demands } = useCoordinator();
+  const why = item.kind === "demand" ? item.row.reason : item.item.reason.kind === "no_demand" ? item.item.reason.text : `Fits ${item.item.reason.demandId}`;
+  return (
+    <>
+      <tr className={open ? "co-gap-tr is-open" : "co-gap-tr"}>
+        <td>
+          <span className={item.kind === "demand" ? "co-unsold-tag co-unsold-tag--act" : "co-unsold-tag"}>{item.kind === "demand" ? "No supply" : "Unsold"}</span>
+        </td>
+        <td>
+          <DetailLink kind={item.kind === "demand" ? "demand" : "batch"} id={item.id}>
+            {item.id}
+          </DetailLink>
+          <small className="ph-muted"> {item.product}</small>
+        </td>
+        <td>
+          <PartyLink name={item.party} role={item.kind === "demand" ? "buyer" : "producer"} />
+        </td>
+        <td>{item.area}</td>
+        <td className="co-num">{formatKg(item.kg)}</td>
+        <td className={item.day <= 1 ? "co-low" : undefined}>{item.kind === "demand" ? "Needed " : "Sell by "}{formatDayInText(item.day)}</td>
+        <td className="co-gap-why">{why}</td>
+        <td>{status ?? <span className="ph-muted">Open</span>}</td>
+        <td>
+          <button type="button" className="ph-link-btn" aria-expanded={open} onClick={onToggle}>
+            {open ? "Close" : "Resolve"}
+          </button>
+        </td>
+      </tr>
+      {open && (
+        <tr className="co-gap-detail">
+          <td colSpan={9}>
+            {item.kind === "demand" ? <DemandGapResolver row={item.row} /> : <SupplyGapResolver batch={item.item.batch} openKg={item.item.openKg} demands={demands} />}
+          </td>
+        </tr>
+      )}
+    </>
   );
 }
 

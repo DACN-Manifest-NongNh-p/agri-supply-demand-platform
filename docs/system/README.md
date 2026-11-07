@@ -2,7 +2,7 @@
 
 This document is the entry point for understanding Farmora as a whole: who uses it, how a sale moves from a farm to a buyer's dock, where each role steps in, and how to demo the system role by role. Each role's own document has the detail: [producer](../producer/README.md), [buyer](../buyer/README.md), [coordinator](../coordinator/README.md), [logistics provider](../logistics/README.md), [authentication](../auth/README.md), [local setup](../setup/README.md).
 
-> **Status.** Sign-up, login and role-based routing are real (Keycloak), and so is the admin's site configuration (API + PostgreSQL: page text, announcements, operating rules, products). The four role areas are UI prototypes on demo data: matching, holds, orders and deliveries run in the browser, nothing is saved, and **the areas do not share state** (an action in one area does not appear in another). The demo data is written so the same codes mean the same thing everywhere (D-551, B-104, S-307…), which is what lets the demo below tell one story across roles.
+> **Status.** Sign-up, login and role-based routing are real (Keycloak), and so is the admin's site configuration (API + PostgreSQL: page text, announcements, operating rules, products). The four role areas are UI prototypes on demo data: matching, holds, orders and deliveries run in the browser on demo data. **Offers, messages, the buyer/producer directory and notification settings are shared** between the areas through browser stores (`frontend/src/lib/*Store.ts`, saved in localStorage), so an offer sent as the producer is the one the buyer answers and the coordinator sees. Everything else (reservations, holds, deliveries) still lives in each area's own state. The demo data is written so the same codes mean the same thing everywhere (D-551, B-104, S-307…), which is what lets the demo below tell one story across roles.
 
 ## 1. Roles
 
@@ -91,6 +91,30 @@ Producers and buyers never contact drivers, and carriers never contact producers
 | Allocation | Held (24 h) → Allocated → In transit → Delivered | Producer confirms; carrier picks up; receipt signed. A hold can be released or lapse |
 | Transport order (logistics) | To answer → Accepted / Declined | Carrier answers; unanswered orders go to the next carrier |
 | Delivery / trip | Packed → Picked up → On the road → Delivered (+ *Needs attention* while an incident is open) | Carrier updates each step; incidents set and clear the flag |
+
+### Offers (shared between producer, buyer and coordinator)
+
+An offer is a producer (or a coordinator on the producer's behalf) proposing kilograms of a batch at a price, with an optional note and a deadline. One batch can be offered to **several buyers at once**, even for more than it has open.
+
+| State | Waiting for | Next |
+| --- | --- | --- |
+| Sent | The buyer | Accept by paying the deposit, propose other terms (kg / price), or decline |
+| Buyer proposed new terms | The producer | Agree (goes back to the buyer to pay), propose again, or decline |
+| Accepted | — | Kilograms come off the batch; the order is confirmed |
+| Declined / Withdrawn / Expired | — | Closed |
+
+**First to accept gets the kilograms.** Accepting is one check-and-write on the store (a transaction on a server): it fails if another buyer already took the kilograms. When a batch sells out, its other open offers are withdrawn; when only part is left, they shrink to what is left. Every proposal and note is kept in the offer's discussion, visible to both sides.
+
+Code: `lib/offerStore.ts` (lifecycle, rules, demo simulation), `components/offers/OfferThread.tsx` (discussion and actions, both sides), `Producer/sections/OfferComposer.tsx` (multi-buyer offer form).
+
+### Talking to each other
+
+- **Buyer / producer card** (`components/parties/PartyDrawer.tsx`, opened from any buyer or producer name): what the party chose to publish, the trades and offers between you, open demand, and Message / Send an offer.
+- **Public or private details.** On the profile page every detail has a Public / Private switch. Private details are shared with the other side only after a confirmed order between the two; coordinators always see them. *Preview my card* shows exactly what others see.
+- **Messages** (`/producer/messages`, `/buyer/messages`; `lib/messageStore.ts`): one-to-one conversations, optionally about one offer or demand. Price and quantity changes belong in the offer itself, so both sides have a record. Drivers are still reached only through the coordinator.
+- **Notification settings** (profile page): per event (offers, answers, messages, order updates, deadlines, freshness, Farmora) and per channel (in the app, email, SMS, Zalo), daily digest and quiet hours. In-app notices follow them now; email/SMS/Zalo are written to a demo outbox until the backend sends them (`lib/notificationPrefs.ts`).
+
+In the demo, buyers other than GreenBasket and producers other than Hoa Phat answer offers and messages on their own after a few seconds; GreenBasket and Hoa Phat are played by hand in their areas.
 
 ## 4. What the system decides and what people decide
 
@@ -224,7 +248,10 @@ About 25 minutes. The demo follows one shipment's life: supply, demand, matching
 
 ## 7. Not built yet
 
-- Backend API and database for batches, demands, matches, holds, orders and deliveries, so actions in one area reach the others.
+- Backend API and database for batches, demands, matches, holds, orders and deliveries, so actions in one area reach the others. Offers, messages, profiles and notification settings are shared in the browser today; their store modules keep the shape an API would return.
+- Reservations made by a buyer (lock → deposit → hold) are not yet in the producer area, so the producer cannot decline one from there; the buyer area still simulates the producer's confirmation.
+- Sending email, SMS and Zalo for real (the settings and the outbox exist).
+- A forum per product group (planned next; it would reuse the admin's product categories).
 - Matching, hold expiry and carrier selection running on the server.
 - Live truck positions and temperature sensors.
 - Ratings after delivery, admin area.

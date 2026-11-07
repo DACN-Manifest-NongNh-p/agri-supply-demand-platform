@@ -9,6 +9,8 @@ import ProducerHome from './components/screens/Producer/ProducerHome'
 import BatchesPage from './components/screens/Producer/BatchesPage'
 import MarketDemandPage from './components/screens/Producer/MarketDemandPage'
 import ProducerOrdersPage from './components/screens/Producer/OrdersPage'
+import ProducerMessagesPage from './components/screens/Producer/MessagesPage'
+import BuyerMessagesPage from './components/screens/Buyer/MessagesPage'
 import BuyerLayout from './components/screens/Buyer/BuyerLayout'
 import BuyerHome from './components/screens/Buyer/BuyerHome'
 import DemandsPage from './components/screens/Buyer/DemandsPage'
@@ -83,6 +85,7 @@ function App() {
           <Route path="calendar" element={<LegacyCalendarRedirect />} />
           <Route path="demand" element={<MarketDemandPage />} />
           <Route path="orders" element={<ProducerOrdersPage />} />
+          <Route path="messages" element={<ProducerMessagesPage />} />
           <Route path="profile" element={<ProducerProfilePage />} />
           {/* Shipments are followed from Orders now; the old list link lands there. */}
           <Route path="deliveries" element={<Navigate to="/producer/orders?tab=deliveries" replace />} />
@@ -112,6 +115,7 @@ function App() {
           <Route path="supply" element={<SupplyPage />} />
           <Route path="supply/:code" element={<SupplyDetailPage />} />
           <Route path="orders" element={<BuyerOrdersPage />} />
+          <Route path="messages" element={<BuyerMessagesPage />} />
           <Route path="auctions" element={<BuyerAuctionsPage />} />
           <Route path="auctions/:id" element={<BuyerAuctionDetailPage />} />
           {/* The deliveries list is a tab of the cart now. */}

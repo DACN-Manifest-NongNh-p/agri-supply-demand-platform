@@ -6,6 +6,7 @@ import { demands, producer } from "./data/mockProducer";
 import { batchesWithoutBuyer, matchAll, type CriterionState, type MatchResult } from "./data/matching";
 import { formatDay, formatKg } from "./data/format";
 import { useProducer } from "./data/producerContext";
+import { PartyLink } from "@/components/parties/PartyLink";
 
 type View = "all" | "matched" | "unmatched";
 
@@ -18,7 +19,7 @@ const VIEWS: { id: View; label: string }[] = [
 const CRITERION_ICON: Record<CriterionState, typeof Check> = { pass: Check, partial: Minus, fail: X };
 
 export default function MarketDemandPage() {
-  const { batches, offers, offer, offerAnswers } = useProducer();
+  const { batches, offers, offerIds, offer, offerAnswers } = useProducer();
   // Links from the home page can pre-open a match (?open=D-551) or pre-filter (?view=unmatched).
   const [searchParams] = useSearchParams();
   const [view, setView] = useState<View>(() => VIEWS.find((option) => option.id === searchParams.get("view"))?.id ?? "all");
@@ -42,6 +43,7 @@ export default function MarketDemandPage() {
     <MatchDetails
       match={match}
       offered={offers[match.demand.id]}
+      offerId={offerIds[match.demand.id]}
       accepted={offerAnswers[match.demand.id] === "confirmed"}
       chosen={chosen[match.demand.id] ?? match.best?.batch.code}
       onChoose={(code) => setChosen((current) => ({ ...current, [match.demand.id]: code }))}
@@ -118,7 +120,7 @@ export default function MarketDemandPage() {
                 <div className="ph-featured-pair">
                   <div className="ph-featured-side">
                     <p className="ph-featured-kicker"><Store size={14} /> Buyer demand</p>
-                    <p className="ph-featured-name">{demand.buyer} <span className="ph-mp-type">{demand.buyerType}</span></p>
+                    <p className="ph-featured-name"><PartyLink name={demand.buyer} role="buyer" /> <span className="ph-mp-type">{demand.buyerType}</span></p>
                     <p className="ph-featured-big">{formatKg(demand.quantityKg)}</p>
                     <p className="ph-featured-meta">
                       {demand.product} · {demand.gradeWanted}
@@ -168,7 +170,7 @@ export default function MarketDemandPage() {
                     {offered ? (
                       <span className="ph-offered">
                         <CircleCheck size={16} /> {offerAnswers[demand.id] === "confirmed" ? "Accepted" : `Offered ${offered}`} ·{" "}
-                        <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+                        <Link to={`/producer/orders#order-${offerIds[demand.id]}`}>View order</Link>
                       </span>
                     ) : (
                       <button type="button" className="ph-btn ph-btn--primary" onClick={() => offer(demand.id, batch.code)}>
@@ -202,6 +204,9 @@ export default function MarketDemandPage() {
                   </div>
                   <div className="ph-mp-actions">
                     <Link to={`/producer/batches?batch=${batch.code}`} className="ph-link-btn">View batch</Link>
+                    <button type="button" className="ph-btn" onClick={() => offer(undefined, batch.code)}>
+                      Offer to past buyers
+                    </button>
                     {helpAsked[batch.code] ? (
                       <span className="ph-offered"><CircleCheck size={16} /> Coordinator notified</span>
                     ) : (
@@ -226,6 +231,7 @@ export default function MarketDemandPage() {
 type DetailsProps = {
   match: MatchResult;
   offered?: string;
+  offerId?: string;
   accepted: boolean;
   chosen?: string;
   onChoose: (code: string) => void;
@@ -234,7 +240,7 @@ type DetailsProps = {
   onAskHelp: () => void;
 };
 
-function MatchDetails({ match, offered, accepted, chosen, onChoose, onOffer, helpAsked, onAskHelp }: DetailsProps) {
+function MatchDetails({ match, offered, offerId, accepted, chosen, onChoose, onOffer, helpAsked, onAskHelp }: DetailsProps) {
   const { demand, considered, reason } = match;
   const focus = considered.find((candidate) => candidate.batch.code === chosen) ?? considered[0];
 
@@ -297,7 +303,7 @@ function MatchDetails({ match, offered, accepted, chosen, onChoose, onOffer, hel
           {offered ? (
             <span className="ph-offered">
               <CircleCheck size={16} /> {accepted ? `Accepted by ${demand.buyer}` : `Offered ${offered} · waiting for the buyer`} ·{" "}
-              <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+              <Link to={`/producer/orders#order-${offerId}`}>View order</Link>
             </span>
           ) : focus?.eligible ? (
             <button type="button" className="ph-btn ph-btn--primary" onClick={() => onOffer(focus.batch.code)}>
