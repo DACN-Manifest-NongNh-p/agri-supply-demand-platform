@@ -54,11 +54,17 @@ export async function recordSignIn() {
 }
 
 /** Signed-in JSON call: sends `body` as JSON, returns the parsed response. */
-export async function apiJson<T>(path: string, method: "GET" | "POST" | "PUT" | "DELETE" = "GET", body?: unknown): Promise<T> {
+export async function apiJson<T>(
+  path: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await apiFetch(path, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
+    signal,
   });
   return readJson<T>(response);
 }
