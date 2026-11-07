@@ -1,5 +1,6 @@
 """Settings from environment variables (compose.yml in Docker, ai/.env on the host)."""
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,6 +21,9 @@ class Settings(BaseSettings):
     site_api_url: str = "http://localhost:8082"
     # Any sentence-transformers model; changing it requires a full re-index.
     embedding_model: str = "BAAI/bge-m3"
+    # Index the policies when the service starts: "always" (unchanged chunks are reused, so it is
+    # quick after the first time), "missing" (only if there is no index yet) or "off".
+    auto_ingest: Literal["always", "missing", "off"] = "off"
 
 
 @lru_cache

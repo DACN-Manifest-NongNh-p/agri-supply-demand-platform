@@ -1,5 +1,6 @@
 """Farmora AI service. Called by the Spring Boot API only, never by the browser directly."""
 import logging
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from elasticsearch import ConnectionError as ESConnectionError
@@ -11,12 +12,19 @@ from app.agent.loop import AgentError, run_chat
 from app.agent.step import continue_turn, start_turn
 from app.config import get_settings
 from app.es import get_es
+from app.ingest import startup
 from app.ingest.pipeline import run_ingest
 from app.retrieval.search import search
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Farmora AI service")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    startup.start_auto_ingest()
+    yield
+
+
+app = FastAPI(title="Farmora AI service", lifespan=lifespan)
 
 Role = Literal["public", "producer", "buyer", "coordinator", "logistics", "admin"]
 
@@ -39,6 +47,7 @@ def health():
         "embedding_model": settings.embedding_model,
         "gemini_model": settings.gemini_model,
         "gemini_configured": bool(settings.gemini_api_key),
+        "auto_ingest": {"mode": settings.auto_ingest, **startup.status},
     }
 
 

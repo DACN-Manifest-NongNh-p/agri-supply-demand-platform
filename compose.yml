@@ -108,14 +108,18 @@ services:
       # The Spring API runs on the host during development.
       SITE_API_URL: ${SITE_API_URL:-http://host.docker.internal:8082}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      # Build the policy index on start-up; only changed chunks are embedded again.
+      AUTO_INGEST: ${AUTO_INGEST:-always}
     ports:
       - "${AI_PORT:-8000}:8000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./docs:/knowledge/docs:ro
-      # Downloaded embedding model (~2 GB), kept across rebuilds.
-      - ai-models:/models
+      # Downloaded embedding model (~2 GB), kept across rebuilds. Set HF_CACHE_DIR to a host folder
+      # (e.g. ~/.cache/huggingface) to reuse a model already downloaded there instead.
+      - ${HF_CACHE_DIR:-ai-models}:/models
     depends_on:
       elasticsearch:
         condition: service_healthy
