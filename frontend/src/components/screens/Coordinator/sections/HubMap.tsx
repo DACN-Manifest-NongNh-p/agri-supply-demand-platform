@@ -40,11 +40,17 @@ function element(className: string, text?: string) {
   return node;
 }
 
-function label(title: string, detail: string, products?: string) {
+/** A pin's label: the place and one number. Everything else is in the popup, on demand. */
+function label(title: string, short?: string) {
   const node = element("co-pin-label");
-  node.append(element("co-pin-label-title", title), element("co-pin-label-detail", detail));
-  if (products) node.append(element("co-pin-label-products", products));
+  node.append(element("co-pin-label-title", title));
+  if (short) node.append(element("co-pin-label-detail", short));
   return node;
+}
+
+/** 14,400 kg → "14.4 t"; 800 kg → "800 kg". */
+function compactKg(kg: number) {
+  return kg >= 1000 ? `${(kg / 1000).toFixed(kg >= 10_000 ? 0 : 1).replace(/\.0$/, "")} t` : `${kg} kg`;
 }
 
 /** One line of a pin's popup: a batch or a demand, opening its detail drawer. */
@@ -56,12 +62,18 @@ type Group = {
   title: string;
   detail: string;
   province?: string;
-  /** "Dragon fruit 2 · Mango 1": what the pin holds, always on its label. */
+  /** One number on the label, e.g. "14.4 t" or "3 demands". */
+  short?: string;
+  /** "Dragon fruit 4 · Mango 4": what the pin holds, shown in its popup. */
   products?: string;
   items?: PopupItem[];
 };
 
-const POPUP_ROWS = 8;
+/** Rows in a popup; the rest are in the lists under the map. */
+const POPUP_ROWS = 3;
+/** Hover this long before a popup opens, so sweeping the mouse across the map opens nothing. */
+const OPEN_DELAY_MS = 250;
+const CLOSE_DELAY_MS = 200;
 
 /** "Dragon fruit 2 · Mango 1" from a list of product names. */
 function productCounts(products: string[]) {
@@ -86,6 +98,7 @@ function batchItem(batch: SupplyBatch, now: number): PopupItem {
 function popupContent(group: Group, onItem: (item: PopupItem) => void, extra?: { label: string; onClick: () => void }) {
   const root = element("co-map-popup-body");
   root.append(element("co-map-popup-title", group.title), element("co-map-popup-sub", group.detail));
+  if (group.products) root.append(element("co-map-popup-products", group.products));
   const items = group.items ?? [];
   if (items.length) {
     const list = document.createElement("ul");
@@ -104,7 +117,7 @@ function popupContent(group: Group, onItem: (item: PopupItem) => void, extra?: {
       list.append(row);
     }
     root.append(list);
-    if (items.length > POPUP_ROWS) root.append(element("co-map-popup-more", `+ ${items.length - POPUP_ROWS} more in the lists below`));
+    if (items.length > POPUP_ROWS) root.append(element("co-map-popup-more", `+ ${items.length - POPUP_ROWS} more in the lists below the map`));
   }
   if (extra) {
     const button = document.createElement("button");
@@ -120,44 +133,82 @@ function popupContent(group: Group, onItem: (item: PopupItem) => void, extra?: {
   return root;
 }
 
+type PopupContent = () => HTMLElement;
+
 /**
- * Shows the pin's popup on hover (and on tap): every batch or demand behind the numbers, without
- * having to click. A click keeps it open until the map or another pin is clicked.
+ * One popup for the whole map. It opens when the pointer rests on a pin (not when it sweeps past),
+ * closes shortly after the pointer leaves the pin and the popup, and closes when the map moves or on
+ * Escape. A click (or a tap on a phone) keeps it open until the map is clicked.
  */
-function attachPopup(map: maplibregl.Map, nodes: HTMLElement[], at: LngLatLike, content: () => HTMLElement, pinned: { current: maplibregl.Popup | null }, clickPins = true) {
-  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 18, maxWidth: "320px", className: "co-map-popup" });
-  let hideTimer = 0;
-  let isPinned = false;
-  const show = () => {
-    window.clearTimeout(hideTimer);
-    if (!popup.isOpen()) popup.setLngLat(at).setDOMContent(content()).addTo(map);
+function popupController(map: maplibregl.Map) {
+  const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, focusAfterOpen: false, offset: 16, maxWidth: "300px", className: "co-map-popup" });
+  let openTimer = 0;
+  let closeTimer = 0;
+  let owner: HTMLElement[] | null = null;
+  let pinned = false;
+
+  const mark = (nodes: HTMLElement[] | null, on: boolean) => nodes?.forEach((node) => node.classList.toggle("is-active", on));
+  const close = () => {
+    window.clearTimeout(openTimer);
+    window.clearTimeout(closeTimer);
+    pinned = false;
+    mark(owner, false);
+    owner = null;
+    popup.remove();
   };
-  const hide = () => {
-    if (isPinned) return;
-    hideTimer = window.setTimeout(() => popup.remove(), 180);
+  const open = (nodes: HTMLElement[], at: LngLatLike, content: PopupContent) => {
+    window.clearTimeout(closeTimer);
+    if (owner === nodes && popup.isOpen()) return;
+    mark(owner, false);
+    owner = nodes;
+    mark(nodes, true);
+    popup.setLngLat(at).setDOMContent(content()).addTo(map);
   };
+  const closeSoon = () => {
+    window.clearTimeout(openTimer);
+    if (pinned) return;
+    closeTimer = window.setTimeout(close, CLOSE_DELAY_MS);
+  };
+
   popup.on("open", () => {
     const box = popup.getElement();
-    box?.addEventListener("mouseenter", () => window.clearTimeout(hideTimer));
-    box?.addEventListener("mouseleave", hide);
+    box?.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
+    box?.addEventListener("mouseleave", closeSoon);
   });
-  popup.on("close", () => {
-    isPinned = false;
-    if (pinned.current === popup) pinned.current = null;
-  });
-  for (const node of nodes) {
-    node.classList.add("co-pin-hover");
-    node.addEventListener("mouseenter", show);
-    node.addEventListener("mouseleave", hide);
-    if (clickPins) node.addEventListener("click", (event) => {
-      event.stopPropagation();
-      if (pinned.current && pinned.current !== popup) pinned.current.remove();
-      show();
-      isPinned = true;
-      pinned.current = popup;
+  map.on("movestart", close);
+  map.on("click", close);
+  const onKey = (event: KeyboardEvent) => event.key === "Escape" && close();
+  window.addEventListener("keydown", onKey);
+  map.on("remove", () => window.removeEventListener("keydown", onKey));
+
+  /**
+   * Gives a pin a popup. `nodes` is the pin, then its label: only the pin takes the pointer; the label
+   * is hidden until the pin is hovered, and hides again while the popup (which repeats its name) is open.
+   * `clickPins: false` leaves the pin's click to the caller.
+   */
+  const attach = (nodes: HTMLElement[], at: LngLatLike, content: PopupContent, clickPins = true) => {
+    const [pin] = nodes;
+    pin.classList.add("co-pin-hover");
+    pin.addEventListener("mouseenter", () => {
+      nodes.forEach((node) => node.classList.add("is-hover"));
+      window.clearTimeout(openTimer);
+      window.clearTimeout(closeTimer);
+      if (pinned && owner !== nodes) return;
+      openTimer = window.setTimeout(() => open(nodes, at, content), owner ? 0 : OPEN_DELAY_MS);
     });
-  }
-  return popup;
+    pin.addEventListener("mouseleave", () => {
+      nodes.forEach((node) => node.classList.remove("is-hover"));
+      closeSoon();
+    });
+    if (clickPins)
+      pin.addEventListener("click", (event) => {
+        event.stopPropagation();
+        if (pinned && owner === nodes) return close();
+        open(nodes, at, content);
+        pinned = true;
+      });
+  };
+  return { attach, close };
 }
 
 // A label on the pin's right is anchored by its left edge, and so on; offsets clear the pin and its rings.
@@ -168,10 +219,9 @@ const LABEL_PLACEMENT: Record<LabelSide, { anchor: maplibregl.PositionAnchor; of
   bottom: { anchor: "top", offset: [0, 26] },
 };
 
-/** Adds a pin and its label; returns both elements so they can be hidden or dimmed as the focus changes. */
 function addPin(map: maplibregl.Map, className: string, group: Group, onClick?: () => void) {
   const pin = element(className);
-  const tag = label(group.title, group.detail, group.products);
+  const tag = label(group.title, group.short);
   if (onClick) {
     for (const node of [pin, tag]) {
       node.classList.add("co-pin-action");
@@ -194,7 +244,8 @@ function framing(farms: Group[], provinces: Group[], buyers: Group[], focus?: st
 }
 
 function padding(wide: boolean) {
-  return wide ? { top: 190, bottom: 90, left: 110, right: 560 } : { top: 110, bottom: 50, left: 70, right: 80 };
+  // The "things need you" list is closed by default, so the map uses its full width.
+  return wide ? { top: 150, bottom: 140, left: 140, right: 180 } : { top: 110, bottom: 50, left: 70, right: 80 };
 }
 
 function farmGroups(market: SupplyBatch[], now: number): Group[] {
@@ -214,6 +265,7 @@ function farmGroups(market: SupplyBatch[], now: number): Group[] {
     side: group.side,
     province: group.province,
     title: name,
+    short: compactKg(group.kg),
     detail: `${formatKg(group.kg)} open · ${group.producers.size} ${group.producers.size === 1 ? "farm" : "farms"}`,
     products: productCounts(group.batches.map((batch) => batch.product)),
     items: [...group.batches].sort((a, b) => a.sellByDay - b.sellByDay).map((batch) => batchItem(batch, now)),
@@ -237,6 +289,7 @@ function provinceGroups(market: SupplyBatch[], now: number): Group[] {
     ...PROVINCE_PINS[province],
     province,
     title: province,
+    short: compactKg(group.kg),
     detail: `${formatKg(group.kg)} open · ${group.producers.size} ${group.producers.size === 1 ? "farm" : "farms"}`,
     products: productCounts(group.batches.map((batch) => batch.product)),
     items: [...group.batches].sort((a, b) => a.sellByDay - b.sellByDay).map((batch) => batchItem(batch, now)),
@@ -258,6 +311,7 @@ function buyerGroups(board: BoardRow[]): Group[] {
       at: group.at,
       side: group.side,
       title: name,
+      short: `${group.rows.length} ${group.rows.length === 1 ? "demand" : "demands"}`,
       detail: `${group.rows.length} ${group.rows.length === 1 ? "demand" : "demands"} · ${formatKg(group.kg)} wanted${gaps ? ` · ${gaps} without supply` : ""}`,
       products: productCounts(group.rows.map((row) => row.demand.product)),
       items: [...group.rows]
@@ -347,10 +401,9 @@ export function HubMap({ market, board, deliveries, focus, onFocus, children }: 
         next.set("detail", `${item.kind}:${item.id}`);
         return next;
       });
-    const pinned: { current: maplibregl.Popup | null } = { current: null };
-    map.on("click", () => pinned.current?.remove());
+    const popups = popupController(map);
     const withPopup = (nodes: HTMLElement[], group: Group, extra?: { label: string; onClick: () => void }, clickPins = true) => {
-      attachPopup(map, nodes, group.at as LngLatLike, () => popupContent(group, openItem, extra), pinned, clickPins);
+      popups.attach(nodes, group.at as LngLatLike, () => popupContent(group, openItem, extra), clickPins);
       return nodes;
     };
 
@@ -363,7 +416,7 @@ export function HubMap({ market, board, deliveries, focus, onFocus, children }: 
         {
           label: `Zoom to ${group.title}`,
           onClick: () => {
-            pinned.current?.remove();
+            popups.close();
             if (group.province) onFocusRef.current?.(group.province);
           },
         },

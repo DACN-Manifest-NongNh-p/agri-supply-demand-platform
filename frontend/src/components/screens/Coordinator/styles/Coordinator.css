@@ -2054,31 +2054,87 @@
   }
 }
 
-/* ---------- Map popups: details on hover, no click needed ---------- */
+/* ---------- Map popups: a short label on every pin, details when the pointer rests on one ---------- */
 .co-pin-hover {
   cursor: pointer;
   pointer-events: auto;
 }
 
-.co-pin-label-products {
-  margin-top: 1px;
-  color: var(--ph-green-dark);
-  font-size: 11px;
+/* Only the points show on the map. A pin's label (place · number) appears while the pointer is on
+   the pin, and gives way to the popup once that opens. */
+.co-pin-label {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none !important;
+  transition: opacity 120ms ease, visibility 120ms;
+}
+
+.co-pin-label.is-hover:not(.is-active) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* A bigger target than the 14 px dot, so pins are easy to point at. */
+.co-pin.co-pin-hover::after {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  content: "";
+}
+
+.co-pin.co-pin-hover:hover {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.55);
+}
+
+.co-pin-label .co-pin-label-detail {
+  display: inline;
   font-weight: 600;
+}
+
+.co-pin.is-active,
+.co-pin-label.is-hover {
+  z-index: 3;
+}
+
+.co-pin.is-active {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.55);
+}
+
+/* Above the map's own panels (stats chips, side panel), which would otherwise cover it. */
+.maplibregl-popup.co-map-popup {
+  z-index: 40;
 }
 
 .co-map-popup .maplibregl-popup-content {
   padding: 12px 14px;
   border-radius: 12px;
   color: var(--ph-ink);
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.97);
   box-shadow: 0 18px 40px -12px rgba(20, 40, 30, 0.45);
   font-family: var(--sans, system-ui, sans-serif);
+  animation: co-popup-in 140ms ease-out;
+}
+
+@keyframes co-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .co-map-popup .maplibregl-popup-content {
+    animation: none;
+  }
 }
 
 .co-map-popup .maplibregl-popup-tip {
-  border-top-color: rgba(255, 255, 255, 0.96);
-  border-bottom-color: rgba(255, 255, 255, 0.96);
+  border-top-color: rgba(255, 255, 255, 0.97);
+  border-bottom-color: rgba(255, 255, 255, 0.97);
 }
 
 .co-map-popup-title {
@@ -2093,24 +2149,39 @@
   line-height: 1.4;
 }
 
+.co-map-popup-products {
+  margin-top: 4px;
+  color: var(--ph-green-dark);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
 .co-map-popup-list {
   display: flex;
-  max-height: 168px;
   flex-direction: column;
   gap: 4px;
   margin: 8px 0 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: 0;
   list-style: none;
+}
+
+.co-map-popup-body {
+  width: 264px;
+  max-width: 100%;
+}
+
+.co-map-popup-list li {
+  min-width: 0;
 }
 
 .co-map-popup-item {
   display: flex;
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   flex-direction: column;
   gap: 1px;
-  padding: 6px 8px;
+  padding: 5px 8px;
   border: 0;
   border-left: 3px solid var(--ph-line-strong);
   border-radius: 6px;
@@ -2145,8 +2216,12 @@
 }
 
 .co-map-popup-item-meta {
+  max-width: 100%;
+  overflow: hidden;
   color: var(--ph-muted);
   font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .co-map-popup-more {
@@ -2170,18 +2245,12 @@
 }
 
 [data-theme="dark"] .co-map-popup .maplibregl-popup-content {
-  background: rgba(24, 34, 28, 0.96);
+  background: rgba(24, 34, 28, 0.97);
 }
 
 [data-theme="dark"] .co-map-popup .maplibregl-popup-tip {
-  border-top-color: rgba(24, 34, 28, 0.96);
-  border-bottom-color: rgba(24, 34, 28, 0.96);
-}
-
-@media (max-width: 700px) {
-  .co-pin-label-products {
-    display: none;
-  }
+  border-top-color: rgba(24, 34, 28, 0.97);
+  border-bottom-color: rgba(24, 34, 28, 0.97);
 }
 
 /* ---------- Gaps: filters, list view and the resolver ---------- */
@@ -2390,4 +2459,229 @@
   color: var(--ph-ink);
   background: var(--ph-card);
   font: inherit;
+}
+
+/* ---------- "Things need you": a button on the map, the list only when asked for ---------- */
+.co-needs-toggle {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  color: var(--ph-ink);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 10px 28px rgba(20, 40, 30, 0.22);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.co-needs-toggle:hover {
+  background: #fff;
+}
+
+.co-needs-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--ph-red);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.co-needs {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  width: 360px;
+  max-height: calc(100% - 32px);
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 18px;
+  color: var(--ph-ink);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 24px 60px -16px rgba(20, 40, 30, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: co-popup-in 160ms ease-out;
+}
+
+.co-needs-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 10px 18px;
+  border-bottom: 1px solid var(--ph-line);
+}
+
+.co-needs-head p {
+  margin: 0;
+  color: var(--ph-muted);
+  font-size: 12px;
+}
+
+.producer-home .co-needs-head h2 {
+  margin: 2px 0 0;
+  color: var(--ph-ink);
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.co-needs-close {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ph-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.co-needs-close:hover {
+  color: var(--ph-ink);
+  background: var(--ph-subtle);
+}
+
+.co-needs-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 10px 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.co-needs-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-needs-group {
+  margin: 0 0 4px 8px;
+  color: var(--ph-muted);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.co-needs-group--urgent {
+  color: var(--ph-red);
+}
+
+.co-needs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.co-needs-row:hover,
+.co-needs-row:focus-visible {
+  background: var(--ph-subtle);
+}
+
+.co-needs-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ph-line-strong);
+}
+
+.co-needs-dot--urgent {
+  background: var(--ph-red);
+}
+
+.co-needs-dot--warning {
+  background: #c9a227;
+}
+
+.co-needs-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.co-needs-title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-needs-caption {
+  overflow: hidden;
+  color: var(--ph-muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-needs-go {
+  flex: none;
+  color: var(--ph-muted);
+}
+
+.co-needs-empty {
+  margin: 0;
+  padding: 18px;
+  color: var(--ph-muted);
+}
+
+.co-needs-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 8px 14px 14px;
+  padding: 10px;
+  border-radius: 12px;
+  color: var(--ph-ink);
+  background: var(--co-lime);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+[data-theme="dark"] .co-needs,
+[data-theme="dark"] .co-needs-toggle {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(24, 34, 28, 0.95);
+}
+
+@media (max-width: 640px) {
+  .co-needs {
+    left: 12px;
+    width: auto;
+  }
+
+  .co-needs-toggle {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+  }
 }
