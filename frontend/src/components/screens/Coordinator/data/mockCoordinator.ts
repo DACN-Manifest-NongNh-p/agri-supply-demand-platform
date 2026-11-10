@@ -55,7 +55,8 @@ export const demands: MarketDemand[] = [
 ];
 
 export const allocations: MarketAllocation[] = [
-  ...buyerAllocations,
+  // Producer offers (A-7, A-8…) come from the shared offer store instead (lib/offerStore).
+  ...buyerAllocations.filter((allocation) => allocation.origin !== "offered"),
   // Matches the producer demo: B-102 is on hold for Phu Tho, waiting for Hoa Phat to confirm.
   // 3,000 kg needs sign-off, so the coordinator approved it.
   { id: "A-6", demandId: "D-540", batchCode: "B-102", producer: producer.name, kg: 3000, stage: "held", holdHoursLeft: 5, matchedBy: "coordinator" },

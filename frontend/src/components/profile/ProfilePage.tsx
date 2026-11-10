@@ -1,9 +1,12 @@
 import { useRef, useState, type ReactNode } from "react";
-import { ArrowLeft, Camera, Check, KeyRound, Mail, Phone, X } from "lucide-react";
+import { ArrowLeft, Camera, Check, Eye, EyeOff, KeyRound, Mail, Phone, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { usePartyParam } from "@/components/parties/usePartyParam";
+import { SELF_BUYER_ID, SELF_PRODUCER_ID } from "@/lib/parties";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { getKeycloakUsername, isKeycloakAuthenticated, openAccountConsole } from "@/lib/keycloak";
 import { Avatar } from "./Avatar";
-import { saveProfile, squarePhoto, useProfile, type Profile, type ProfileArea } from "./profileStore";
+import { PROFILE_FIELD_LABEL, saveProfile, squarePhoto, useProfile, type Profile, type ProfileArea, type ProfileField } from "./profileStore";
 import "./profile.css";
 
 type Props = {
@@ -60,6 +63,31 @@ function ProductTags({ products, onChange }: { products: string[]; onChange: (pr
   );
 }
 
+/** Public / private switch next to a field label. */
+function Shown({ field, profile, onChange }: { field: ProfileField; profile: Profile; onChange: (field: ProfileField, value: boolean) => void }) {
+  const on = profile.visibility[field];
+  return (
+    <button
+      type="button"
+      className={on ? "pf-vis is-public" : "pf-vis"}
+      aria-pressed={on}
+      title={on ? "Buyers and producers can see this. Click to keep it private." : "Only you and Farmora coordinators see this. Click to publish it."}
+      onClick={() => onChange(field, !on)}
+    >
+      {on ? <Eye size={12} /> : <EyeOff size={12} />} {on ? "Public" : "Private"}
+    </button>
+  );
+}
+
+/** A field label with its public / private switch. */
+function Label({ text, field, profile, onChange }: { text: string; field: ProfileField; profile: Profile; onChange: (field: ProfileField, value: boolean) => void }) {
+  return (
+    <span className="pf-label">
+      {text} <Shown field={field} profile={profile} onChange={onChange} />
+    </span>
+  );
+}
+
 /** The signed-in user's profile: photo, personal details and the farm or company they act for. */
 export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
   const saved = useProfile(area);
@@ -76,6 +104,9 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
     setJustSaved(false);
   };
   const editOrg = (patch: Partial<Profile["org"]>) => edit({ org: { ...draft.org, ...patch } });
+  const setShown = (field: ProfileField, value: boolean) => edit({ visibility: { ...draft.visibility, [field]: value } });
+  const { open: openParty } = usePartyParam();
+  const publicCount = (Object.keys(draft.visibility) as ProfileField[]).filter((field) => draft.visibility[field]).length;
 
   const pickPhoto = async (file: File | undefined) => {
     if (!file) return;
@@ -97,7 +128,17 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
       title: draft.title.trim(),
       email: draft.email.trim(),
       phone: draft.phone.trim(),
-      org: { ...draft.org, name: draft.org.name.trim(), type: draft.org.type.trim(), region: draft.org.region.trim(), about: draft.org.about.trim() },
+      org: {
+        ...draft.org,
+        name: draft.org.name.trim(),
+        type: draft.org.type.trim(),
+        region: draft.org.region.trim(),
+        about: draft.org.about.trim(),
+        address: draft.org.address.trim(),
+        taxId: draft.org.taxId.trim(),
+        website: draft.org.website.trim(),
+        volume: draft.org.volume.trim(),
+      },
     };
     saveProfile(area, clean);
     setDraft(clean);
@@ -153,6 +194,7 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
       </section>
 
       <div className="pf-columns">
+        <div className="pf-main-col">
         <form
           className="pf-forms"
           onSubmit={(event) => {
@@ -162,9 +204,13 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
         >
           <section className="ph-card pf-section" aria-labelledby="pf-personal">
             <h2 id="pf-personal">Personal details</h2>
+            <p className="ph-muted pf-hint">
+              Use <strong>Public</strong> / <strong>Private</strong> to choose what buyers and producers see on your card. Private details are shared
+              with the other side only once you have a confirmed order together; coordinators always see them.
+            </p>
             <div className="ph-field-row">
               <label className="ph-field">
-                <span>Full name</span>
+                <Label text="Full name" field="contact" profile={draft} onChange={setShown} />
                 <input value={draft.name} onChange={(event) => edit({ name: event.target.value })} autoComplete="name" />
               </label>
               <label className="ph-field">
@@ -174,11 +220,11 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
             </div>
             <div className="ph-field-row">
               <label className="ph-field">
-                <span>Email</span>
+                <Label text="Email" field="email" profile={draft} onChange={setShown} />
                 <input type="email" value={draft.email} onChange={(event) => edit({ email: event.target.value })} autoComplete="email" />
               </label>
               <label className="ph-field">
-                <span>Phone</span>
+                <Label text="Phone" field="phone" profile={draft} onChange={setShown} />
                 <input type="tel" value={draft.phone} placeholder="e.g. 0912 345 678" onChange={(event) => edit({ phone: event.target.value })} autoComplete="tel" />
               </label>
             </div>
@@ -203,7 +249,7 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
               </label>
               {area === "producer" && (
                 <label className="ph-field">
-                  <span>Growing area (ha)</span>
+                  <Label text="Growing area (ha)" field="hectares" profile={draft} onChange={setShown} />
                   <input
                     type="number"
                     min={0}
@@ -215,13 +261,43 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
               )}
             </div>
             <div className="ph-field">
-              <span>{area === "producer" ? "What you grow" : "What you usually buy"}</span>
+              <Label text={area === "producer" ? "What you grow" : "What you usually buy"} field="products" profile={draft} onChange={setShown} />
               <ProductTags products={draft.org.products} onChange={(products) => editOrg({ products })} />
             </div>
             <label className="ph-field">
-              <span>About</span>
-              <textarea rows={3} value={draft.org.about} placeholder="A line or two buyers and producers will see." onChange={(event) => editOrg({ about: event.target.value })} />
+              <Label text="About" field="about" profile={draft} onChange={setShown} />
+              <textarea rows={3} value={draft.org.about} placeholder="A line or two about what you do." onChange={(event) => editOrg({ about: event.target.value })} />
             </label>
+          </section>
+
+          <section className="ph-card pf-section" aria-labelledby="pf-business">
+            <h2 id="pf-business">Business details</h2>
+            <div className="ph-field-row">
+              <label className="ph-field">
+                <Label text="Business address" field="address" profile={draft} onChange={setShown} />
+                <input value={draft.org.address} placeholder="Street, ward, district, province" onChange={(event) => editOrg({ address: event.target.value })} autoComplete="street-address" />
+              </label>
+              <label className="ph-field">
+                <Label text="Tax / registration no." field="taxId" profile={draft} onChange={setShown} />
+                <input value={draft.org.taxId} placeholder="e.g. 0313 554 201" onChange={(event) => editOrg({ taxId: event.target.value })} />
+              </label>
+            </div>
+            <div className="ph-field-row">
+              <label className="ph-field">
+                <Label text="Website" field="website" profile={draft} onChange={setShown} />
+                <input value={draft.org.website} placeholder="e.g. hoaphat.coop" onChange={(event) => editOrg({ website: event.target.value })} autoComplete="url" />
+              </label>
+              <label className="ph-field">
+                <Label text={area === "producer" ? "Typical harvest volume" : "Typical order volume"} field="volume" profile={draft} onChange={setShown} />
+                <input value={draft.org.volume} placeholder={area === "producer" ? "e.g. about 25 t a month in season" : "e.g. 40–60 t a month"} onChange={(event) => editOrg({ volume: event.target.value })} />
+              </label>
+            </div>
+            {area === "producer" && (
+              <div className="ph-field">
+                <Label text="Certifications" field="certifications" profile={draft} onChange={setShown} />
+                <ProductTags products={draft.org.certifications} onChange={(certifications) => editOrg({ certifications })} />
+              </div>
+            )}
           </section>
 
           {errors.length > 0 && (
@@ -254,6 +330,8 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
             </button>
           </div>
         </form>
+        <NotificationSettings area={area} contact={{ email: saved.email, phone: saved.phone }} />
+        </div>
 
         <aside className="pf-aside">
           <section className="ph-card pf-section" aria-labelledby="pf-account">
@@ -273,6 +351,24 @@ export function ProfilePage({ area, roleLabel, orgLabel, aside }: Props) {
                 <KeyRound size={15} /> Password & security
               </button>
             )}
+          </section>
+          <section className="ph-card pf-section" aria-labelledby="pf-visibility">
+            <h2 id="pf-visibility">What others see</h2>
+            <p className="ph-muted">
+              {publicCount} of {Object.keys(draft.visibility).length} details are public.
+            </p>
+            <ul className="pf-vis-list">
+              {(Object.keys(draft.visibility) as ProfileField[])
+                .filter((field) => area === "producer" || (field !== "hectares" && field !== "certifications"))
+                .map((field) => (
+                  <li key={field}>
+                    {PROFILE_FIELD_LABEL[field]} <Shown field={field} profile={draft} onChange={setShown} />
+                  </li>
+                ))}
+            </ul>
+            <button type="button" className="ph-btn pf-wide" disabled={dirty} title={dirty ? "Save your changes first" : undefined} onClick={() => openParty(area === "producer" ? SELF_PRODUCER_ID : SELF_BUYER_ID, area)}>
+              <Eye size={15} /> Preview my card
+            </button>
           </section>
           {aside}
         </aside>

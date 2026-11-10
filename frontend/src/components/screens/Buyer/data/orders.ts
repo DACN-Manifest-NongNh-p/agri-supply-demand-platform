@@ -30,7 +30,7 @@ export function nextStep(order: Allocation) {
     case "locked":
       return "Pay the deposit before the lock runs out";
     case "offered":
-      return `Accept and pay the deposit · expires in ${order.offerHoursLeft ?? "–"} h`;
+      return order.closedNote ?? `Accept and pay the deposit · expires in ${order.offerHoursLeft ?? "–"} h`;
     case "held":
       return `${order.producer} confirms · ${order.holdHoursLeft ?? "–"} h left`;
     case "confirmed":
@@ -49,10 +49,10 @@ export type OrderTab = "held" | "offered" | "confirmed" | "deliveries" | "declin
 /** Tabs of the cart, On hold first. */
 export const ORDER_TABS: { id: OrderTab; label: string; hint: string; empty: string; stages: AllocationStage[] }[] = [
   { id: "held", label: "On hold", hint: "Locked batches wait for your deposit before the timer runs out. Paid orders wait for the producer to confirm.", empty: "Nothing on hold. Reserve a batch from one of your demands.", stages: ["locked", "held"] },
-  { id: "offered", label: "Offers", hint: "Producers offered a batch for one of your demands. Accept and pay the deposit to confirm the order.", empty: "No offers from producers right now.", stages: ["offered"] },
+  { id: "offered", label: "Offers", hint: "Producers offered a batch for one of your demands (or straight to you). Accept and pay the deposit to confirm, propose other terms, or decline.", empty: "No offers from producers right now.", stages: ["offered"] },
   { id: "confirmed", label: "Confirmed", hint: "Both sides agreed. A truck is being booked for pickup at the farm.", empty: "No confirmed orders waiting for pickup.", stages: ["confirmed"] },
   { id: "deliveries", label: "Deliveries", hint: "Confirmed orders once a truck picks them up, to proof of delivery at your DC. Problems first.", empty: "No deliveries yet.", stages: ["in_transit", "delivered"] },
-  { id: "declined", label: "Declined", hint: "Offers you turned down.", empty: "You have not declined any offer.", stages: ["declined"] },
+  { id: "declined", label: "Closed", hint: "Offers you turned down, and offers withdrawn or expired.", empty: "Nothing closed yet.", stages: ["declined"] },
 ];
 
 /** The tab an order of this stage is listed under. */

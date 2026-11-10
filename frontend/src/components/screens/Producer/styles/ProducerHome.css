@@ -5407,3 +5407,164 @@
   margin: 0 0 6px;
   color: var(--ph-muted);
 }
+
+/* ---- Batches: search, sort, risk on the calendar ---- */
+.ph-batch-find {
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-top: 0;
+}
+
+.ph-search {
+  display: flex;
+  min-width: 220px;
+  flex: 1 1 260px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 8px;
+  color: var(--ph-muted);
+  background: var(--ph-card);
+}
+
+.ph-search input {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  outline: 0;
+  color: var(--ph-ink);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+}
+
+.ph-search:focus-within {
+  border-color: var(--ph-green);
+  outline: 3px solid var(--g-100);
+}
+
+.ph-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ph-sort select,
+.ph-cal-goto input {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--ph-line-strong);
+  border-radius: 8px;
+  color: var(--ph-ink);
+  background: var(--ph-card);
+  font: inherit;
+  font-size: 14px;
+}
+
+.ph-batch-count {
+  font-size: 13px;
+}
+
+.ph-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: none;
+  font: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+}
+
+.ph-sort-btn svg {
+  opacity: 0.45;
+}
+
+.ph-sort-btn.is-active {
+  color: var(--ph-green-dark);
+}
+
+.ph-sort-btn.is-active svg {
+  opacity: 1;
+}
+
+.ph-cal-goto {
+  display: inline-flex;
+}
+
+.ph-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ph-cal-day {
+  position: relative;
+}
+
+.ph-cal-day--month {
+  box-shadow: inset 2px 0 0 var(--ph-line-strong);
+}
+
+.ph-cal-month {
+  position: absolute;
+  top: -16px;
+  left: 2px;
+  color: var(--ph-green-dark);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ph-calendar-grid {
+  padding-top: 16px;
+}
+
+.ph-cal-risk {
+  display: inline-grid;
+  min-width: 26px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  vertical-align: 1px;
+}
+
+.ph-cal-risk--low {
+  color: var(--ph-green-dark);
+  background: var(--ph-green-soft);
+}
+
+.ph-cal-risk--watch {
+  color: var(--ph-amber);
+  background: var(--ph-amber-soft);
+}
+
+.ph-cal-risk--high {
+  color: #fff;
+  background: var(--ph-red);
+}
+
+.ph-cal-risk--none {
+  color: var(--ph-muted);
+  background: var(--ph-subtle);
+}
+
+.ph-cal-bar--risk-watch {
+  box-shadow: inset 0 -3px 0 #c9a227;
+}
+
+.ph-cal-bar--risk-high {
+  box-shadow: inset 0 -3px 0 var(--ph-red), 0 0 0 1px var(--ph-red);
+}

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ArrowRight, Check, Clock, TriangleAlert } from "lucide-react";
+import { ArrowRight, Check, Clock, Send, TriangleAlert } from "lucide-react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { LifecycleSteps } from "@/components/orders/LifecycleSteps";
 import { RULES } from "@/lib/site";
@@ -18,6 +18,9 @@ import {
 } from "./data/orders";
 import { useProducer } from "./data/producerContext";
 import { DeliveriesList } from "./sections/DeliveriesList";
+import { OfferThread } from "@/components/offers/OfferThread";
+import { PartyLink } from "@/components/parties/PartyLink";
+import { formatVnd } from "./data/format";
 
 function placed(day: number, offered: boolean) {
   const verb = offered ? "Offered" : "Placed";
@@ -38,11 +41,17 @@ function OrderCard({ order }: { order: ProducerOrder }) {
       <div className="ord-head">
         <span className="ord-what">
           <strong>
-            {formatKg(order.quantityKg)} {order.product.toLowerCase()} for {order.buyer}
+            {formatKg(order.quantityKg)} {order.product.toLowerCase()} for <PartyLink name={order.buyer} role="buyer" />
           </strong>
           <span>
-            {order.buyerType} · from <Link to={`/producer/batches?batch=${order.batch}`}>{order.batch}</Link> ·{" "}
-            {order.stage === "delivered" ? "delivered" : `needed ${formatDay(order.neededByDay).toLowerCase()}`} · {order.destination}
+            {order.buyerType && `${order.buyerType} · `}from <Link to={`/producer/batches?batch=${order.batch}`}>{order.batch}</Link>
+            {order.pricePerKg !== undefined && ` · ${formatVnd(order.pricePerKg)}/kg`}
+            {order.demandId !== "Direct offer" && (
+              <>
+                {" "}· {order.stage === "delivered" ? "delivered" : `needed ${formatDay(order.neededByDay).toLowerCase()}`}
+                {order.destination && ` · ${order.destination}`}
+              </>
+            )}
           </span>
           <small>
             {order.demandId} · {placed(order.placedDay, order.origin === "producer")}
@@ -54,11 +63,12 @@ function OrderCard({ order }: { order: ProducerOrder }) {
         </span>
       </div>
 
-      {order.stage !== "offered" && order.stage !== "declined" && (
+      {order.stage !== "offered" && order.stage !== "declined" && !(order.offerId && order.stage === "to_confirm") && (
         <p className="ord-money">
           {order.stage === "delivered" ? "Paid in full by the buyer" : `${order.buyer} paid a ${RULES.depositPercent}% deposit · the rest on delivery`}
         </p>
       )}
+      {order.offerId && <OfferThread offerId={order.offerId} side="producer" defaultOpen={order.stage === "to_confirm"} />}
       {problem && (
         <p className="ph-delivery-problem">
           <TriangleAlert size={14} /> {problem}
@@ -102,7 +112,7 @@ function OrderCard({ order }: { order: ProducerOrder }) {
  * offers you sent that wait for the buyer, then confirmed, on the way, delivered and declined.
  */
 export default function OrdersPage() {
-  const { orders } = useProducer();
+  const { orders, offer } = useProducer();
   const [params, setParams] = useSearchParams();
   const location = useLocation();
 
@@ -135,6 +145,9 @@ export default function OrdersPage() {
             {offered > 0 && `, ${offered} ${offered === 1 ? "offer waits" : "offers wait"} for a buyer`}. An order is confirmed once both sides agree; only then is a truck booked.
           </p>
         </div>
+        <button type="button" className="ph-btn ph-btn--primary" onClick={() => offer()}>
+          <Send size={16} /> Offer a batch
+        </button>
       </section>
 
       <nav className="ord-tabs" aria-label="Order stages">

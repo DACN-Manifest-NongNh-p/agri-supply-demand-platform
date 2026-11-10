@@ -62,6 +62,70 @@ services:
       keycloak-db:
         condition: service_healthy
 
+  # Knowledge index for the assistant (RAG over the site's docs and policies).
+  # Single node, security off: local development only.
+  elasticsearch:
+    build:
+      context: ./docker/elasticsearch
+      args:
+        ES_VERSION: ${ES_VERSION:-8.17.0}
+    image: farmora-elasticsearch:${ES_VERSION:-8.17.0}
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: ${ES_JAVA_OPTS:--Xms1g -Xmx1g}
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  # Browse the index while developing: `docker compose --profile dev up -d kibana`.
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ES_VERSION:-8.17.0}
+    profiles: ["dev"]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # Python AI service: knowledge indexing pipeline, retrieval and (later) the Gemini agent.
+  ai:
+    build: ./ai
+    image: farmora-ai
+    environment:
+      ES_URL: http://elasticsearch:9200
+      ES_INDEX: ${ES_INDEX:-policy}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DOCS_DIR: /knowledge/docs
+      # The Spring API runs on the host during development.
+      SITE_API_URL: ${SITE_API_URL:-http://host.docker.internal:8082}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-m3}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash-lite}
+      # Build the policy index on start-up; only changed chunks are embedded again.
+      AUTO_INGEST: ${AUTO_INGEST:-always}
+    ports:
+      - "${AI_PORT:-8000}:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./docs:/knowledge/docs:ro
+      # Downloaded embedding model (~2 GB), kept across rebuilds. Set HF_CACHE_DIR to a host folder
+      # (e.g. ~/.cache/huggingface) to reuse a model already downloaded there instead.
+      - ${HF_CACHE_DIR:-ai-models}:/models
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
 volumes:
   keycloak-db-data:
   app-db-data:
+  es-data:
+  ai-models:

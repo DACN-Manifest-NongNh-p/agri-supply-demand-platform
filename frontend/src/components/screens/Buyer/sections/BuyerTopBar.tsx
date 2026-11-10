@@ -5,12 +5,15 @@ import type { BuyerAlert } from "../data/alerts";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { useAnnouncementNotices } from "@/components/notifications/announcements";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
+import { useUnreadCount } from "@/lib/messageStore";
+import { buyer } from "../data/mockBuyer";
 
 const pages = [
   { label: "Home", to: "/buyer", end: true },
   { label: "My demands", to: "/buyer/demands", end: false },
   // Find supply also covers the pre-harvest auctions (a tab inside it).
   { label: "Find supply", to: "/buyer/supply", end: false, also: "/buyer/auctions" },
+  { label: "Messages", to: "/buyer/messages", end: false },
 ];
 
 type Props = {
@@ -26,6 +29,7 @@ export function BuyerTopBar({ alerts, onDismiss, cartCount, cartNeedsYou }: Prop
   // Admin announcements come first under the bell, then the buyer's own alerts.
   const announcements = useAnnouncementNotices("BUYER");
   const { pathname } = useLocation();
+  const unread = useUnreadCount(buyer.name);
 
   return (
     <header className="ph-topbar">
@@ -44,6 +48,11 @@ export function BuyerTopBar({ alerts, onDismiss, cartCount, cartNeedsYou }: Prop
             className={"also" in page && page.also && pathname.startsWith(page.also) ? "is-active" : undefined}
           >
             {page.label}
+            {page.to === "/buyer/messages" && unread > 0 && (
+              <span className="ph-nav-count" aria-label={`${unread} unread`}>
+                {unread}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>
