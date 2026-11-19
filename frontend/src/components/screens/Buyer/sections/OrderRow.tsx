@@ -9,6 +9,8 @@ import { DepositDialog } from "./DepositPayment";
 import { useBuyer } from "../data/buyerContext";
 import { ALLOCATION_STAGE_LABEL, depositFor, type Allocation, type AllocationStage } from "../data/mockBuyer";
 import { nextStep, orderStepIndex, orderSteps } from "../data/orders";
+import { OfferThread } from "@/components/offers/OfferThread";
+import { PartyLink } from "@/components/parties/PartyLink";
 
 const TONE: Record<AllocationStage, OrderTone> = {
   locked: "attention",
@@ -56,12 +58,18 @@ export function OrderRow({ order, showDemand = false, onReleased }: Props) {
             {formatKg(order.kg)} {batch ? batch.product.toLowerCase() : ""}
           </strong>
           <span>
-            {batch ? <Link to={`/buyer/supply/${order.batchCode}`}>{order.batchCode}</Link> : order.batchCode} · {order.producer}
+            {batch ? <Link to={`/buyer/supply/${order.batchCode}`}>{order.batchCode}</Link> : order.batchCode} · <PartyLink name={order.producer} role="producer" />
             {batch && <> · {batch.variety}, grade {batch.grade}, sell by {formatDay(batch.sellByDay)}</>}
           </span>
           {showDemand && (
             <small>
-              For <Link to={`/buyer/demands/${order.demandId}`}>{order.demandId}</Link>
+              {order.demandId ? (
+                <>
+                  For <Link to={`/buyer/demands/${order.demandId}`}>{order.demandId}</Link>
+                </>
+              ) : (
+                "Direct offer · not linked to a demand"
+              )}
             </small>
           )}
         </span>
@@ -69,6 +77,7 @@ export function OrderRow({ order, showDemand = false, onReleased }: Props) {
       </div>
 
       {order.note && order.stage === "offered" && <p className="ord-note">{order.note}</p>}
+      {order.offerId && <OfferThread offerId={order.offerId} side="buyer" onAccept={() => setPaying(true)} />}
       {order.deposit ? (
         <p className="ord-money">
           <Wallet size={14} aria-hidden="true" />
@@ -120,7 +129,7 @@ export function OrderRow({ order, showDemand = false, onReleased }: Props) {
               </button>
             </>
           )}
-          {order.stage === "offered" && (
+          {order.stage === "offered" && !order.offerId && (
             <>
               <button type="button" className="ph-btn" onClick={() => declineOffer(order.id)}>
                 Decline

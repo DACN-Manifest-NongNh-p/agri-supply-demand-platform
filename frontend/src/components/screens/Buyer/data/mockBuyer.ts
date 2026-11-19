@@ -181,6 +181,8 @@ export type Allocation = {
   /** The balance was paid on delivery. */
   paidInFull?: boolean;
   deliveryId?: string;
+  /** Set when it comes from a producer's offer in the shared offer store (lib/offerStore). */
+  offerId?: string;
 };
 
 export type BuyerDelivery = Delivery & { producer: string; demandId: string };

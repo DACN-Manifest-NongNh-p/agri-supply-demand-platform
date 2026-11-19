@@ -13,12 +13,15 @@ import { useNow } from "@/components/orders/useNow";
 import { formatVnd } from "../Producer/data/format";
 import { PARTNERS, partnerPrice, rescueProposals, type RescueDecision } from "./data/rescue";
 import { buildQueue } from "./data/queue";
-import type { CoordinatorState, DeliveryUpdate, Resolution } from "./data/coordinatorContext";
+import type { CoordinatorState, DeliveryUpdate, GapEntry, Resolution } from "./data/coordinatorContext";
 // Same look as the producer and buyer areas: their styles first, then the coordinator's own.
 import "../Producer/styles/ProducerHome.css";
 import "../Buyer/styles/Buyer.css";
 import "./styles/Coordinator.css";
 import { useStoredTheme } from "./data/theme";
+import { acceptedKg, isOpen, useOfferSimulation, useOffers } from "@/lib/offerStore";
+import type { MarketAllocation } from "./data/mockCoordinator";
+import { PartyDrawer } from "@/components/parties/PartyDrawer";
 
 /** When a decision was made (called from event handlers only). */
 const stamp = () => Date.now();
@@ -34,10 +37,36 @@ export default function CoordinatorLayout() {
   // The matching engine has already run over the demo market: clean proposals start out as holds.
   const [book, setBook] = useState<Book>(() => autoMatch(demands, { market: initialMarket, allocations: initialAllocations }));
   const [notified, setNotified] = useState<Record<string, boolean>>({});
+  const [gapLog, setGapLog] = useState<Record<string, GapEntry[]>>({});
+  const logGap: CoordinatorState["logGap"] = (key, entry) => setGapLog((current) => ({ ...current, [key]: [...(current[key] ?? []), { ...entry, at: stamp() }] }));
+  // Demo: buyers and producers answer the offers a coordinator sends on a producer's behalf.
+  useOfferSimulation();
   const [resolved, setResolved] = useState<Record<string, Resolution>>({});
   const [deliveryUpdates, setDeliveryUpdates] = useState<Record<string, DeliveryUpdate[]>>({});
   const location = useLocation();
-  const { market, allocations } = book;
+  const { market: bookMarket, allocations: bookAllocations } = book;
+  // Offers between producers and buyers live in the shared store (lib/offerStore): accepted ones count
+  // as confirmed orders, open ones as offers, so the coordinator sees the same picture as both sides.
+  const storeOffers = useOffers();
+  const offerAllocations: MarketAllocation[] = storeOffers
+    .filter((offer) => offer.demandId)
+    .map((offer) => ({
+      id: offer.id,
+      demandId: offer.demandId!,
+      batchCode: offer.batchCode,
+      producer: offer.producer,
+      kg: offer.kg,
+      stage: offer.status === "accepted" ? "confirmed" : isOpen(offer) ? "offered" : "declined",
+      origin: "offered",
+      pricePerKg: offer.pricePerKg,
+      note: offer.note,
+      matchedBy: offer.origin === "coordinator" ? "coordinator" : undefined,
+    }));
+  const market = bookMarket.map((batch) => {
+    const taken = acceptedKg(batch.code);
+    return taken ? { ...batch, allocatedKg: Math.min(batch.quantityKg, batch.allocatedKg + taken) } : batch;
+  });
+  const allocations = [...bookAllocations, ...offerAllocations];
   const [hiddenToasts, setHiddenToasts] = useState<Record<string, boolean>>({});
 
   // Unsold batches still on the market, watched for spoilage risk; alerts pop up without a reload.
@@ -78,21 +107,21 @@ export default function CoordinatorLayout() {
   const settle = (next: Book, matchOptions = options()) => setBook(autoMatch(demands, next, matchOptions));
 
   const approve: CoordinatorState["approve"] = (demandId, batchCode, kg) => {
-    const batch = market.find((item) => item.code === batchCode);
+    const batch = bookMarket.find((item) => item.code === batchCode);
     if (!batch || kg <= 0) return;
     settle(addHold(book, { demandId, batchCode, producer: batch.producer, kg, matchedBy: "coordinator" }));
   };
 
   const release: CoordinatorState["release"] = (allocationId) => {
-    const allocation = allocations.find((item) => item.id === allocationId);
+    const allocation = bookAllocations.find((item) => item.id === allocationId);
     if (!allocation || allocation.stage !== "held") return;
     // A released pair is not proposed again, so the demand moves on to its next batch.
     const nextBlocked = [...blocked, pairKey(allocation.demandId, allocation.batchCode)];
     setBlocked(nextBlocked);
     settle(
       {
-        allocations: allocations.filter((item) => item.id !== allocationId),
-        market: market.map((batch) => (batch.code === allocation.batchCode ? { ...batch, allocatedKg: Math.max(0, batch.allocatedKg - allocation.kg) } : batch)),
+        allocations: bookAllocations.filter((item) => item.id !== allocationId),
+        market: bookMarket.map((batch) => (batch.code === allocation.batchCode ? { ...batch, allocatedKg: Math.max(0, batch.allocatedKg - allocation.kg) } : batch)),
       },
       options(nextBlocked),
     );
@@ -111,13 +140,13 @@ export default function CoordinatorLayout() {
   };
 
   const recordShortfall: CoordinatorState["recordShortfall"] = (allocationId, kg) => {
-    const allocation = allocations.find((item) => item.id === allocationId);
+    const allocation = bookAllocations.find((item) => item.id === allocationId);
     if (!allocation) return;
     const cut = Math.min(kg, allocation.kg);
     // The batch is smaller than declared; the demand gets the missing kilograms back to match.
     settle({
-      allocations: allocations.map((item) => (item.id === allocationId ? { ...item, kg: item.kg - cut } : item)),
-      market: market.map((batch) =>
+      allocations: bookAllocations.map((item) => (item.id === allocationId ? { ...item, kg: item.kg - cut } : item)),
+      market: bookMarket.map((batch) =>
         batch.code === allocation.batchCode
           ? { ...batch, quantityKg: batch.quantityKg - cut, allocatedKg: Math.max(0, batch.allocatedKg - cut), issue: undefined }
           : batch,
@@ -156,10 +185,10 @@ export default function CoordinatorLayout() {
     const partner = PARTNERS.find((item) => item.id === (edit.partnerId ?? proposal.partnerId));
     const part = parts[0];
     if (!partner || !part) return;
-    const batch = market.find((item) => item.code === part.batchCode);
+    const batch = bookMarket.find((item) => item.code === part.batchCode);
     if (!batch) return;
     const kg = Math.min(part.kg, openOf(batch));
-    settle({ ...book, market: market.map((item) => (item.code === batch.code ? { ...item, allocatedKg: item.allocatedKg + kg } : item)) });
+    settle({ ...book, market: bookMarket.map((item) => (item.code === batch.code ? { ...item, allocatedKg: item.allocatedKg + kg } : item)) });
     const transportId = nextTransportId();
     const carrier = coldChain.has(batch.product) ? "Delta Cold Chain (refrigerated)" : "SouthLine Logistics";
     setRescueDecisions((current) => ({
@@ -193,7 +222,12 @@ export default function CoordinatorLayout() {
     verifyProducer,
     recordShortfall,
     notified,
-    notifyProducers: (demandId) => setNotified((current) => ({ ...current, [demandId]: true })),
+    notifyProducers: (demandId) => {
+      setNotified((current) => ({ ...current, [demandId]: true }));
+      logGap(`demand:${demandId}`, { action: "invited", text: "Asked every producer of this product to declare supply" });
+    },
+    gapLog,
+    logGap,
     requests,
     resolved,
     resolve: (requestId, note) => setResolved((current) => ({ ...current, [requestId]: { note } })),
@@ -238,6 +272,7 @@ export default function CoordinatorLayout() {
       <div className="co-content">
         <Outlet context={state} />
         <DetailDrawer demands={demands} market={market} allocations={allocations} board={board} excursions={spoilage.excursions} />
+        <PartyDrawer viewer={{ area: "coordinator" }} />
       </div>
       <RiskToasts
         actionLabel="See rescue options"

@@ -7,6 +7,51 @@ import { buyer } from "@/components/screens/Buyer/data/mockBuyer";
 
 export type ProfileArea = "buyer" | "producer";
 
+/** Details the owner can show to the other side of the market or keep for Farmora and the coordinator. */
+export type ProfileField =
+  | "contact"
+  | "email"
+  | "phone"
+  | "address"
+  | "taxId"
+  | "website"
+  | "volume"
+  | "certifications"
+  | "hectares"
+  | "products"
+  | "about";
+
+export const PROFILE_FIELD_LABEL: Record<ProfileField, string> = {
+  contact: "Contact person and job title",
+  email: "Email",
+  phone: "Phone",
+  address: "Business address",
+  taxId: "Tax / business registration number",
+  website: "Website",
+  volume: "Typical volume",
+  certifications: "Certifications",
+  hectares: "Growing area",
+  products: "Products",
+  about: "About",
+};
+
+/** True = buyers and producers can see it; false = only you, the coordinator and Farmora see it. */
+export type Visibility = Record<ProfileField, boolean>;
+
+export const DEFAULT_VISIBILITY: Visibility = {
+  contact: true,
+  email: false,
+  phone: false,
+  address: false,
+  taxId: false,
+  website: true,
+  volume: true,
+  certifications: true,
+  hectares: true,
+  products: true,
+  about: true,
+};
+
 export type Profile = {
   name: string;
   title: string;
@@ -22,7 +67,17 @@ export type Profile = {
     hectares: number | null;
     products: string[];
     about: string;
+    /** Registered business address (not a delivery point). */
+    address: string;
+    taxId: string;
+    website: string;
+    /** How much the farm sells or the company buys, in the owner's words ("about 20 t a month"). */
+    volume: string;
+    /** VietGAP, GlobalGAP, organic… (producers). */
+    certifications: string[];
   };
+  /** Which details the other side of the market sees. */
+  visibility: Visibility;
 };
 
 // A real account starts with only what Keycloak knows (name, email); the rest is filled in on the
@@ -35,7 +90,8 @@ function blank(): Profile {
     email: identity.email,
     phone: "",
     photo: null,
-    org: { name: "", type: "", region: "", hectares: null, products: [], about: "" },
+    org: { name: "", type: "", region: "", hectares: null, products: [], about: "", address: "", taxId: "", website: "", volume: "", certifications: [] },
+    visibility: { ...DEFAULT_VISIBILITY },
   };
 }
 
@@ -55,7 +111,13 @@ function defaults(area: ProfileArea): Profile {
         hectares: producer.hectares,
         products: producer.products,
         about: "Family cooperative growing VietGAP dragon fruit, mango and pomelo for supermarkets and exporters.",
+        address: "Hamlet 3, Ham Thuan Nam, Binh Thuan",
+        taxId: "3400 112 857",
+        website: "hoaphat.coop",
+        volume: "About 25 t a month in season",
+        certifications: ["VietGAP", "GlobalGAP"],
       },
+      visibility: { ...DEFAULT_VISIBILITY },
     };
   }
   return {
@@ -71,7 +133,13 @@ function defaults(area: ProfileArea): Profile {
       hectares: null,
       products: buyer.products,
       about: "Supermarket chain with 24 stores in Ho Chi Minh City, buying fresh fruit direct from growers.",
+      address: "12 Nguyen Huu Tho, Tan Hung, District 7, Ho Chi Minh City",
+      taxId: "0313 554 201",
+      website: "greenbasket.vn",
+      volume: "40–60 t of fruit a month",
+      certifications: [],
     },
+    visibility: { ...DEFAULT_VISIBILITY },
   };
 }
 
@@ -84,7 +152,7 @@ function load(area: ProfileArea): Profile {
     const saved = localStorage.getItem(storageKey(area));
     if (!saved) return base;
     const parsed = JSON.parse(saved) as Partial<Profile>;
-    return { ...base, ...parsed, org: { ...base.org, ...parsed.org } };
+    return { ...base, ...parsed, org: { ...base.org, ...parsed.org }, visibility: { ...base.visibility, ...parsed.visibility } };
   } catch {
     return base;
   }
@@ -121,6 +189,15 @@ export function useProfile(area: ProfileArea) {
   return useSyncExternalStore(subscribe, () => read(area));
 }
 
+/** The saved profile outside React (the party directory reads it). */
+export function getProfile(area: ProfileArea) {
+  return read(area);
+}
+
+export function subscribeProfiles(listener: () => void) {
+  return subscribe(listener);
+}
+
 /** True until the farm or company has a name; the home card then asks to complete the profile. */
 export function isIncomplete(profile: Profile) {
   return !profile.org.name.trim();
@@ -135,6 +212,8 @@ export function missingFields(area: ProfileArea, profile: Profile) {
     [!profile.phone.trim(), "phone"],
     [!profile.org.region.trim(), area === "producer" ? "growing region" : "office address"],
     [profile.org.products.length === 0, area === "producer" ? "crops" : "products you buy"],
+    [!profile.org.address.trim(), "business address"],
+    [!profile.org.volume.trim(), area === "producer" ? "typical harvest volume" : "typical order volume"],
   ];
   return checks.filter(([empty]) => empty).map(([, label]) => label);
 }

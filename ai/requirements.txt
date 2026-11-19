@@ -1,0 +1,11 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic-settings==2.7.1
+# Client major version must match the server (Elasticsearch 8.x).
+elasticsearch==8.17.0
+httpx==0.28.1
+PyYAML==6.0.2
+# Embeddings (BAAI/bge-m3). In Docker, torch is installed first from the CPU-only index (see Dockerfile).
+sentence-transformers==3.3.1
+# Gemini (chat and tool calling).
+google-genai==2.33.0

@@ -7,6 +7,20 @@ import type { SpoilageItem } from "@/components/freshness/useSpoilageAlerts";
 import type { Proposal, RescueDecision, RescueEdit } from "./rescue";
 
 export type Resolution = { note: string };
+
+/** What the coordinator did about a gap (a demand with no supply, or unsold supply). */
+export type GapAction = "invited" | "offered" | "contacted" | "relax" | "rescue" | "note" | "resolved";
+export type GapEntry = { action: GapAction; text: string; party?: string; at: number };
+
+export const ACTION_LABEL: Record<GapAction, string> = {
+  invited: "Producer invited",
+  offered: "Offer sent",
+  contacted: "Contacted",
+  relax: "Asked to relax criteria",
+  rescue: "Sent to rescue",
+  note: "Note",
+  resolved: "Resolved",
+};
 export type DeliveryUpdate = { text: string; time: string };
 
 /** State shared by every /coordinator page, owned by CoordinatorLayout. */
@@ -40,6 +54,9 @@ export type CoordinatorState = {
   /** Demand ids for which producers were asked to declare supply. */
   notified: Record<string, boolean>;
   notifyProducers: (demandId: string) => void;
+  /** Work done on each gap, keyed "demand:D-575" or "batch:B-112", oldest first. */
+  gapLog: Record<string, GapEntry[]>;
+  logGap: (key: string, entry: Omit<GapEntry, "at">) => void;
   requests: HelpRequest[];
   resolved: Record<string, Resolution>;
   resolve: (requestId: string, note: string) => void;

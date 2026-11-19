@@ -319,9 +319,25 @@ Where: the **Pre-harvest auctions** tab of Batches (`/producer/auctions`, `Aucti
 | `data/routes.ts` | Stored road geometry for the delivery map |
 | `styles/ProducerHome.css` | Styles for the whole producer area |
 
+## Offers, negotiation and buyers
+
+- **Offer a batch** (from a match, a buyer's card, *Batches without a buyer*, or Orders) opens one form: pick the batch, tick **one or several buyers** (open demands for the product, best match first, plus past buyers with no open demand), set kilograms per buyer, the **price per kg**, a **note** and how long the offer stays open. Offering more than the batch has open is allowed: the first buyer to pay the deposit gets the kilograms, the other offers shrink or are withdrawn.
+- Each offer in **Orders** has a discussion: every proposal and note, and the actions for whoever has to answer. When a buyer proposes other terms the order moves to **To confirm**; **Agree** sends it back to the buyer to pay, **Propose other terms** answers with yours, **Decline** closes it. **Withdraw offer** takes back an offer nobody answered.
+- Every buyer name opens the **buyer card**: what the buyer published (private details stay hidden until you have a confirmed order together), your history together, their open demand with your best batch for each, and **Message** / **Send an offer**.
+- **Messages** (top bar) holds the conversations with buyers, with an unread count.
+
+## Profile and notifications
+
+- The profile has business details (address, tax number, website, typical volume, certifications) and a **Public / Private** switch on each detail; *Preview my card* shows the buyer's view.
+- **Notifications** on the profile page choose, per event, the bell, email, SMS or Zalo, plus a daily digest and quiet hours. The bell in the top bar now lists tasks, answers to offers, messages, freshness alerts and Farmora announcements, filtered by these settings.
+
+## Batches: list and calendar
+
+Both views share **search** (code, product, variety, plot), **sort** (harvest, sell-by, spoilage risk, kg open/declared, status, code; ascending or descending) and the product/status filters, kept in the URL. The list headers sort on click. The calendar shows each batch's **spoilage risk** score next to its name and as an underline on its bar (details in the tooltip), the month and year above the days, full dates with the year, and moves by week or by **month**, or jumps to a chosen date.
+
 ## Not done yet
 
 - Backend API and persistence for batches, demands, matches, orders and deliveries; matching should move server-side.
 - Real AI insight generation and data sources (e.g. a weather API such as Open-Meteo, market price feeds).
 - Live vehicle positions and sensor readings for deliveries.
-- Producer profile editing.
+- Offers to buyers outside the demo accounts are answered by a simulation; reservations made in the buyer area do not reach this area yet.

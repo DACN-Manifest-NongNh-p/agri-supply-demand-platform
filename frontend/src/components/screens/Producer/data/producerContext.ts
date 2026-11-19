@@ -19,11 +19,13 @@ export type ProducerState = {
   addBatches: (batches: Omit<Batch, "code" | "allocatedKg" | "status">[]) => string[];
   outcomes: Record<string, TaskOutcome>;
   resolveTask: (task: Task, outcome: TaskOutcome) => void;
-  /** demandId → batch code for offers sent in this session. */
+  /** demandId → batch code of the latest offer on it (open or accepted). */
   offers: Record<string, string>;
-  /** Offers a batch to a matched demand; it shows up in Orders as "Offered". */
-  offer: (demandId: string, batchCode: string) => void;
-  /** The buyer's answer to an offer, by demand id (in the demo the buyer accepts a few seconds later). */
+  /** demandId → id of that offer, for links to the order. */
+  offerIds: Record<string, string>;
+  /** Opens the offer form, pre-filled with a demand, a batch or a buyer; offers land in Orders. */
+  offer: (demandId?: string, batchCode?: string, buyer?: string) => void;
+  /** The buyer's answer to the latest offer, by demand id. */
   offerAnswers: Record<string, "confirmed" | "declined">;
   /** Every order on the farm's batches, stages kept in sync with resolved tasks and offers. */
   orders: ProducerOrder[];

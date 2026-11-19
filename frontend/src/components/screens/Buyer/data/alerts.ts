@@ -9,7 +9,7 @@ export type AlertTone = "urgent" | "warning" | "info";
 
 export type BuyerAlert = {
   id: string;
-  kind: "short" | "waiting" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue" | "offer" | "confirmed" | "lock_expired";
+  kind: "short" | "waiting" | "supply_issue" | "hold_expiring" | "freshness" | "delivery_issue" | "offer" | "confirmed" | "lock_expired" | "message";
   tone: AlertTone;
   /** One plain sentence: what is wrong. */
   title: string;
@@ -75,12 +75,14 @@ export function buildAlerts({ demands, allocations, supply, deliveries, delivery
     const open = allocation.stage === "held" || allocation.stage === "confirmed";
 
     // A producer offered a batch to one of your demands: your answer is needed.
-    if (allocation.stage === "offered") {
+    // (Not while the producer is answering your own proposal: closedNote says so.)
+    if (allocation.stage === "offered" && !allocation.closedNote) {
       alerts.push({
-        id: `offer-${allocation.id}`,
+        // New terms from the producer raise a new alert.
+        id: `offer-${allocation.id}-${allocation.kg}-${allocation.pricePerKg ?? 0}`,
         kind: "offer",
         tone: "warning",
-        title: `${allocation.producer} offered ${formatKg(allocation.kg)} for ${allocation.demandId}`,
+        title: `${allocation.producer} offered ${formatKg(allocation.kg)}${allocation.demandId ? ` for ${allocation.demandId}` : ""}`,
         detail: `${allocation.batchCode} · expires in ${allocation.offerHoursLeft ?? "–"} h. Accept and pay the deposit to confirm the order.`,
         link: { label: "Review offer", to: `/buyer/orders?tab=offered#order-${allocation.id}` },
       });

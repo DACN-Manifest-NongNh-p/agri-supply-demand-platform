@@ -113,6 +113,10 @@ The list is derived from current data (`data/queue.ts`), not stored, so it updat
 
 On the overview panel, urgent items are listed one by one with a one-line caption. The full text is on the page each opens. Everything else is folded into one row per kind, such as "2 holds about to lapse" with the items named underneath. A kind with a single item shows that item and opens it directly.
 
+## Map
+
+Every pin on the overview map shows its details **on hover** (on a phone, on tap), without having to click: a farm area or province lists its open batches (kilograms, sell-by date, producer, coloured by spoilage risk), a buyer city lists its open demands (kilograms, deadline, best batch or *no supply*), a truck shows its load, carrier and ETA. Each row opens the detail drawer. Labels also show what each pin holds per product. Clicking a province still zooms in; clicking another pin keeps its popup open.
+
 ## Matching
 
 **Needs your decision** shows only the proposals the system would not hold on its own. Each card shows:
@@ -125,7 +129,14 @@ It also warns when the producer reported a problem with the batch, and when the 
 
 **Approve X kg** holds the smaller of the demand's open quantity and the batch's open quantity; anything left stays open. **Other batches** lists the alternatives with their score and lets the coordinator use one instead.
 
-**Gaps** lists demands with no supply (with the reason and an **Ask producers for supply** action) and **unsold supply**: first every batch that must sell within 3 days, whatever the reason (no demand accepts it, or it fits a demand that needs a decision or is not held yet, with a link to that demand), then batches no demand accepts that have more time. Each shows the kilograms left, the sell-by date with the days left (red for today or tomorrow), and why nobody has bought it.
+**Gaps** has search, product and area filters, sorting (most urgent, largest, product) and a **Cards / List** switch, all kept in the URL. Each gap opens a resolver:
+
+- **Demand with no supply → Find supply.** *Past suppliers* (producers who supplied this buyer, or this product to others, with their last order, kilograms and rating) and *New suppliers* (producers who list the product but never sold it here). For each, their batches of the product and the rule each one misses, **Offer to the buyer** on the producer's behalf, **Ask to declare supply** and **Mark contacted**; plus **Ask buyer to relax criteria** and **Combine farms** (Rescue).
+- **Unsold supply → Find a buyer.** *Past buyers* (who bought this product, or from this producer) and *New buyers*, with their open demand for the product and how the batch fits; **Offer for D-xxx**, **Direct offer**, **Mark contacted**, and **Rescue options**.
+
+Offers sent from here appear in the producer's and buyer's areas like any other offer, marked as sent by Farmora, and their status shows in the resolver. Every action and note is logged on the gap, and its latest action shows as a badge; **Mark resolved** closes it.
+
+The original lists are still there: demands with no supply (with the reason and an **Ask all producers** action) and **unsold supply**: first every batch that must sell within 3 days, whatever the reason (no demand accepts it, or it fits a demand that needs a decision or is not held yet, with a link to that demand), then batches no demand accepts that have more time. Each shows the kilograms left, the sell-by date with the days left (red for today or tomorrow), and why nobody has bought it.
 
 **Holds** lists every hold waiting on a producer: who made it (the system with its score, or the coordinator) and the time left. **Extend 12 h** gives the producer more time. **Release** gives the quantity back and overrides the match: that demand and batch are not paired again, and the demand moves on to its next batch.
 

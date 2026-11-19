@@ -1,12 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { TopBar } from "./sections/TopBar";
 import type { TaskOutcome } from "./sections/AttentionList";
-import { batches as initialBatches, demands, tasks, type BatchStatus, type Task } from "./data/mockProducer";
+import { batches as initialBatches, demands, producer, tasks, type BatchStatus, type Task } from "./data/mockProducer";
+import { matchDemand } from "./data/matching";
+import { formatDay, formatKg } from "./data/format";
+import { MatchScore } from "./sections/MatchScore";
+import { PartyDrawer } from "@/components/parties/PartyDrawer";
+import { useAnnouncementNotices } from "@/components/notifications/announcements";
+import { useMessageNotices, useRoutedNotices, type EventNotice } from "@/components/notifications/useRoutedNotices";
+import { useProfile } from "@/components/profile/profileStore";
+import { formatVnd } from "./data/format";
 import type { ProducerState } from "./data/producerContext";
 import type { DeliveryIssue } from "./data/deliveries";
-import { orderStage, orders as placedOrders, type ProducerOrder } from "./data/orders";
+import { orderFromOffer, orderStage, orders as placedOrders, type ProducerOrder } from "./data/orders";
 import { OfferSentNotice } from "./sections/OfferSentNotice";
+import { OfferComposer, type ComposerStart } from "./sections/OfferComposer";
+import { acceptedKg, useOfferSimulation, useOffers } from "@/lib/offerStore";
+import { useMessageSimulation } from "@/lib/messageStore";
+import { partyId } from "@/lib/parties";
 import { useAuctionSimulation } from "@/components/auction/useAuctionSimulation";
 import { getSite } from "@/lib/site";
 import { RiskToasts } from "@/components/freshness/RiskToasts";
@@ -15,26 +27,31 @@ import "./styles/ProducerHome.css";
 import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 import { ProfileNudge } from "@/components/profile/ProfileNudge";
 
-/**
- * Demo only: the areas do not share state, so a buyer cannot really answer an offer sent from here.
- * The buyer "accepts" a few seconds later instead, so the order moves on and the popup shows it.
- */
-const BUYER_REPLY_MS = 6000;
-
 /** Shell for all producer pages: top bar plus the demo state shared between them. */
 export default function ProducerLayout() {
-  const [batches, setBatches] = useState(initialBatches);
+  const [baseBatches, setBatches] = useState(initialBatches);
   const [outcomes, setOutcomes] = useState<Record<string, TaskOutcome>>({});
-  const [offers, setOffers] = useState<Record<string, string>>({});
-  const [offerAnswers, setOfferAnswers] = useState<Record<string, "confirmed" | "declined">>({});
-  /** The offer just sent, shown in a popup until closed. */
-  const [sentOffer, setSentOffer] = useState<string | null>(null);
-  const replyTimers = useRef<number[]>([]);
+  /** The offer form, open with what it was started from. */
+  const [composer, setComposer] = useState<ComposerStart | null>(null);
+  /** The offers just sent, shown in a popup until closed. */
+  const [sentOffers, setSentOffers] = useState<string[] | null>(null);
+  // Offers live in the shared store, so the buyer area answers the same ones.
+  const myOffers = useOffers().filter((item) => partyId(item.producer) === partyId(producer.name));
+  // Kilograms buyers accepted from an offer are allocated on the batch.
+  const batches = baseBatches.map((batch) => {
+    const taken = acceptedKg(batch.code);
+    if (!taken) return batch;
+    const allocatedKg = Math.min(batch.quantityKg, batch.allocatedKg + taken);
+    return { ...batch, allocatedKg, status: batch.status === "ready" || batch.status === "expected" ? ("allocated" as const) : batch.status };
+  });
   const [issues, setIssues] = useState<Record<string, string>>({});
   const [deliveryIssues, setDeliveryIssues] = useState<Record<string, DeliveryIssue>>({});
   const location = useLocation();
   // Demo: other buyers bid on the open pre-harvest auctions, and auctions close on time.
   useAuctionSimulation();
+  // Demo: buyers other than GreenBasket answer offers and messages after a few seconds.
+  useOfferSimulation();
+  useMessageSimulation();
   const [hiddenToasts, setHiddenToasts] = useState<Record<string, boolean>>({});
 
   // The farm's unsold kilograms, watched for spoilage risk; alerts pop up without a reload.
@@ -56,11 +73,6 @@ export default function ProducerLayout() {
     .filter((item) => coldChain.has(item.product) && item.sellByDay >= 1 && item.harvestDay <= 0)
     .sort((a, b) => a.sellByDay - b.sellByDay)[0]?.code;
   const spoilage = useSpoilageAlerts(watched, excursionCode);
-
-  useEffect(() => {
-    const timers = replyTimers.current;
-    return () => timers.forEach((timer) => window.clearTimeout(timer));
-  }, []);
 
   // Router navigation does not scroll on its own: jump to #section links, otherwise to the top.
   useEffect(() => {
@@ -87,16 +99,20 @@ export default function ProducerLayout() {
 
   const addBatch: ProducerState["addBatch"] = (draft) => addBatches([draft])[0];
 
-  const offer = (demandId: string, batchCode: string) => {
-    setOffers((current) => ({ ...current, [demandId]: batchCode }));
-    setSentOffer(demandId);
-    replyTimers.current.push(
-      window.setTimeout(() => {
-        setOfferAnswers((current) => ({ ...current, [demandId]: "confirmed" }));
-        setStatus(batchCode, "allocated");
-      }, BUYER_REPLY_MS),
-    );
-  };
+  const offer: ProducerState["offer"] = (demandId, batchCode, buyer) => setComposer({ demandId, batchCode, buyer });
+
+  // The latest offer per demand (offers are newest last in the store), for the match cards.
+  const offers: Record<string, string> = {};
+  const offerIds: Record<string, string> = {};
+  const offerAnswers: Record<string, "confirmed" | "declined"> = {};
+  for (const item of myOffers) {
+    if (!item.demandId || item.status === "withdrawn" || item.status === "expired") continue;
+    offers[item.demandId] = item.batchCode;
+    offerIds[item.demandId] = item.id;
+    if (item.status === "accepted") offerAnswers[item.demandId] = "confirmed";
+    else if (item.status === "declined") offerAnswers[item.demandId] = "declined";
+    else delete offerAnswers[item.demandId];
+  }
 
   const resolveTask = (task: Task, outcome: TaskOutcome) => {
     setOutcomes((current) => ({ ...current, [task.id]: outcome }));
@@ -112,31 +128,42 @@ export default function ProducerLayout() {
 
   const openTasks = tasks.filter((task) => !outcomes[task.id]).length;
 
-  // One list for the whole life of a sale: placed orders with their current stage, then this
-  // session's offers, which wait for the buyer.
+  // The bell: home-page tasks, answers to offers, messages, freshness and Farmora announcements,
+  // routed by the notification settings (some events may go by SMS or email instead).
+  const [dismissedNotices, setDismissedNotices] = useState<Record<string, boolean>>({});
+  const announcements = useAnnouncementNotices("PRODUCER");
+  const messageNotices = useMessageNotices("producer", producer.name);
+  const profile = useProfile("producer");
+  const taskNotices: EventNotice[] = tasks
+    .filter((task) => !outcomes[task.id])
+    .map((task) =>
+      task.kind === "confirm_allocation"
+        ? { id: `task-${task.id}`, event: "order", tone: task.dueInHours <= 6 ? "urgent" : "warning", title: `Confirm ${formatKg(task.quantityKg)} of ${task.batch} for ${task.buyer}`, detail: `${task.dueInHours} h left to answer the reservation.`, link: { label: "Open orders", to: "/producer/orders?tab=to_confirm" } }
+        : task.kind === "hold_expiring"
+          ? { id: `task-${task.id}`, event: "hold", tone: "warning", title: `Hold on ${task.batch} for ${task.buyer} runs out`, detail: `${task.dueInHours} h left.`, link: { label: "See tasks", to: "/producer#attention" } }
+          : { id: `task-${task.id}`, event: "order", tone: "info", title: `Update ${task.batch}`, detail: `Move it from ${task.from.replace("_", " ")} to ${task.to.replace("_", " ")}.`, link: { label: "See tasks", to: "/producer#attention" } },
+    );
+  const offerNotices: EventNotice[] = myOffers.flatMap((item): EventNotice[] => {
+    const id = `offer-${item.id}-${item.status}-${item.events.length}`;
+    const link = { label: "Open offer", to: `/producer/orders#order-${item.id}` };
+    if (item.status === "countered" && item.proposal)
+      return [{ id, event: "offer_reply", tone: "warning", title: `${item.buyer} proposed new terms for ${item.batchCode}`, detail: `${formatKg(item.proposal.kg)} at ${formatVnd(item.proposal.pricePerKg)}/kg instead of ${formatVnd(item.pricePerKg)}/kg.`, link }];
+    if (item.status === "accepted") return [{ id, event: "offer_reply", tone: "info", title: `${item.buyer} accepted ${formatKg(item.kg)} of ${item.batchCode}`, detail: "The deposit is paid; a truck is being booked.", link }];
+    if (item.status === "declined") return [{ id, event: "offer_reply", tone: "info", title: `${item.buyer} declined your offer on ${item.batchCode}`, detail: item.events.at(-1)?.text ?? "The kilograms are yours to offer again.", link }];
+    return [];
+  });
+  const spoilageNotices: EventNotice[] = spoilage.alerts.map((alert) => ({ id: `risk-${alert.id}`, event: "spoilage", tone: alert.score >= 70 ? "urgent" : "warning", title: alert.title, detail: alert.detail, link: { label: "Find buyers", to: alert.to } }));
+  const notices = useRoutedNotices(
+    "producer",
+    [...announcements.notices.map((notice) => ({ ...notice, event: "coordinator" as const })), ...taskNotices, ...offerNotices, ...messageNotices, ...spoilageNotices],
+    { email: profile.email, phone: profile.phone },
+  ).filter((notice) => !dismissedNotices[notice.id]);
+
+  // One list for the whole life of a sale: placed orders with their current stage, then the offers
+  // sent from here (or by a coordinator for this farm), newest first.
   const orders: ProducerOrder[] = [
     ...placedOrders.map((order) => ({ ...order, stage: orderStage(order, outcomes) })),
-    ...Object.entries(offers).flatMap(([demandId, batch]) => {
-      const demand = demands.find((item) => item.id === demandId);
-      return demand
-        ? [
-            {
-              id: `OF-${demandId}`,
-              demandId,
-              buyer: demand.buyer,
-              buyerType: demand.buyerType,
-              product: demand.product,
-              batch,
-              quantityKg: demand.quantityKg,
-              neededByDay: demand.neededByDay,
-              destination: demand.destination,
-              placedDay: 0,
-              stage: offerAnswers[demandId] ?? ("offered" as const),
-              origin: "producer" as const,
-            },
-          ]
-        : [];
-    }),
+    ...[...myOffers].reverse().map(orderFromOffer),
   ];
 
   const state: ProducerState = {
@@ -149,6 +176,7 @@ export default function ProducerLayout() {
     outcomes,
     resolveTask,
     offers,
+    offerIds,
     offer,
     offerAnswers,
     orders,
@@ -161,7 +189,13 @@ export default function ProducerLayout() {
 
   return (
     <div className="producer-home" id="top">
-      <TopBar openTasks={openTasks} ordersToConfirm={orders.filter((order) => order.stage === "to_confirm").length} />
+      <TopBar
+        ordersToConfirm={orders.filter((order) => order.stage === "to_confirm").length}
+        notices={notices}
+        onDismiss={(id) => {
+          if (!announcements.dismiss(id)) setDismissedNotices((current) => ({ ...current, [id]: true }));
+        }}
+      />
       <AnnouncementBanner audience="PRODUCER" />
       <ProfileNudge area="producer" />
       <Outlet context={state} />
@@ -170,9 +204,63 @@ export default function ProducerLayout() {
         onDismiss={(id) => setHiddenToasts((current) => ({ ...current, [id]: true }))}
         actionLabel="Find buyers"
       />
-      {sentOffer && orders.some((order) => order.id === `OF-${sentOffer}`) && (
-        <OfferSentNotice order={orders.find((order) => order.id === `OF-${sentOffer}`)!} onClose={() => setSentOffer(null)} />
+      <PartyDrawer
+        viewer={{ area: "producer", self: producer.name }}
+        extra={(party) =>
+          party.role === "buyer" ? (
+            <>
+              <button type="button" className="ph-btn" onClick={() => offer(undefined, undefined, party.name)}>
+                Send an offer
+              </button>
+              <BuyerDemands buyer={party.name} batches={batches} onOffer={(demandId, code) => offer(demandId, code, party.name)} />
+            </>
+          ) : null
+        }
+      />
+      {composer && (
+        <OfferComposer
+          batches={batches}
+          start={composer}
+          onClose={() => setComposer(null)}
+          onSent={(ids) => {
+            setComposer(null);
+            setSentOffers(ids);
+          }}
+        />
       )}
+      {sentOffers && <OfferSentNotice offerIds={sentOffers} onClose={() => setSentOffers(null)} />}
     </div>
+  );
+}
+
+/** In the buyer card: what this buyer is asking for right now, and how well your batches fit. */
+function BuyerDemands({ buyer, batches, onOffer }: { buyer: string; batches: ProducerState["batches"]; onOffer: (demandId: string, batchCode?: string) => void }) {
+  const open = demands.filter((demand) => demand.buyer === buyer);
+  return (
+    <section className="pt-section" style={{ flexBasis: "100%" }} aria-label="Open demand">
+      <h3>Open demand</h3>
+      {open.length === 0 ? (
+        <p className="ph-muted">No open demand from this buyer. You can still send a direct offer.</p>
+      ) : (
+        <ul className="pt-demands">
+          {open.map((demand) => {
+            const best = matchDemand(demand, batches).best;
+            return (
+              <li key={demand.id}>
+                <span>
+                  <strong>{demand.id}</strong> · {formatKg(demand.quantityKg)} {demand.product.toLowerCase()}, {demand.gradeWanted} · by {formatDay(demand.neededByDay)}
+                </span>
+                <span className="pt-actions">
+                  {best && <MatchScore score={best.score} />}
+                  <button type="button" className="ph-link-btn" onClick={() => onOffer(demand.id, best?.batch.code)}>
+                    Offer {best ? best.batch.code : "a batch"}
+                  </button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

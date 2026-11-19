@@ -4,6 +4,7 @@
 // coordinator areas (A-6 is the Phu Tho hold on B-102; S-301, S-303, S-296, S-288 are the trips).
 import type { TaskOutcome } from "../sections/AttentionList";
 import type { OrderTone } from "@/components/orders/LifecycleSteps";
+import { hoursLeft, type Offer } from "@/lib/offerStore";
 
 export type OrderStage = "offered" | "to_confirm" | "confirmed" | "in_transit" | "delivered" | "declined";
 
@@ -39,7 +40,34 @@ export type ProducerOrder = {
   /** The "confirm allocation" task on the home page that settles this order. */
   taskId?: string;
   deliveryId?: string;
+  /** The offer behind it, for orders the producer offered (lib/offerStore). */
+  offerId?: string;
+  pricePerKg?: number;
 };
+
+/** An offer from the shared store as a row of the producer's orders. */
+export function orderFromOffer(offer: Offer): ProducerOrder {
+  const stage: OrderStage =
+    offer.status === "sent" ? "offered" : offer.status === "countered" ? "to_confirm" : offer.status === "accepted" ? "confirmed" : "declined";
+  return {
+    id: offer.id,
+    demandId: offer.demandId ?? "Direct offer",
+    buyer: offer.buyer,
+    buyerType: "",
+    product: offer.product,
+    batch: offer.batchCode,
+    quantityKg: offer.kg,
+    neededByDay: offer.neededByDay ?? 0,
+    destination: offer.destination ?? "",
+    placedDay: 0,
+    stage,
+    confirmWithinHours: stage === "to_confirm" ? hoursLeft(offer) : undefined,
+    depositPaid: offer.status === "accepted",
+    origin: "producer",
+    offerId: offer.id,
+    pricePerKg: offer.pricePerKg,
+  };
+}
 
 export const orders: ProducerOrder[] = [
   {
@@ -140,7 +168,9 @@ export function producerStepIndex(stage: OrderStage) {
 export function producerNextStep(order: ProducerOrder) {
   switch (order.stage) {
     case "to_confirm":
-      return `Your answer · ${order.confirmWithinHours ?? "–"} h left`;
+      return order.offerId
+        ? `${order.buyer} proposed new terms · your answer`
+        : `Your answer · ${order.confirmWithinHours ?? "–"} h left`;
     case "offered":
       return `${order.buyer} decides`;
     case "confirmed":
@@ -169,11 +199,11 @@ export type ProducerOrderTab = "to_confirm" | "offered" | "confirmed" | "deliver
 
 /** Tabs of the Orders page, in lifecycle order. */
 export const PRODUCER_ORDER_TABS: { id: ProducerOrderTab; label: string; hint: string; empty: string }[] = [
-  { id: "to_confirm", label: "To confirm", hint: "Buyers reserved these batches. Confirm to make the order final, or decline to put the kilograms back on the market.", empty: "No order waits for your confirmation." },
+  { id: "to_confirm", label: "To confirm", hint: "Waiting for your answer: buyers reserved these batches, or proposed other terms on your offer. Confirm, propose again, or decline to put the kilograms back on the market.", empty: "No order waits for your confirmation." },
   { id: "offered", label: "Offered", hint: "You offered these batches to buyers. The order is confirmed when the buyer accepts.", empty: "No offers waiting for a buyer. Offer a batch from Matches." },
   { id: "confirmed", label: "Confirmed", hint: "Both sides agreed. A truck is being booked to pick the batch up at your packhouse.", empty: "No confirmed orders waiting for pickup." },
   { id: "deliveries", label: "Deliveries", hint: "Confirmed orders once a truck picks them up, to the buyer's signature. Problems first.", empty: "No deliveries yet." },
-  { id: "declined", label: "Declined", hint: "Orders you declined or offers the buyer turned down.", empty: "Nothing declined." },
+  { id: "declined", label: "Closed", hint: "Orders you declined, offers the buyer turned down, and offers withdrawn or expired.", empty: "Nothing declined." },
 ];
 
 /** The tab an order of this stage is listed under; on the way and delivered share Deliveries. */

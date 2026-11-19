@@ -5,6 +5,7 @@ import { demands } from "../data/mockProducer";
 import { useProducer } from "../data/producerContext";
 import { formatDay, formatKg } from "../data/format";
 import { MatchScore, ScoreRing } from "./MatchScore";
+import { PartyLink } from "@/components/parties/PartyLink";
 
 const CRITERION_ICON = { pass: Check, partial: Minus, fail: X } satisfies Record<CriterionState, typeof Check>;
 const MORE_COUNT = 3;
@@ -14,7 +15,7 @@ type Props = {
   offers: Record<string, string>;
   /** The buyer's answer to each offer, by demand id. */
   answers: Record<string, "confirmed" | "declined">;
-  onOffer: (demandId: string, batchCode: string) => void;
+  onOffer: (demandId?: string, batchCode?: string) => void;
 };
 
 /** The centrepiece of the producer home: system-generated matches, best one featured. */
@@ -51,7 +52,7 @@ export function MatchHero({ matches, offers, answers, onOffer }: Props) {
               {others.map(({ demand, best }) => (
                 <li key={demand.id}>
                   <div>
-                    <p className="ph-match-more-buyer">{demand.buyer}</p>
+                    <p className="ph-match-more-buyer"><PartyLink name={demand.buyer} role="buyer" /></p>
                     <p className="ph-match-more-meta">
                       {formatKg(demand.quantityKg)} {demand.product} · {best?.batch.code}
                     </p>
@@ -82,6 +83,7 @@ export function MatchHero({ matches, offers, answers, onOffer }: Props) {
 }
 
 function FeaturedMatch({ match, offered, answers, onOffer }: { match: MatchResult; offered?: string; answers: Props["answers"]; onOffer: Props["onOffer"] }) {
+  const { offerIds } = useProducer();
   const { demand, best } = match;
   if (!best) return null;
   const batch = best.batch;
@@ -93,7 +95,7 @@ function FeaturedMatch({ match, offered, answers, onOffer }: { match: MatchResul
       <div className="ph-featured-pair">
         <div className="ph-featured-side">
           <p className="ph-featured-kicker"><Store size={14} /> Buyer demand</p>
-          <p className="ph-featured-name">{demand.buyer}</p>
+          <p className="ph-featured-name"><PartyLink name={demand.buyer} role="buyer" /></p>
           <p className="ph-featured-big">{formatKg(demand.quantityKg)}</p>
           <p className="ph-featured-meta">
             {demand.product} · {demand.gradeWanted}
@@ -135,11 +137,16 @@ function FeaturedMatch({ match, offered, answers, onOffer }: { match: MatchResul
         {offered ? (
           <span className="ph-offered">
             <CircleCheck size={16} /> {answers[demand.id] === "confirmed" ? `${demand.buyer} accepted ${offered}` : `Offered ${offered} · waiting for ${demand.buyer}`} ·{" "}
-            <Link to={`/producer/orders#order-OF-${demand.id}`}>View order</Link>
+            <Link to={`/producer/orders#order-${offerIds[demand.id]}`}>View order</Link>
           </span>
         ) : (
           <button type="button" className="ph-btn ph-btn--primary ph-btn--large" onClick={() => onOffer(demand.id, batch.code)}>
             Offer {batch.code} to {demand.buyer}
+          </button>
+        )}
+        {!offered && (
+          <button type="button" className="ph-btn ph-btn--large" onClick={() => onOffer(undefined, batch.code)}>
+            Offer to several buyers
           </button>
         )}
         <Link to={`/producer/demand?open=${demand.id}`} className="ph-link-btn">

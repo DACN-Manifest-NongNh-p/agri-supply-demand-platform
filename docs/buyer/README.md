@@ -315,6 +315,13 @@ Same delivery views as the producer (route map with a live Cold chain block, sum
 | `data/buyerContext.ts` | `useBuyer()` and the shared state type |
 | `styles/Buyer.css` | Buyer-only styles; the area also loads `Producer/styles/ProducerHome.css` |
 
+## Offers, negotiation and producers
+
+- Producer offers come from the shared offer store, so an offer Hoa Phat sends in the producer area appears here (Orders → **Offers**, and under the bell). Offers can also come with no demand attached ("direct offer").
+- Each offer shows the producer's note and a discussion. **Accept · pay deposit** confirms it at the offer's price; **Propose other terms** sends kilograms and a price back to the producer, who agrees, re-proposes or declines; **Decline** closes it. If another buyer accepted first, the payment is refused and nothing is charged.
+- Producer names open the **producer card** (published details, history together, reviews) with **Message**.
+- **Messages** in the top bar; notification settings on the profile page, as for producers.
+
 ## Not done yet
 
 - Backend API and persistence for demands, holds, offers, orders and deliveries; matching, hold and offer expiry should run server-side, and producers' answers should come from the producer area instead of the demo timer.
