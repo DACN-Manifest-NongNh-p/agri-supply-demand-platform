@@ -97,8 +97,17 @@ function nextId(prefix: string) {
 }
 const log = (by: Actor, action: string, note?: string): HistoryEntry => ({ at: Date.now(), by, action, note });
 
-function notify(title: string, body: string, to?: string, tone: Notice["tone"] = "info") {
-  set((current) => ({ ...current, notices: [{ id: `SN-${Date.now()}-${current.notices.length}`, title, body, to, tone, at: Date.now() } as Notice, ...current.notices].slice(0, 30) }));
+function notify(title: string, detail: string, to?: string, tone: "info" | "warning" | "urgent" = "info") {
+  set((current) => ({
+    ...current,
+    notices: [{
+      id: `SN-${Date.now()}-${current.notices.length}`,
+      title,
+      detail,
+      tone,
+      ...(to ? { link: { label: "Open", to } } : {}),
+    }, ...current.notices].slice(0, 30),
+  }));
 }
 export function dismissNotice(id: string) {
   set((current) => ({ ...current, notices: current.notices.filter((notice) => notice.id !== id) }));
@@ -153,7 +162,7 @@ const commit = (code: string, kg: number) => patchLot(code, (lot) => ({ reserved
 function createTransaction(input: Omit<SupplierTransaction, "code" | "status" | "createdAt" | "total">) {
   const code = nextId("TX");
   set((current) => ({ ...current, transactions: [{ ...input, code, total: input.quantity * input.price, status: "CONFIRMED", createdAt: Date.now() }, ...current.transactions] }));
-  notify("Transaction created", `${input.quantity.toLocaleString("en-GB")} kg ${input.crop.toLowerCase()} with ${input.buyer}.`, `/producer/transactions/${code}`, "good");
+  notify("Transaction created", `${input.quantity.toLocaleString("en-GB")} kg ${input.crop.toLowerCase()} with ${input.buyer}.`, `/producer/transactions/${code}`);
   return code;
 }
 
@@ -209,7 +218,7 @@ export function addDoc(target: "profile" | string, type: string, name: string) {
 /** Demo only: the coordinator's decision. */
 export function demoDecideIdentity(status: "VERIFIED" | "NEEDS_ADDITIONAL_INFORMATION" | "REJECTED", note?: string) {
   set((current) => ({ ...current, profile: { ...current.profile, status, coordinatorNote: note, history: [...current.profile.history, log("COORDINATOR", status === "VERIFIED" ? "Verified" : status === "REJECTED" ? "Rejected" : "Needs more information", note)] } }));
-  notify("Identity verification", status === "VERIFIED" ? "Your identity is verified. You can declare production areas." : note ?? "The coordinator answered.", "/producer/verification", status === "VERIFIED" ? "good" : "warn");
+  notify("Identity verification", status === "VERIFIED" ? "Your identity is verified. You can declare production areas." : note ?? "The coordinator answered.", "/producer/verification", status === "VERIFIED" ? "info" : "warning");
 }
 
 // ── B0 production areas ─────────────────────────────────────────────────────
@@ -258,7 +267,7 @@ export function demoDecideArea(code: string, status: "VERIFIED" | "NEEDS_ADDITIO
     ...current,
     areas: current.areas.map((area) => (area.code === code ? { ...area, status, coordinatorNote: note, pucVerified: status === "VERIFIED" && !!area.puc, history: [...area.history, log("COORDINATOR", status === "VERIFIED" ? "Verified" : status === "REJECTED" ? "Rejected" : "Needs more information", note)] } : area)),
   }));
-  notify("Production area", status === "VERIFIED" ? `${code} is verified.` : note ?? `${code}: the coordinator answered.`, "/producer/verification", status === "VERIFIED" ? "good" : "warn");
+  notify("Production area", status === "VERIFIED" ? `${code} is verified.` : note ?? `${code}: the coordinator answered.`, "/producer/verification", status === "VERIFIED" ? "info" : "warning");
 }
 
 export const emptyCrop = (): AreaCrop => ({ id: `C-${Math.random().toString(36).slice(2, 7)}`, crop: "", variety: "", hectares: 0, method: "", season: "", plantingFrom: "", harvestFrom: "", expectedYield: 0 });
@@ -574,7 +583,7 @@ export function runSupplierSession(slot: SessionSlot) {
       matches: [match, ...current.matches],
       sellOrders: current.sellOrders.map((item) => (item.code === order.code ? { ...item, remaining, status: remaining === 0 ? "FILLED" : "PARTIALLY_FILLED", history: [...item.history, log("SYSTEM", `Matched ${quantity.toLocaleString("en-GB")} kg`, `${slot.code} · ${price.toLocaleString("en-GB")} ₫/kg`)] } : item)),
     }));
-    notify("New match result", `${quantity.toLocaleString("en-GB")} kg ${order.crop.toLowerCase()} to ${buyer} at ${price.toLocaleString("en-GB")} ₫/kg. Confirm it.`, "/producer/sell-orders?tab=results", "warn");
+    notify("New match result", `${quantity.toLocaleString("en-GB")} kg ${order.crop.toLowerCase()} to ${buyer} at ${price.toLocaleString("en-GB")} ₫/kg. Confirm it.`, "/producer/sell-orders?tab=results", "warning");
     later(6000, () => {
       const current = state.matches.find((item) => item.code === code);
       if (!current || current.buyerSide !== "PENDING") return;
@@ -644,7 +653,7 @@ function simulateAward(code: string, quantity: number, price: number) {
     }
     reserve(lot.code, quantity);
     set((current) => ({ ...current, proposals: current.proposals.map((item) => (item.code === code ? { ...item, award: { quantity, price, deadline: Date.now() + confirmHours() * HOUR, status: "PENDING_SUPPLIER_CONFIRMATION" }, history: [...item.history, log("BUYER", "Confirmed the award", `${quantity.toLocaleString("en-GB")} kg · ${price.toLocaleString("en-GB")} ₫/kg`)] } : item)) }));
-    notify("You were awarded", `${quantity.toLocaleString("en-GB")} kg at ${price.toLocaleString("en-GB")} ₫/kg. Confirm it.`, `/producer/demands/${proposal.demandCode}`, "warn");
+    notify("You were awarded", `${quantity.toLocaleString("en-GB")} kg at ${price.toLocaleString("en-GB")} ₫/kg. Confirm it.`, `/producer/demands/${proposal.demandCode}`, "warning");
   });
 }
 
@@ -763,7 +772,7 @@ function endAuction(code: string, reason: string, by: Actor) {
   const bids = state.bids.filter((bid) => bid.auctionCode === code && bid.status === "SUBMITTED");
   set((current) => ({ ...current, auctions: current.auctions.map((item) => (item.code === code ? { ...item, status: "ENDED", endedAt: Date.now(), endReason: reason, history: [...item.history, log(by, reason)] } : item)) }));
   if (bids.length === 0) closeAuction(code, "NO_WINNER", "No bids");
-  else notify("Auction ended", `${code} has ${bids.length} bid${bids.length === 1 ? "" : "s"}. Choose who gets how much.`, `/producer/auctions/${code}`, "warn");
+  else notify("Auction ended", `${code} has ${bids.length} bid${bids.length === 1 ? "" : "s"}. Choose who gets how much.`, `/producer/auctions/${code}`, "warning");
 }
 
 export function endEarly(code: string, reason: string): Result {
@@ -815,7 +824,7 @@ function answerAllocation(id: string, status: "CONFIRMED" | "DECLINED" | "EXPIRE
   if (status === "CONFIRMED") {
     commit(auction.lotCode, allocation.quantity);
     createTransaction({ mechanism: "SUPPLIER_LED_AUCTION", sourceRef: id, sourceParent: auction.code, buyer: allocation.buyer, lotCode: auction.lotCode, crop: auction.crop, variety: auction.variety, quantity: allocation.quantity, price: allocation.price, deliveryTerms: `${auction.deliveryLocation}${auction.deliveryTerms ? ` · ${auction.deliveryTerms}` : ""}` });
-  } else notify(status === "DECLINED" ? "A buyer declined" : "A result expired", `${allocation.buyer} ${status === "DECLINED" ? "declined" : "did not confirm"} ${allocation.quantity.toLocaleString("en-GB")} kg. You can choose a replacement bid.`, `/producer/auctions/${auction.code}`, "warn");
+  } else notify(status === "DECLINED" ? "A buyer declined" : "A result expired", `${allocation.buyer} ${status === "DECLINED" ? "declined" : "did not confirm"} ${allocation.quantity.toLocaleString("en-GB")} kg. You can choose a replacement bid.`, `/producer/auctions/${auction.code}`, "warning");
   set((current) => ({
     ...current,
     allocations: current.allocations.map((item) => (item.id === id ? { ...item, status } : item)),
