@@ -1,64 +1,9 @@
-import { ArrowRight, ArrowDown } from "lucide-react";
-import { Reveal, Eyebrow } from "./Reveal";
+import { ArrowRight } from "lucide-react";
+import { Reveal } from "./Reveal";
 import { Logo } from "./Nav";
 import { registerWithKeycloak } from "@/lib/keycloak";
-import rescueImage from "@/assets/rescue-produce.jpg";
 import "../styles/Rescue.css";
 import { useContent } from "@/lib/siteContent";
-
-function Flow({ steps, tone }: { steps: string[]; tone: "normal" | "risk" }) {
-  return (
-    <ul className="flow-list">
-      {steps.map((s, i) => (
-        <li key={s}>
-          <div className={tone === "risk" && i === 0 ? "flow-step flow-step--highlight" : "flow-step flow-step--normal"}>
-            {s}
-          </div>
-          {i < steps.length - 1 && <ArrowDown className="flow-arrow" />}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function Rescue() {
-  const c = useContent();
-  return (
-    <section className="rescue-section">
-      <div className="rescue-container">
-        <div className="rescue-grid">
-          <Reveal>
-            <Eyebrow className="rescue-eyebrow">Rescue</Eyebrow>
-            <h2 className="editorial rescue-title">{c("landing.rescue.title")}</h2>
-            <p className="rescue-intro">{c("landing.rescue.intro")}</p>
-            <img
-              src={rescueImage}
-              alt="Crates of watermelons and dragon fruit at a distribution yard"
-              loading="lazy"
-              width={1440}
-              height={960}
-              className="rescue-image"
-            />
-          </Reveal>
-
-          <Reveal delay={100} className="flow-cards">
-            <div className="flow-card flow-card--normal">
-              <p className="label-eyebrow flow-card-label flow-card-label--normal">Normal path</p>
-              <Flow steps={["Normal demand", "Match", "Delivery"]} tone="normal" />
-            </div>
-            <div className="flow-card flow-card--risk">
-              <p className="label-eyebrow flow-card-label flow-card-label--risk">When risk increases</p>
-              <Flow
-                steps={["High risk", "Alternative demand", "Redistribution", "Rescue"]}
-                tone="risk"
-              />
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export function FinalCTA() {
   const c = useContent();
@@ -73,7 +18,7 @@ export function FinalCTA() {
               {c("landing.cta.primary")}
               <ArrowRight className="cta-primary-icon" />
             </button>
-            <a href="#coordination" className="cta-secondary">{c("landing.cta.secondary")}</a>
+            <a href="#order-matching" className="cta-secondary">{c("landing.cta.secondary")}</a>
           </div>
         </Reveal>
       </div>
@@ -85,8 +30,9 @@ export function Footer() {
   const links = [
     ["Home", "#top"],
     ["How It Works", "#how-it-works"],
-    ["Platform", "#platform"],
-    ["About", "#about"],
+    ["Order matching", "#order-matching"],
+    ["Procurement", "#procurement"],
+    ["Auctions", "#auction"],
   ];
 
   return (
@@ -97,8 +43,8 @@ export function Footer() {
             <Logo />
 
             <p>
-              Connecting agricultural supply, demand, and logistics
-              through timely data and smarter coordination.
+              A market for agricultural produce where verified buyers and
+              suppliers trade real supply lots and confirm every deal.
             </p>
           </div>
 
@@ -118,7 +64,7 @@ export function Footer() {
           <span>© {new Date().getFullYear()} Farmora</span>
 
           <span>
-            Supply · Demand · Time · Coordination
+            Verify · Trade · Confirm · Deliver
           </span>
         </div>
       </div>

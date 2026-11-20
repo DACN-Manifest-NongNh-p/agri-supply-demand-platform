@@ -1,14 +1,14 @@
 import { ArrowRight, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProfilePage } from "@/components/profile/ProfilePage";
-import { useBuyer } from "./data/buyerContext";
+import { useBuyerData } from "./model/store";
 
 function DeliveryPointsCard() {
-  const { addresses } = useBuyer();
+  const { addresses } = useBuyerData();
   const main = addresses[0];
   return (
     <section className="ph-card pf-section" aria-labelledby="pf-points">
-      <Link to="/buyer/company" className="pf-aside-link">
+      <Link to="/buyer/delivery-points" className="pf-aside-link">
         <span>
           <h2 id="pf-points">Delivery points</h2>
           <p>

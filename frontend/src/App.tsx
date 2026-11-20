@@ -15,15 +15,19 @@ import BuyerLayout from './components/screens/Buyer/BuyerLayout'
 import BuyerHome from './components/screens/Buyer/BuyerHome'
 import DemandsPage from './components/screens/Buyer/DemandsPage'
 import DemandDetailPage from './components/screens/Buyer/DemandDetailPage'
-import NewDemandPage from './components/screens/Buyer/NewDemandPage'
+import DemandFormPage from './components/screens/Buyer/DemandFormPage'
+import DeliveryPointsPage from './components/screens/Buyer/DeliveryPointsPage'
+import MarketPage from './components/screens/Buyer/MarketPage'
+import LotDetailPage from './components/screens/Buyer/LotDetailPage'
+import BuyOrderFormPage from './components/screens/Buyer/BuyOrderFormPage'
+import BuyOrderDetailPage from './components/screens/Buyer/BuyOrderDetailPage'
+import { TransactionsPage, TransactionDetailPage } from './components/screens/Buyer/TransactionsPage'
 import CompanyPage from './components/screens/Buyer/CompanyPage'
 import BuyerProfilePage from './components/screens/Buyer/ProfilePage'
 import ProducerProfilePage from './components/screens/Producer/ProfilePage'
 import NewBatchPage from './components/screens/Producer/NewBatchPage'
 import NewAuctionPage from './components/screens/Producer/NewAuctionPage'
-import SupplyPage from './components/screens/Buyer/SupplyPage'
-import SupplyDetailPage from './components/screens/Buyer/SupplyDetailPage'
-import BuyerOrdersPage from './components/screens/Buyer/OrdersPage'
+import BuyOrdersPage from './components/screens/Buyer/BuyOrdersPage'
 import BuyerAuctionsPage from './components/screens/Buyer/AuctionsPage'
 import BuyerAuctionDetailPage from './components/screens/Buyer/AuctionDetailPage'
 import ProducerAuctionsPage from './components/screens/Producer/AuctionsPage'
@@ -108,19 +112,27 @@ function App() {
           }
         >
           <Route index element={<BuyerHome />} />
+          <Route path="market" element={<MarketPage />} />
+          <Route path="market/:code" element={<LotDetailPage />} />
+          <Route path="orders" element={<BuyOrdersPage />} />
+          <Route path="orders/new" element={<BuyOrderFormPage />} />
+          <Route path="orders/:code" element={<BuyOrderDetailPage />} />
+          <Route path="orders/:code/edit" element={<BuyOrderFormPage />} />
           <Route path="demands" element={<DemandsPage />} />
-          <Route path="demands/new" element={<NewDemandPage />} />
-          <Route path="company" element={<CompanyPage />} />
-          <Route path="profile" element={<BuyerProfilePage />} />
-          <Route path="demands/:id" element={<DemandDetailPage />} />
-          <Route path="supply" element={<SupplyPage />} />
-          <Route path="supply/:code" element={<SupplyDetailPage />} />
-          <Route path="orders" element={<BuyerOrdersPage />} />
-          <Route path="messages" element={<BuyerMessagesPage />} />
+          <Route path="demands/new" element={<DemandFormPage />} />
+          <Route path="demands/:code" element={<DemandDetailPage />} />
+          <Route path="demands/:code/edit" element={<DemandFormPage />} />
           <Route path="auctions" element={<BuyerAuctionsPage />} />
           <Route path="auctions/:id" element={<BuyerAuctionDetailPage />} />
-          {/* The deliveries list is a tab of the cart now. */}
-          <Route path="deliveries" element={<Navigate to="/buyer/orders?tab=deliveries" replace />} />
+          <Route path="transactions" element={<TransactionsPage />} />
+          <Route path="transactions/:code" element={<TransactionDetailPage />} />
+          <Route path="company" element={<CompanyPage />} />
+          <Route path="delivery-points" element={<DeliveryPointsPage />} />
+          <Route path="profile" element={<BuyerProfilePage />} />
+          <Route path="messages" element={<BuyerMessagesPage />} />
+          {/* Old links from the reserve/deposit prototype. */}
+          <Route path="supply/*" element={<Navigate to="/buyer/market" replace />} />
+          <Route path="deliveries" element={<Navigate to="/buyer/transactions" replace />} />
           <Route
             path="deliveries/:id"
             element={

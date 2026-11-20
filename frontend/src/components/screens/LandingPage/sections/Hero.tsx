@@ -27,7 +27,7 @@ export function Hero() {
             </h1>
             <p className="hero-description">{c("landing.hero.description")}</p>
             <div className="hero-buttons">
-              <a href="#coordination" className="hero-button hero-button-primary">
+              <a href="#what" className="hero-button hero-button-primary">
                 {c("landing.hero.primaryCta")}
                 <ArrowRight size={16} />
               </a>
@@ -38,7 +38,7 @@ export function Hero() {
           <aside className="hero-aside">
             <p className="hero-aside-title">{c("landing.hero.asideTitle")}</p>
             <p className="hero-aside-text">{c("landing.hero.asideText")}</p>
-            <a href="#time-aware" className="hero-aside-link">
+            <a href="#what" className="hero-aside-link">
               Learn More <ArrowRight size={14} />
             </a>
           </aside>

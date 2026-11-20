@@ -1,27 +1,24 @@
 import { Hero } from './sections/Hero'
 import { Nav } from './sections/Nav'
-import { Intro } from './sections/Intro'
+import { Overview } from './sections/Overview'
 import { HowItWorks } from './sections/HowItWorks'
-import { TimeAware } from './sections/TimeAware'
-import { SmartCoordination, Reservation } from './sections/SmartCoordination'
-import { Intelligence } from './sections/Intelligence'
-import { Rescue, FinalCTA, Footer } from './sections/Rescue'
-import { Dashboard } from './sections/Dashboard'
+import { AuctionSection, MatchingSection, ProcurementSection, TransactionSection, VerificationSection } from './sections/Showcase'
+import { FinalCTA, Footer } from './sections/Rescue'
 import { AnnouncementBanner } from "@/components/notifications/AnnouncementBanner";
 
+/** Public landing page, following the Farmora flow: verify → trade (three channels) → transaction → delivery. */
 export default function LandingPage() {
   return (
     <div className="landing-page">
       <Nav />
       <Hero />
-      <Intro />
+      <Overview />
       <HowItWorks />
-      <TimeAware />
-      <Intelligence />
-      <Dashboard />
-      <SmartCoordination />
-      <Reservation />
-      <Rescue />
+      <VerificationSection />
+      <MatchingSection />
+      <ProcurementSection />
+      <AuctionSection />
+      <TransactionSection />
       <FinalCTA />
       <Footer />
       <AnnouncementBanner audience="PUBLIC" placement="floating" />

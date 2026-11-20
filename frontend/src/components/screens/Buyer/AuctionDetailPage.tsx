@@ -1,184 +1,326 @@
+// One auction (B3.2.3 + B3.2.5): what is offered, the buyer's single bid (price + quantity) with its
+// history, and the result to confirm if the supplier selects it. Other buyers' bids are not shown:
+// visibility between buyers is still an open question (Q-02), so Farmora shows only your own.
 import { useState } from "react";
-import { ArrowLeft, Gavel } from "lucide-react";
+import { ArrowLeft, FileText, MapPin, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { AuctionStatus, AuctionTimer, BidHistory, ConfidencePanel, LastRaise, PriceSparkline } from "@/components/auction/AuctionParts";
-import { currentBid, minNextBid, placeBid, useAuctions, type BidResult } from "@/components/auction/auctionStore";
-import { estimate, vnd } from "@/components/auction/format";
+import { PartyLink } from "@/components/parties/PartyLink";
+import { AUCTION_ALLOCATION_LABEL, AUCTION_LABEL, BID_LABEL, GRADE_LABEL, zoneLabel } from "./model/catalog";
+import { answerAuctionAllocation, submitBid, useBuyerData, withdrawBid } from "./model/store";
+import { formatClock, formatDateTime, formatLeft } from "./model/time";
 import { useNow } from "@/components/orders/useNow";
-import { formatDay } from "../Producer/data/format";
+import { Deal, useMarketPrice } from "./sections/Deal";
+import type { Errors } from "./model/validation";
+import { LotEvidence } from "./MarketPage";
+import { ConfirmFacts, Field, FormError, GateNote, History, PageHead, Pill, ReasonDialog, TimeLeft } from "./ui/parts";
+import { kg, perKg, useVerified, vnd } from "./ui/format";
+import { AUCTION_ALLOCATION_TONE, AUCTION_TONE, BID_TONE } from "./ui/tones";
 
-const REFUSED: Record<Exclude<BidResult, { ok: true }>["reason"], (current: number) => string> = {
-  stale: (current) => `Another buyer bid ${vnd(current)}/kg a moment before you, so your bid was not placed. Bid again on the new price.`,
-  too_low: (current) => `Your bid must be above ${vnd(current)}/kg.`,
-  closed: () => "This auction has closed.",
-};
-
-/** One auction: what is offered and how sure the yield is, the live bid, and placing a bid. */
 export default function AuctionDetailPage() {
   const { id } = useParams();
-  const auctions = useAuctions();
+  const data = useBuyerData();
+  const verified = useVerified();
+  const auction = data.auctions.find((item) => item.code === id);
+  const bid = data.bids.find((item) => item.auctionCode === id && item.status !== "WITHDRAWN");
+  const withdrawn = data.bids.filter((item) => item.auctionCode === id && item.status === "WITHDRAWN");
+  const allocation = data.auctionAllocations.find((item) => item.auctionCode === id && item.bidCode === bid?.code);
+  const [price, setPrice] = useState(String(bid?.price ?? auction?.startingPrice ?? ""));
+  const [quantity, setQuantity] = useState(String(bid?.quantity ?? auction?.minBidQuantity ?? ""));
+  const [preference, setPreference] = useState(bid?.deliveryPreference ?? "");
+  const [conditions, setConditions] = useState(bid?.conditions ?? "");
+  const [errors, setErrors] = useState<Errors>({});
+  const [message, setMessage] = useState<string | null>(null);
+  const [declining, setDeclining] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const now = useNow(1000);
-  const auction = auctions.find((item) => item.id === id);
-  const [amount, setAmount] = useState<number | null>(null);
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
-  // The version this buyer is looking at; a bid placed against an older one is refused.
-  const [seen, setSeen] = useState<number | null>(null);
+  const market = useMarketPrice();
 
   if (!auction) {
     return (
       <main className="ph-main">
         <Link to="/buyer/auctions" className="ph-back">
-          <ArrowLeft size={16} /> Pre-harvest auctions
+          <ArrowLeft size={16} /> Auctions
         </Link>
         <p className="ph-empty">Auction {id} was not found.</p>
       </main>
     );
   }
 
-  const min = minNextBid(auction);
-  const bid = amount !== null && amount >= min ? amount : min;
-  const leader = auction.bids.at(-1);
-  const ended = auction.status !== "live" || now >= auction.endsAt;
-  const youLead = Boolean(leader?.self);
-  const youBid = auction.bids.some((item) => item.self);
-  const version = seen ?? auction.version;
+  const lot = data.lots.find((item) => item.code === auction.lotCode);
+  const active = auction.status === "ACTIVE";
+  const canBid = active && (!bid || bid.status === "SUBMITTED");
+  const value = Number(price) * Number(quantity);
 
-  // `against` is the version the bid is made on: the one the buyer was looking at, or the latest for one-tap rebids.
-  const submit = (price: number, against = version) => {
-    const result = placeBid(auction.id, price, against);
-    if (result.ok) {
-      setMessage({ tone: "ok", text: `Bid placed: ${vnd(price)}/kg. You lead for now.` });
-      setAmount(null);
-      setSeen(null);
-    } else {
-      setMessage({ tone: "error", text: REFUSED[result.reason](result.current) });
-      setSeen(null);
-      setAmount(null);
+  const send = () => {
+    const result = submitBid(auction.code, { price: Number(price), quantity: Number(quantity), deliveryPreference: preference || undefined, conditions: conditions || undefined });
+    if (!result.ok) {
+      setErrors(result.errors);
+      setMessage(null);
+      return;
     }
+    setErrors({});
+    setMessage(bid ? "Bid updated. The supplier sees the new price and quantity." : "Bid submitted. You can change or withdraw it until the auction ends.");
   };
 
-  const midKg = Math.round((auction.estMinKg + auction.estMaxKg) / 2);
-
   return (
-    <main className="ph-main">
+    <main className="ph-main bf-page bf-auction-detail">
       <Link to="/buyer/auctions" className="ph-back">
-        <ArrowLeft size={16} /> Pre-harvest auctions
+        <ArrowLeft size={16} /> Auctions
       </Link>
+      <PageHead
+        eyebrow={`Auction ${auction.code}`}
+        title={auction.name}
+        summary={
+          <>
+            <PartyLink name={auction.supplier} role="producer" /> · {auction.crop}, {auction.variety}, {GRADE_LABEL[auction.grade]}
+          </>
+        }
+        actions={<Pill tone={AUCTION_TONE[auction.status]}>{AUCTION_LABEL[auction.status]}</Pill>}
+      />
 
-      <div className="au-detail">
-        <section className="ph-card">
-          <p className="ph-eyebrow">
-            <Gavel size={14} aria-hidden="true" /> Pre-harvest auction {auction.id}
-          </p>
-          <h1 className="au-title">
-            {auction.product} · grade {auction.grade}
-          </h1>
-          <p className="au-muted">
-            {auction.batchCode} · {auction.variety} · {auction.producer}, {auction.region}
-          </p>
-          <dl className="au-facts">
-            <div>
-              <dt>Estimated yield</dt>
-              <dd>{estimate(auction)}</dd>
+      <div className="bf-columns">
+        <div className="bf-col-main">
+          <section className="ph-card bf-section of">
+            <div className="of-heading">
+              <p className="rq-eyebrow">What is offered</p>
+              <h2>{auction.crop}</h2>
+              <p>
+                {auction.variety} <span>·</span> {GRADE_LABEL[auction.grade]}
+              </p>
             </div>
-            <div>
-              <dt>Expected harvest</dt>
-              <dd>{formatDay(auction.harvestDay)}</dd>
-            </div>
-            <div>
-              <dt>Opening price</dt>
-              <dd>{vnd(auction.startPrice)}/kg</dd>
-            </div>
-            <div>
-              <dt>Raise by at least</dt>
-              <dd>{vnd(auction.step)}/kg</dd>
-            </div>
-          </dl>
-          <ul className="au-farming">
-            {auction.farming.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <ConfidencePanel auction={auction} />
-          {auction.risk && <p className="au-message au-message--error">Producer reported: {auction.risk}. The auction is under review by a coordinator.</p>}
-        </section>
+            {lot && <LotEvidence lot={lot} />}
 
-        <section className="ph-card au-bid-panel" aria-live="polite">
-          <AuctionStatus auction={auction} />
-          <AuctionTimer auction={auction} />
-          <p className="au-current">
-            {/* Re-keyed on every bid, so the price flashes when it changes. */}
-            <span key={auction.bids.length} className={auction.bids.length ? "au-current-value" : undefined}>
-              {leader ? vnd(currentBid(auction)) : vnd(auction.startPrice)}
-            </span>{" "}
-            <small>/kg</small>
-          </p>
-          <p className={youLead ? "au-lead is-you" : youBid ? "au-lead is-outbid" : "au-lead au-muted"}>
-            {!leader ? "No bids yet" : youLead ? (ended ? "You won" : "You are the highest bidder") : youBid ? `Outbid by ${leader.bidder}` : `${leader.bidder} leads`}
-          </p>
-          <LastRaise auction={auction} />
-          <PriceSparkline auction={auction} width={320} height={48} />
-          {!ended && youBid && !youLead && (
-            <div className="au-outbid" role="alert">
-              You've been outbid
-              <button type="button" className="ph-btn ph-btn--primary" onClick={() => submit(min, auction.version)}>
-                Bid {vnd(min)} to lead again
-              </button>
+            <div className="of-stats">
+              <div>
+                <small>Quantity</small>
+                <strong>{kg(auction.quantity)}</strong>
+                <span>bid from {kg(auction.minBidQuantity)}</span>
+              </div>
+              <div>
+                <small>Starting price</small>
+                <strong>{perKg(auction.startingPrice)}</strong>
+                <Deal start={auction.startingPrice} market={market(auction)} />
+              </div>
+              <div className={active && auction.endTime - now < 3_600_000 ? "of-clock is-hot" : "of-clock"}>
+                <small>{active ? "Time left" : auction.status === "SCHEDULED" ? "Opens in" : "Ended"}</small>
+                <strong>
+                  {active ? formatClock(auction.endTime - now) : auction.status === "SCHEDULED" ? formatLeft(auction.startTime - now) : formatDateTime(auction.endedAt ?? auction.endTime)}
+                </strong>
+                {auction.endReason && <span>{auction.endReason}</span>}
+              </div>
             </div>
-          )}
-          {!ended && youLead && <p className="au-leading">You lead. We'll show it here the moment someone outbids you.</p>}
 
-          {ended ? (
-            <div className={youLead ? "au-result is-won" : "au-result"}>
-              {youLead ? (
+            <div className="of-timeline">
+              <span>
+                <small>Opens</small>
+                {formatDateTime(auction.startTime)}
+              </span>
+              <span className="of-track" aria-hidden="true">
+                <i style={{ width: `${Math.max(0, Math.min(1, (now - auction.startTime) / (auction.endTime - auction.startTime))) * 100}%` }} />
+              </span>
+              <span>
+                <small>{auction.endedAt ? "Ended" : "Ends"}</small>
+                {formatDateTime(auction.endedAt ?? auction.endTime)}
+              </span>
+            </div>
+
+            <ul className="of-list">
+              <li>
+                <Truck size={16} aria-hidden="true" />
+                <span>
+                  <strong>{auction.deliveryLocation}</strong>
+                  {auction.deliveryTerms && <small>{auction.deliveryTerms}</small>}
+                </span>
+              </li>
+              <li>
+                <MapPin size={16} aria-hidden="true" />
+                <span>
+                  <strong>Ships from {zoneLabel(auction.zone)}</strong>
+                  <small>
+                    Supply lot <Link to={`/buyer/market/${auction.lotCode}`}>{auction.lotCode}</Link>
+                  </small>
+                </span>
+              </li>
+              {auction.additionalConditions && (
+                <li>
+                  <FileText size={16} aria-hidden="true" />
+                  <span>
+                    <strong>Other conditions</strong>
+                    <small>{auction.additionalConditions}</small>
+                  </span>
+                </li>
+              )}
+            </ul>
+          </section>
+
+          {allocation && (
+            <section className={allocation.status === "PENDING_CONFIRMATION" ? "ph-card bf-section bf-section--alert" : "ph-card bf-section"}>
+              <h2>Result for you</h2>
+              <p className="bf-big">
+                {kg(allocation.quantity)} at {perKg(allocation.acceptedPrice)} · {vnd(allocation.quantity * allocation.acceptedPrice)}
+              </p>
+              <p className="ph-muted">The supplier chose your bid{allocation.quantity < (bid?.quantity ?? 0) ? ` and allocated part of it (${kg(allocation.quantity)} of ${kg(bid!.quantity)})` : ""}. Price and quantity are fixed at this step.</p>
+              <Pill tone={AUCTION_ALLOCATION_TONE[allocation.status]}>{AUCTION_ALLOCATION_LABEL[allocation.status]}</Pill>
+              {allocation.status === "PENDING_CONFIRMATION" && (
                 <>
-                  <strong>Future supply commitment</strong>
-                  You secured {auction.batchCode} at {vnd(currentBid(auction))}/kg, about {midKg.toLocaleString("en-GB")} kg (≈ {vnd(midKg * currentBid(auction))}) for harvest{" "}
-                  {formatDay(auction.harvestDay).toLowerCase()}. The final quantity is what the producer actually harvests; it then follows the normal order flow.
-                </>
-              ) : leader ? (
-                <>
-                  <strong>Auction closed</strong>
-                  Won by an anonymous buyer at {vnd(currentBid(auction))}/kg.
-                </>
-              ) : (
-                <>
-                  <strong>No winner</strong>
-                  The batch goes back to the market when it is harvested, where matching picks it up.
+                  <p>
+                    Confirm within <TimeLeft until={allocation.deadline} passed="deadline passed" />. If you decline or let it expire, the quantity goes back to the supplier.
+                  </p>
+                  <GateNote />
+                  <FormError errors={errors} />
+                  <div className="bf-actions">
+                    <button type="button" className="ph-btn" disabled={!verified} onClick={() => setDeclining(true)}>
+                      Decline
+                    </button>
+                    <button
+                      type="button"
+                      className="ph-btn ph-btn--primary"
+                      disabled={!verified}
+                      onClick={() => setConfirming(true)}
+                    >
+                      Confirm result
+                    </button>
+                  </div>
                 </>
               )}
-            </div>
-          ) : (
-            <form
-              className="au-bid-form"
-              onSubmit={(event) => {
-                event.preventDefault();
-                submit(bid);
-              }}
-              onFocus={() => setSeen((current) => current ?? auction.version)}
-            >
-              <label className="au-muted" htmlFor="bid-amount">
-                Your bid per kg (at least {vnd(min)})
-              </label>
-              <input id="bid-amount" type="number" min={min} step={auction.step} value={bid} onChange={(event) => setAmount(Number(event.target.value))} />
-              <div className="au-quick">
-                {[0, 1, 2].map((extra) => (
-                  <button key={extra} type="button" className="ph-btn" onClick={() => setAmount(min + extra * auction.step)}>
-                    {vnd(min + extra * auction.step)}
-                  </button>
-                ))}
-              </div>
-              <button type="submit" className="ph-btn ph-btn--primary">
-                Bid {vnd(bid)}/kg
-              </button>
-              {message && <p className={`au-message au-message--${message.tone}`}>{message.text}</p>}
-            </form>
+              {allocation.status === "CONFIRMED" &&
+                (() => {
+                  const transaction = data.transactions.find((item) => item.sourceRef === allocation.id);
+                  return transaction ? (
+                    <p>
+                      <Link to={`/buyer/transactions/${transaction.code}`} className="ph-link-btn">
+                        Transaction {transaction.code}
+                      </Link>
+                    </p>
+                  ) : null;
+                })()}
+            </section>
           )}
 
-          <h2 className="au-section-title">Bids</h2>
-          <BidHistory auction={auction} />
-        </section>
+          {allocation && (
+            <ReasonDialog
+              open={confirming}
+              noReason
+              title={`Confirm ${kg(allocation.quantity)} from this auction?`}
+              text="Once you confirm, you cannot change your answer."
+              confirmLabel="Yes, confirm"
+              extra={
+                <ConfirmFacts
+                  rows={[
+                    ["Quantity", kg(allocation.quantity)],
+                    ["Price", perKg(allocation.acceptedPrice)],
+                    ["Total value", <strong key="v">{vnd(allocation.quantity * allocation.acceptedPrice)}</strong>],
+                  ]}
+                  note="A transaction with the supplier is created right away. Payment is agreed in the contract, outside Farmora."
+                />
+              }
+              onClose={() => setConfirming(false)}
+              onConfirm={() => {
+                const result = answerAuctionAllocation(allocation.id, "CONFIRM");
+                setErrors(result.ok ? {} : result.errors);
+                return result.ok ? null : result.errors;
+              }}
+            />
+          )}
+
+          {bid && <History entries={bid.history} title="Your bid history" />}
+        </div>
+
+        <aside className="bf-col-side">
+          <section className="ph-card bf-sticky bf-bid-panel">
+            <h2>{bid && bid.status !== "SUBMITTED" ? "Your bid" : bid ? "Change your bid" : "Place a bid"}</h2>
+            <p className="bf-sealed">
+              Other buyers' bids are not shown. The supplier picks bids on price, quantity and terms, not only the highest price.
+            </p>
+            {bid && (
+              <p>
+                <Pill tone={BID_TONE[bid.status]}>{BID_LABEL[bid.status]}</Pill> {perKg(bid.price)} × {kg(bid.quantity)}
+              </p>
+            )}
+            {withdrawn.length > 0 && !bid && <p className="ph-muted">You withdrew an earlier bid. You can bid again while the auction is open.</p>}
+
+            {canBid ? (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  send();
+                }}
+                noValidate
+              >
+                <div className="bf-grid bf-grid--1">
+                  <Field label="Price (VND/kg)" error={errors.price} hint={`At least ${perKg(auction.startingPrice)}`}>
+                    <input type="number" min={auction.startingPrice} step={100} value={price} onChange={(event) => setPrice(event.target.value)} />
+                  </Field>
+                  <Field label="Quantity (kg)" error={errors.quantity} hint={`${kg(auction.minBidQuantity)} – ${kg(auction.quantity)}`}>
+                    <input type="number" min={auction.minBidQuantity} max={auction.quantity} value={quantity} onChange={(event) => setQuantity(event.target.value)} />
+                  </Field>
+                  <Field label="Delivery preference (optional)">
+                    <input value={preference} onChange={(event) => setPreference(event.target.value)} />
+                  </Field>
+                  <Field label="Conditions or note (optional)">
+                    <input value={conditions} onChange={(event) => setConditions(event.target.value)} />
+                  </Field>
+                </div>
+                {value > 0 && (
+                  <p className="bf-auction-total">
+                    <span>Value if fully selected</span>
+                    <strong>{vnd(value)}</strong>
+                  </p>
+                )}
+                <GateNote />
+                <FormError errors={errors} />
+                {message && (
+                  <p className="bf-callout" role="status">
+                    {message}
+                  </p>
+                )}
+                <div className="bf-stack">
+                  <button type="submit" className="ph-btn ph-btn--primary" disabled={!verified}>
+                    {bid ? "Update bid" : "Submit bid"}
+                  </button>
+                  {bid && (
+                    <button
+                      type="button"
+                      className="ph-btn"
+                      disabled={!verified}
+                      onClick={() => {
+                        const result = withdrawBid(auction.code);
+                        setErrors(result.ok ? {} : result.errors);
+                        setMessage(result.ok ? "Bid withdrawn." : null);
+                      }}
+                    >
+                      Withdraw bid
+                    </button>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <p className="ph-muted">
+                {auction.status === "SCHEDULED"
+                  ? `Bidding opens ${formatDateTime(auction.startTime)}.`
+                  : auction.status === "ENDED"
+                    ? "Bidding has ended. The supplier is choosing bids."
+                    : "This auction no longer takes bids."}
+              </p>
+            )}
+          </section>
+        </aside>
       </div>
+
+      {allocation && (
+        <ReasonDialog
+          open={declining}
+          title="Decline this result?"
+          text={`${kg(allocation.quantity)} goes back to ${auction.supplier}, who may choose another bid.`}
+          confirmLabel="Decline result"
+          danger
+          onClose={() => setDeclining(false)}
+          onConfirm={(reason) => {
+            const result = answerAuctionAllocation(allocation.id, "DECLINE", reason);
+            return result.ok ? null : result.errors;
+          }}
+        />
+      )}
     </main>
   );
 }

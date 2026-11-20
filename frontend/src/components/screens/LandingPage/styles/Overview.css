@@ -1,0 +1,177 @@
+/* ===== Farmora in 30 seconds ===== */
+.overview-section {
+  padding: 6rem 0;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+@media (min-width: 768px) {
+  .overview-section {
+    padding: 8rem 0;
+  }
+}
+.overview-grid {
+  display: grid;
+  gap: 3rem;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+@media (min-width: 768px) {
+  .overview-grid {
+    padding: 0 2.5rem;
+  }
+}
+@media (min-width: 1100px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 4rem;
+  }
+}
+.overview-title {
+  margin-top: 1.25rem;
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  line-height: 1.08;
+}
+.overview-intro {
+  margin-top: 1.25rem;
+  max-width: 36rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+.overview-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+@media (max-width: 640px) {
+  .overview-roles {
+    grid-template-columns: 1fr;
+  }
+}
+.overview-role {
+  padding: 1.1rem 1.2rem;
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  border-radius: 14px;
+  background: hsl(var(--card));
+}
+.overview-role-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: hsl(var(--primary));
+  font-size: 1.05rem;
+}
+.overview-role small {
+  display: block;
+  margin-top: 0.2rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.8rem;
+}
+.overview-role ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.overview-role li {
+  display: flex;
+  gap: 0.45rem;
+}
+.overview-role li svg {
+  flex: none;
+  margin-top: 0.2rem;
+  color: hsl(var(--sage));
+}
+.overview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+  color: hsl(var(--primary));
+  font-weight: 600;
+  text-decoration: none;
+}
+.overview-demo {
+  min-width: 0;
+}
+
+/* The demo inside: supplier | Farmora | buyer, delivery underneath */
+.ov-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px minmax(0, 1fr);
+  gap: 10px;
+}
+.ov-side {
+  min-height: 200px;
+}
+.ov-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.ov-hub {
+  padding: 8px 12px;
+  border: 2px dashed #b9c2b4;
+  border-radius: 999px;
+  color: #687269;
+  font-weight: 700;
+  transition: all 0.4s;
+}
+.ov-hub.is-on {
+  border-style: solid;
+  border-color: #2f6340;
+  color: #fff;
+  background: #2f6340;
+}
+.ov-price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  background: #f1f8dc;
+  font-size: 11px;
+  text-align: center;
+}
+.ov-price b {
+  font-size: 13px;
+}
+.ov-lot {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #eef6ec;
+}
+.ov-road {
+  grid-column: 1 / -1;
+  min-height: 70px;
+  padding: 0 6px;
+  border: 1px solid #e4e7e1;
+  border-radius: 12px;
+  background: #fff;
+}
+.ov-wait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 70px;
+}
+@media (max-width: 640px) {
+  .ov-screen {
+    grid-template-columns: 1fr;
+  }
+  .ov-middle {
+    flex-direction: row;
+  }
+}

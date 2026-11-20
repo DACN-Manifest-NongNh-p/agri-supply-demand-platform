@@ -7,20 +7,20 @@ import { DELIVERY_STEPS } from "../Producer/data/mockProducer";
 import { deliveryStatus, etaText } from "../Producer/data/deliveries";
 import { formatKg } from "../Producer/data/format";
 import { deliveries } from "./data/mockBuyer";
-import { useBuyer } from "./data/buyerContext";
+import { reportDeliveryIssue, useBuyerData } from "./model/store";
 
 type Tab = "timeline" | "proof" | "report";
 
 export default function DeliveryDetailPage() {
   const { id } = useParams();
-  const { deliveryIssues, reportDeliveryIssue } = useBuyer();
+  const { deliveryIssues } = useBuyerData();
   const [tab, setTab] = useState<Tab>("timeline");
   const delivery = deliveries.find((item) => item.id === id);
 
   if (!delivery) {
     return (
       <main className="ph-main">
-        <Link to="/buyer/orders?tab=deliveries" className="ph-back"><ArrowLeft size={16} /> All deliveries</Link>
+        <Link to="/buyer/transactions" className="ph-back"><ArrowLeft size={16} /> Transactions</Link>
         <p className="ph-empty">Delivery {id} was not found.</p>
       </main>
     );
@@ -38,8 +38,8 @@ export default function DeliveryDetailPage() {
 
   return (
     <main className="ph-main">
-      <Link to="/buyer/orders?tab=deliveries" className="ph-back">
-        <ArrowLeft size={16} /> All deliveries
+      <Link to="/buyer/transactions" className="ph-back">
+        <ArrowLeft size={16} /> Transactions
       </Link>
 
       <RouteMap delivery={delivery} status={status}>

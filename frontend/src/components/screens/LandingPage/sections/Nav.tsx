@@ -15,9 +15,9 @@ import "../styles/Nav.css";
 
 const links = [
   { label: "Home", href: "#top" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Platform", href: "#time-aware" },
-  { label: "About", href: "#about" },
+  { label: "What it is", href: "#what" },
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Ways to trade", href: "#order-matching" },
 ];
 
 export function Logo({ className }: { className?: string }) {

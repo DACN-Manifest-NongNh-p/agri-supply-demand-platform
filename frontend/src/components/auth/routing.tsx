@@ -31,10 +31,13 @@ export function AuthCallback() {
   return <Navigate to={target} replace />;
 }
 
+/** TEMPORARY, for UI review only: `VITE_AUTH_BYPASS=true npm run dev` opens every area without signing in. Never active in a build. */
+const AUTH_BYPASS = import.meta.env.DEV && import.meta.env.VITE_AUTH_BYPASS === "true";
+
 /** Sends anonymous visitors to Keycloak and back; shows a no-access page for the wrong role. */
 export function RequireRole({ role, children }: { role: AppRole; children: ReactNode }) {
   const location = useLocation();
-  const authenticated = isKeycloakAuthenticated();
+  const authenticated = AUTH_BYPASS || isKeycloakAuthenticated();
   const returnTo = `${location.pathname}${location.search}${location.hash}`;
 
   useEffect(() => {
@@ -44,7 +47,7 @@ export function RequireRole({ role, children }: { role: AppRole; children: React
   if (!authenticated) {
     return <main className="access-page"><p className="access-muted">Redirecting to sign in…</p></main>;
   }
-  if (!hasRole(role)) return <NoAccess role={role} />;
+  if (!AUTH_BYPASS && !hasRole(role)) return <NoAccess role={role} />;
   return <>{children}</>;
 }
 
