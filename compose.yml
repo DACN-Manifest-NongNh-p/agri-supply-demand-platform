@@ -100,10 +100,11 @@ services:
   ai:
     build: ./ai
     image: farmora-ai
+    env_file:
+      - ./ai/.env
     environment:
       ES_URL: http://elasticsearch:9200
       ES_INDEX: ${ES_INDEX:-policy}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       DOCS_DIR: /knowledge/docs
       # The Spring API runs on the host during development.
       SITE_API_URL: ${SITE_API_URL:-http://host.docker.internal:8082}
